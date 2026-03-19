@@ -32,13 +32,24 @@ const AVAILABLE_TIMES = [
   { time: "04:30 PM", available: true }
 ];
 
-export default function BookingWidget({ branches, services, staff, tenantName, tenantId, tenantLogo }: { 
+export default function BookingWidget({ 
+  branches, 
+  services, 
+  staff, 
+  tenantName, 
+  tenantId, 
+  tenantLogo,
+  homeServiceTerms,
+  homeServiceTermsEnabled
+}: { 
   branches: Branch[], 
   services: Service[], 
   staff: Staff[], 
   tenantName: string, 
   tenantId: string,
-  tenantLogo?: string 
+  tenantLogo?: string,
+  homeServiceTerms?: string,
+  homeServiceTermsEnabled?: boolean
 }) {
   const t = useTranslations('BookingWidget');
   const [step, setStep] = useState(1);
@@ -61,6 +72,7 @@ export default function BookingWidget({ branches, services, staff, tenantName, t
   const [guestPhone, setGuestPhone] = useState("");
   const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
   const [showCountryList, setShowCountryList] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Auto-detect country roughly by timezone
   useEffect(() => {
@@ -72,7 +84,7 @@ export default function BookingWidget({ branches, services, staff, tenantName, t
   }, []);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const isFormValid = guestName.trim() !== "" && emailRegex.test(guestEmail) && guestPhone.length >= 7;
+  const isFormValid = guestName.trim() !== "" && emailRegex.test(guestEmail) && guestPhone.length >= 7 && (modality !== 'domicilio' || agreedToTerms);
 
   // Cargar horarios reales cuando cambien los filtros
   useEffect(() => {
@@ -83,9 +95,10 @@ export default function BookingWidget({ branches, services, staff, tenantName, t
           const times = await getAvailableSlots(
             selectedDate, 
             selectedService.id, 
-            selectedBranch?.id || '', 
+            selectedBranch?.id || branches[0]?.id || '', 
             selectedStaff?.id
           );
+          console.log("Found slots:", times.length, "for date:", selectedDate);
           setAvailableTimes(times);
           // Si el horario previamente seleccionado ya no está disponible, limpiarlo
           if (selectedTime && !times.find(t => t.time === selectedTime && t.available)) {
@@ -128,24 +141,19 @@ export default function BookingWidget({ branches, services, staff, tenantName, t
   };
 
   const handleFinalCheckout = async () => {
-    if (modality === 'domicilio') {
-        setStep(5);
-        return;
-    }
-
     if (!selectedService || !selectedDate || !selectedTime) return;
 
-    // TODO: Obtener tenantId dinámicamente si es necesario, por ahora servimos un placeholder o el ID del primer tenant
-    // Para el demo usaremos el ID que viene en los datos del servidor (si lo tuviéramos)
-    // Por simplicidad en este paso, pasamos a step 5 directamente si la acción falla o tiene éxito
-    const startDateTime = new Date(`${selectedDate}T${formatTimeToMilitary(selectedTime)}Z`);
+    // 1. Calcular tiempos de inicio y fin (UTC para consistencia en DB)
+    const militaryTime = formatTimeToMilitary(selectedTime);
+    const startDateTime = new Date(`${selectedDate}T${militaryTime}Z`);
     const endDateTime = new Date(startDateTime.getTime() + selectedService.durationMinutes * 60000);
 
+    // 2. Persistir en Base de Datos
     const result = await createBookingAction({
       tenantId: tenantId, 
-      branchId: selectedBranch?.id || '',
+      branchId: selectedBranch?.id || branches[0]?.id || '',
       serviceId: selectedService.id,
-      staffId: selectedStaff?.id || '',
+      staffId: selectedStaff?.id || staff[0]?.id || '',
       customerName: guestName,
       customerEmail: guestEmail,
       startTime: startDateTime,
@@ -153,6 +161,17 @@ export default function BookingWidget({ branches, services, staff, tenantName, t
     });
 
     if (result.success) {
+      if (modality === 'domicilio') {
+        const whatsappMsg = encodeURIComponent(
+          `¡Hola! Me gustaría confirmar mi cita para *${selectedService.name}*.\n\n` +
+          `📅 *Fecha:* ${selectedDate}\n` +
+          `⏰ *Hora:* ${selectedTime}\n` +
+          `📍 *Modalidad:* Servicio a Domicilio\n` +
+          `👤 *Cliente:* ${guestName}\n` +
+          `📞 *Teléfono:* ${guestPhone}`
+        );
+        window.open(`https://wa.me/50370000000?text=${whatsappMsg}`, '_blank');
+      }
       setStep(5);
     } else {
       alert("Error al crear la reserva");
@@ -176,14 +195,14 @@ export default function BookingWidget({ branches, services, staff, tenantName, t
     d.setDate(today.getDate() + i + (modality === 'domicilio' ? 7 : 0)); 
     return {
       date: d,
-      dayName: d.toLocaleDateString('es-ES', { weekday: 'short' }),
+      dayName: d.toLocaleDateString(undefined, { weekday: 'short' }),
       dayNum: d.getDate(),
       fullDate: d.toISOString().split('T')[0]
     };
   });
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-start md:justify-center p-4 sm:p-8 md:p-12 lg:p-24 relative overflow-hidden bg-slate-50 dark:bg-black/95">
+    <main className="flex min-h-screen flex-col items-center justify-start md:justify-center p-4 sm:p-6 md:p-8 lg:p-12 relative overflow-x-hidden bg-slate-50 dark:bg-black/95">
       {/* Decorative ambient background blobs */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
@@ -211,8 +230,8 @@ export default function BookingWidget({ branches, services, staff, tenantName, t
                 <LangToggle />
               </div>
             </div>
-            <p className="text-slate-500 dark:text-zinc-400 text-lg leading-relaxed max-w-md">
-              Reserva tu cita al instante. Solo completemos los detalles clave.
+            <p className="text-slate-500 dark:text-zinc-400 text-lg leading-relaxed max-w-xl">
+              {t("hero_subtitle")}
             </p>
           </div>
           
@@ -247,7 +266,7 @@ export default function BookingWidget({ branches, services, staff, tenantName, t
                 <div className="flex items-center gap-3 text-slate-600 dark:text-zinc-300 animate-in fade-in slide-in-from-left-2 duration-300">
                   <Calendar className="w-5 h-5 text-orange-400" />
                   <span className="font-medium">
-                    {selectedDate ? selectedDate : "Fecha por definir"} 
+                    {selectedDate ? selectedDate : t("date_tbd")} 
                     {selectedTime ? ` - ${selectedTime}` : ""}
                   </span>
                 </div>
@@ -257,7 +276,7 @@ export default function BookingWidget({ branches, services, staff, tenantName, t
         </div>
 
         {/* Right Side: Interactive Booking Widget */}
-        <div className="flex-[1.4] w-full bg-white dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-5 sm:p-8 shadow-2xl relative min-h-[550px] flex flex-col rounded-3xl">
+        <div className="flex-[1.5] w-full bg-white dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-5 sm:p-8 shadow-2xl relative min-h-[500px] flex flex-col rounded-3xl overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-3xl pointer-events-none"></div>
           
           {/* STEP 1: Branch & Modality */}
@@ -372,8 +391,7 @@ export default function BookingWidget({ branches, services, staff, tenantName, t
               </div>
               
               {/* STAFF SELECTION */}
-              {modality !== 'domicilio' && (
-                <div className="mb-6">
+              <div className="mb-6">
                   <p className="text-sm font-semibold text-slate-500 dark:text-zinc-400 mb-3 uppercase tracking-wider">{t("who_attends")}</p>
                   <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                     <div 
@@ -406,7 +424,6 @@ export default function BookingWidget({ branches, services, staff, tenantName, t
                     ))}
                   </div>
                 </div>
-              )}
 
               {/* DATE SELECTION (MOCK) */}
               <div className="mb-6 bg-slate-100 dark:bg-black/20 p-4 rounded-xl border border-slate-200 dark:border-white/5">
@@ -441,7 +458,7 @@ export default function BookingWidget({ branches, services, staff, tenantName, t
                 ) : availableTimes.length === 0 ? (
                   <div className="col-span-2 flex flex-col items-center justify-center p-8 text-slate-400 text-center">
                     <Clock className="w-12 h-12 mb-2 opacity-20" />
-                    <p>No hay horarios disponibles para esta selección.</p>
+                    <p>{t("no_slots_available")}</p>
                   </div>
                 ) : availableTimes.map(({time, available}) => (
                   <button 
@@ -549,6 +566,31 @@ export default function BookingWidget({ branches, services, staff, tenantName, t
                     </div>
                   </div>
                 </div>
+
+                {modality === 'domicilio' && homeServiceTermsEnabled && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+                      <p className="text-sm text-slate-600 dark:text-zinc-300 italic mb-2 whitespace-pre-wrap">
+                        {homeServiceTerms || t("home_service_terms_default")}
+                      </p>
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className="relative">
+                          <input 
+                            type="checkbox" 
+                            checked={agreedToTerms}
+                            onChange={(e) => setAgreedToTerms(e.target.checked)}
+                            className="peer sr-only"
+                          />
+                          <div className="w-6 h-6 border-2 border-slate-300 dark:border-white/20 rounded-md bg-transparent peer-checked:bg-purple-600 peer-checked:border-purple-600 transition-all"></div>
+                          <Check className="w-4 h-4 absolute inset-1 text-slate-900 dark:text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                        </div>
+                        <span className="text-sm font-medium text-slate-700 dark:text-zinc-200 group-hover:text-purple-400 transition-colors">
+                          {t("i_agree_to_terms")}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="mt-auto">
@@ -575,12 +617,12 @@ export default function BookingWidget({ branches, services, staff, tenantName, t
                  {modality === 'domicilio' ? t("redirecting") : t("success")}
                </h2>
                
-               <div className="space-y-4 text-slate-600 dark:text-zinc-300 mb-8 max-w-sm">
+               <div className="space-y-4 text-slate-600 dark:text-zinc-300 mb-8 max-w-md">
                  <p>
-                   {modality === 'domicilio' 
-                     ? `Tu solicitud de ${selectedService?.name} a domicilio está en camino de ser confirmada. Serás redirigido a conversar con ${tenantName}.`
-                     : `Hola ${guestName.split(' ')[0]}, tu cita presencial en ${selectedBranch?.name} para ${selectedService?.name} está confirmada.`
-                   }
+                    {modality === 'domicilio' 
+                      ? t("redirecting_desc", { service: selectedService?.name || '', tenant: tenantName })
+                      : t("success_desc", { name: guestName.split(' ')[0], branch: selectedBranch?.name || '', service: selectedService?.name || '' })
+                    }
                  </p>
                  <div className="bg-slate-200 dark:bg-black/30 w-full p-4 rounded-xl border border-slate-200 dark:border-white/5 mt-4">
                     <p className="text-purple-400 font-bold text-lg mb-1">{selectedDate || t("date_tbd")}</p>

@@ -1,16 +1,19 @@
-import { db } from '../../db';
-import { tenants, branches, services, staff } from '../../db/schema';
+import { db } from '@/db';
+import { tenants, branches, services, staff } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import BookingWidget from '../../components/BookingWidget';
+import BookingWidget from '@/components/BookingWidget';
 
 export const dynamic = 'force-dynamic';
 
-export default async function Home() {
-  // 1. Obtener la información del negocio local
-  const allTenants = await db.select().from(tenants).limit(1);
-  const tenant = allTenants[0];
+export default async function Home({ params }: { params: { locale: string, slug: string } }) {
+  const { slug } = params;
 
-  // 2. Extraer los datos reales insertados desde el Seed
+  // 1. Obtener la información del negocio por slug
+  const tenant = await db.query.tenants.findFirst({
+    where: eq(tenants.slug, slug)
+  });
+
+  // 2. Extraer los datos reales si el tenant existe
   const tenantBranches = tenant ? await db.select().from(branches).where(eq(branches.tenantId, tenant.id)) : [];
   const tenantServices = tenant ? await db.select().from(services).where(eq(services.tenantId, tenant.id)) : [];
   const tenantStaff = tenant ? await db.select().from(staff).where(eq(staff.tenantId, tenant.id)) : [];
@@ -24,6 +27,8 @@ export default async function Home() {
           staff={tenantStaff}
           tenantName={tenant.name || "ZyncSlot Premium Studio"} 
           tenantId={tenant.id}
+          homeServiceTerms={tenant.homeServiceTerms || ''}
+          homeServiceTermsEnabled={tenant.homeServiceTermsEnabled}
         />
       ) : (
         <div className="min-h-screen bg-black text-white flex items-center justify-center">

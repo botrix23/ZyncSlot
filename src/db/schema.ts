@@ -20,6 +20,9 @@ export const tenants = pgTable('tenants', {
   plan: varchar('plan', { length: 50 }).notNull().default('FREE'), // 'FREE' | 'PRO' | 'ENTERPRISE'
   status: varchar('status', { length: 50 }).notNull().default('TRIAL'), // 'ACTIVE' | 'TRIAL' | 'SUSPENDED'
   subscriptionExpiresAt: timestamp('subscription_expires_at', { withTimezone: true, mode: 'date' }),
+  homeServiceTerms: text('home_service_terms'),
+  homeServiceTermsEnabled: boolean('home_service_terms_enabled').default(false).notNull(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
@@ -42,6 +45,7 @@ export const staff = pgTable('staff', {
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
 
 // 4. Services (Catálogo de servicios)
@@ -49,11 +53,13 @@ export const services = pgTable('services', {
   id: uuid('id').primaryKey().defaultRandom(),
   tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
   durationMinutes: integer('duration_minutes').notNull(),
   price: decimal('price', { precision: 10, scale: 2 }).notNull(),
   includes: json('includes').$type<string[]>().default([]).notNull(),
   excludes: json('excludes').$type<string[]>().default([]).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
 
 // 5. Products (Catálogo de productos físicos)

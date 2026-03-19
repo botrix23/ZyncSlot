@@ -14,12 +14,13 @@ export function LangToggle() {
 
   const toggleLocale = () => {
     const nextLocale = locale === 'es' ? 'en' : 'es';
-    // Pathname check (e.g., /es/something -> /en/something)
-    if (pathname.startsWith(`/${locale}`)) {
-      const newPath = pathname.replace(`/${locale}`, `/${nextLocale}`);
-      router.push(newPath || `/${nextLocale}`);
+    const pathParts = pathname.split('/');
+    // pathParts[0] es "", pathParts[1] es el locale (es o en)
+    if (pathParts[1] === 'es' || pathParts[1] === 'en') {
+      pathParts[1] = nextLocale;
+      router.push(pathParts.join('/'));
     } else {
-      router.push(`/${nextLocale}${pathname}`);
+      router.push(`/${nextLocale}${pathname === '/' ? '' : pathname}`);
     }
   };
 

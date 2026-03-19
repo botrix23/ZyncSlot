@@ -10,20 +10,60 @@ import {
   MoreVertical,
   Activity
 } from 'lucide-react';
+import { db } from '@/db';
+import { bookings, services, tenants } from '@/db/schema';
+import { eq, and, gte, lte, desc } from 'drizzle-orm';
+import { getSession } from '@/lib/auth-session';
+import { redirect } from 'next/navigation';
+import { startOfDay, endOfDay, format } from 'date-fns';
 
-export default function AdminDashboard() {
+export default async function AdminDashboard() {
+  const session = await getSession();
+  
+  if (!session || !session.tenantId) {
+    redirect('/admin/login');
+  }
+
+  const tenantId = session.tenantId;
+  const todayStart = startOfDay(new Date());
+  const todayEnd = endOfDay(new Date());
+
+  // 1. Obtener reservas de hoy
+  const bookingsToday = await db.select().from(bookings).where(
+    and(
+      eq(bookings.tenantId, tenantId),
+      gte(bookings.startTime, todayStart),
+      lte(bookings.startTime, todayEnd)
+    )
+  );
+
+  // 2. Obtener todas las reservas para calcular ingresos (Mock simplificado)
+  const allBookings = await db.query.bookings.findMany({
+    where: eq(bookings.tenantId, tenantId),
+    with: {
+      service: true
+    },
+    limit: 50,
+    orderBy: [desc(bookings.createdAt)]
+  });
+
+  const totalRevenue = allBookings.reduce((acc, curr) => acc + parseFloat(curr.service?.price || '0'), 0);
+
   const stats = [
-    { label: 'Reservas Hoy', value: '12', icon: Calendar, trend: '+20%', color: 'from-purple-600 to-indigo-600' },
-    { label: 'Clientes Nuevos', value: '45', icon: Users, trend: '+12%', color: 'from-blue-600 to-cyan-600' },
-    { label: 'Ingresos Mes', value: '$3,450', icon: TrendingUp, trend: '+8.5%', color: 'from-emerald-600 to-teal-600' },
+    { label: 'Reservas Hoy', value: bookingsToday.length.toString(), icon: Calendar, trend: '+20%', color: 'from-purple-600 to-indigo-600' },
+    { label: 'Clientes (Total)', value: allBookings.length.toString(), icon: Users, trend: '+12%', color: 'from-blue-600 to-cyan-600' },
+    { label: 'Ingresos Estimados', value: `$${totalRevenue.toFixed(2)}`, icon: TrendingUp, trend: '+8.5%', color: 'from-emerald-600 to-teal-600' },
     { label: 'Ocupación', value: '85%', icon: Clock, trend: '+5%', color: 'from-orange-600 to-amber-600' },
   ];
 
-  const recentBookings = [
-    { id: 1, customer: 'Roberto Menjívar', service: 'Corte Premium', time: '10:30 AM', status: 'Confirmada', avatar: 'RM' },
-    { id: 2, customer: 'Lucía Fernández', service: 'Manicura Luxury', time: '11:45 AM', status: 'En Proceso', avatar: 'LF' },
-    { id: 3, customer: 'Eduardo Paz', service: 'Matizado Olaplex', time: '01:00 PM', status: 'Pendiente', avatar: 'EP' },
-  ];
+  const recentBookingsDisplay = allBookings.slice(0, 5).map(b => ({
+    id: b.id,
+    customer: b.customerName,
+    service: b.service?.name || 'Servicio desconocido',
+    time: format(b.startTime, "hh:mm a"),
+    status: b.status === 'CONFIRMED' ? 'Confirmada' : b.status,
+    avatar: b.customerName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  }));
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -76,7 +116,7 @@ export default function AdminDashboard() {
           </div>
           
           <div className="space-y-4">
-            {recentBookings.map((booking) => (
+            {recentBookingsDisplay.length > 0 ? recentBookingsDisplay.map((booking) => (
               <div key={booking.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all group">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-500 font-bold">
@@ -102,7 +142,9 @@ export default function AdminDashboard() {
                   </button>
                 </div>
               </div>
-            ))}
+            )) : (
+              <p className="text-slate-500 text-center py-8">No hay citas recientes.</p>
+            )}
           </div>
         </div>
 

@@ -1,5 +1,7 @@
 {
   "BookingWidget": {
+    "hero_subtitle": "Book your appointment instantly. Let's just complete the key details.",
+    "no_slots_available": "No slots available for this selection.",
     "title_branch": "Step 1: Where will we serve you?",
     "visit_branch": "Visit a Branch",
     "visit_branch_desc": "Immediate booking at our facilities",
@@ -36,7 +38,9 @@
     "your_appointment": "Your Appointment:",
     "home_address": "Home Address",
     "branch_address": "Branch: {branch}",
-    "with_staff": "With {staff}"
+    "with_staff": "With {staff}",
+    "home_service_terms_default": "By scheduling this service, you agree that the appointment is subject to confirmation via WhatsApp and transport availability.",
+    "i_agree_to_terms": "I agree to the terms and conditions"
   },
   "Login": {
     "title": "Login",

@@ -1,5 +1,7 @@
 {
   "BookingWidget": {
+    "hero_subtitle": "Reserva tu cita al instante. Solo completemos los detalles clave.",
+    "no_slots_available": "No hay horarios disponibles para esta selección.",
     "title_branch": "Paso 1: ¿Dónde te atenderemos?",
     "visit_branch": "Visita una Sucursal",
     "visit_branch_desc": "Reserva inmediata en nuestras instalaciones",
@@ -36,7 +38,9 @@
     "your_appointment": "Tu Cita:",
     "home_address": "A Domicilio",
     "branch_address": "Sucursal: {branch}",
-    "with_staff": "Con {staff}"
+    "with_staff": "Con {staff}",
+    "home_service_terms_default": "Al agendar este servicio, aceptas que la cita está sujeta a confirmación vía WhatsApp y disponibilidad de transporte.",
+    "i_agree_to_terms": "Acepto los términos y condiciones"
   },
   "Login": {
     "title": "Iniciar Sesión",

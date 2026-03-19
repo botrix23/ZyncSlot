@@ -6,5 +6,6 @@ export default createMiddleware({
 });
 
 export const config = {
-  matcher: ['/', '/(es|en)/:path*']
+  // Solo rutas que no sean archivos estáticos ni API
+  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
 };
