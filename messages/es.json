@@ -37,5 +37,27 @@
     "home_address": "A Domicilio",
     "branch_address": "Sucursal: {branch}",
     "with_staff": "Con {staff}"
+  },
+  "Login": {
+    "title": "Iniciar Sesión",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Email",
+    "passwordLabel": "Contraseña",
+    "passwordPlaceholder": "Contraseña",
+    "submit": "Entrar al Panel",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "recover": "Recuperar acceso",
+    "noAccount": "¿No tienes cuenta?",
+    "register": "Regístrate ahora"
+  },
+  "Register": {
+    "title": "Crea tu Cuenta",
+    "businessName": "Nombre del Negocio",
+    "adminName": "Tu Nombre",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "submit": "Empezar ahora",
+    "hasAccount": "¿Ya tienes cuenta?",
+    "login": "Inicia Sesión"
   }
 }

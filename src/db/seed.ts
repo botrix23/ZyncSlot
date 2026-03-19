@@ -1,13 +1,16 @@
 import { db } from './index';
-import { tenants, branches, staff, services, products, bookings } from './schema';
+import { tenants, branches, staff, services, products, bookings, users } from './schema';
+import bcrypt from 'bcryptjs';
 
 async function main() {
   console.log('🌱 Inicializando Seed de Datos Falsos en la BD...');
   
   try {
+    const hashedPassword = await bcrypt.hash('admin123', 10);
     // 0. Limpiar BD previa
     console.log('🧹 Limpiando base de datos anterior...');
     await db.delete(bookings);
+    await db.delete(users);
     await db.delete(products);
     await db.delete(services);
     await db.delete(staff);
@@ -18,9 +21,29 @@ async function main() {
     const [tenant] = await db.insert(tenants).values({
       name: 'ZyncSalón Spa',
       timezone: 'America/El_Salvador',
+      status: 'ACTIVE', // Seeded tenant is active
     }).returning();
     
     console.log('✅ Tenant creado:', tenant.name);
+
+    // 1.5 Crear Usuario Admin para el Tenant
+    await db.insert(users).values({
+      tenantId: tenant.id,
+      name: 'Admin Zync',
+      email: 'admin@zyncslot.com',
+      password: hashedPassword,
+      role: 'ADMIN',
+    });
+
+    // 1.6 Crear Super Admin (Sin Tenant)
+    await db.insert(users).values({
+      name: 'Super Zync',
+      email: 'super@zyncslot.com',
+      password: hashedPassword,
+      role: 'SUPER_ADMIN',
+    });
+
+    console.log('✅ Usuarios administrativos creados');
 
     // 2. Crear una Sucursal Principal para este Tenant
     const [branchMain] = await db.insert(branches).values({

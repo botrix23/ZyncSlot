@@ -37,5 +37,27 @@
     "home_address": "Home Address",
     "branch_address": "Branch: {branch}",
     "with_staff": "With {staff}"
+  },
+  "Login": {
+    "title": "Login",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Email",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Password",
+    "submit": "Enter Dashboard",
+    "forgotPassword": "Forgot password?",
+    "recover": "Recover access",
+    "noAccount": "Don't have an account?",
+    "register": "Register now"
+  },
+  "Register": {
+    "title": "Create your Account",
+    "businessName": "Business Name",
+    "adminName": "Your Name",
+    "email": "Email Address",
+    "password": "Password",
+    "submit": "Start now",
+    "hasAccount": "Already have an account?",
+    "login": "Login"
   }
 }

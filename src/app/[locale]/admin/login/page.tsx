@@ -12,13 +12,14 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LangToggle } from '@/components/LangToggle';
+import { useTranslations } from 'next-intl';
 
 import { loginAction } from '@/app/actions/auth';
 
 export default function LoginPage() {
+  const t = useTranslations('Login');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<'ADMIN' | 'SUPER_ADMIN'>('ADMIN');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -30,7 +31,6 @@ export default function LoginPage() {
     const formData = new FormData();
     formData.append("email", email);
     formData.append("password", password);
-    formData.append("role", role);
 
     const locale = window.location.pathname.split('/')[1];
     const result = await loginAction(formData, locale);
@@ -69,46 +69,18 @@ export default function LoginPage() {
 
         {/* Login Card */}
         <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-3xl p-8 shadow-2xl shadow-purple-500/5 backdrop-blur-sm">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Iniciar Sesión</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">{t('title')}</h2>
           
           <form onSubmit={handleLogin} className="space-y-5">
-            {/* Role Tab Selector */}
-            <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-2xl mb-2">
-                <button 
-                    type="button"
-                    onClick={() => setRole('ADMIN')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                        role === 'ADMIN' 
-                        ? 'bg-white dark:bg-zinc-800 text-purple-600 shadow-sm' 
-                        : 'text-slate-500 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-300'
-                    }`}
-                >
-                    <UserCircle className="w-4 h-4" />
-                    ADMIN
-                </button>
-                <button 
-                    type="button"
-                    onClick={() => setRole('SUPER_ADMIN')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                        role === 'SUPER_ADMIN' 
-                        ? 'bg-white dark:bg-zinc-800 text-purple-600 shadow-sm' 
-                        : 'text-slate-500 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-300'
-                    }`}
-                >
-                    <ShieldCheck className="w-4 h-4" />
-                    SUPER ADMIN
-                </button>
-            </div>
-
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">Email</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{t('emailLabel')}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input 
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ej. admin@negocio.com" 
+                  placeholder={t('emailPlaceholder')} 
                   className="w-full bg-slate-100 dark:bg-white/5 border border-transparent focus:border-purple-500/50 rounded-2xl py-4 pl-12 pr-4 text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                   required
                 />
@@ -116,14 +88,14 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">Contraseña</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{t('passwordLabel')}</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input 
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••" 
+                  placeholder={t('passwordPlaceholder')} 
                   className="w-full bg-slate-100 dark:bg-white/5 border border-transparent focus:border-purple-500/50 rounded-2xl py-4 pl-12 pr-4 text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                   required
                 />
@@ -146,7 +118,7 @@ export default function LoginPage() {
                     <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : (
                     <>
-                        Entrar al Panel
+                        {t('submit')}
                         <ChevronRight className="w-5 h-5" />
                     </>
                 )}
@@ -154,9 +126,14 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center mt-8 text-slate-500 dark:text-zinc-500 text-sm">
-          ¿Olvidaste tu contraseña? <button className="text-purple-600 font-bold hover:underline">Recuperar acceso</button>
-        </p>
+        <div className="mt-8 text-center space-y-4">
+            <p className="text-slate-500 dark:text-zinc-500 text-sm">
+            {t('forgotPassword')} <button className="text-purple-600 font-bold hover:underline">{t('recover')}</button>
+            </p>
+            <p className="text-slate-500 dark:text-zinc-500 text-sm">
+            {t('noAccount')} <a href={`/${window.location.pathname.split('/')[1]}/admin/register`} className="text-purple-600 font-bold hover:underline cursor-pointer">{t('register')}</a>
+            </p>
+        </div>
       </div>
 
       <style jsx global>{`

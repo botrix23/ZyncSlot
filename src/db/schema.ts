@@ -17,6 +17,9 @@ export const tenants = pgTable('tenants', {
   name: varchar('name', { length: 255 }).notNull(),
   logoUrl: text('logo_url'), // Nueva columna para personalización de marca
   timezone: varchar('timezone', { length: 100 }).notNull().default('UTC'), 
+  plan: varchar('plan', { length: 50 }).notNull().default('FREE'), // 'FREE' | 'PRO' | 'ENTERPRISE'
+  status: varchar('status', { length: 50 }).notNull().default('TRIAL'), // 'ACTIVE' | 'TRIAL' | 'SUSPENDED'
+  subscriptionExpiresAt: timestamp('subscription_expires_at', { withTimezone: true, mode: 'date' }),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
@@ -112,3 +115,38 @@ export const users = pgTable('users', {
   role: varchar('role', { length: 50 }).notNull().default('ADMIN'), // 'ADMIN' | 'SUPER_ADMIN'
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
+
+export const tenantsRelations = relations(tenants, ({ many }) => ({
+  users: many(users),
+  branches: many(branches),
+}));
+
+export const usersRelations = relations(users, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [users.tenantId],
+    references: [tenants.id],
+  }),
+}));
+export const branchesRelations = relations(branches, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [branches.tenantId], references: [tenants.id] }),
+  staff: many(staff),
+  bookings: many(bookings),
+}));
+
+export const staffRelations = relations(staff, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [staff.tenantId], references: [tenants.id] }),
+  branch: one(branches, { fields: [staff.branchId], references: [branches.id] }),
+  bookings: many(bookings),
+}));
+
+export const servicesRelations = relations(services, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [services.tenantId], references: [tenants.id] }),
+  bookings: many(bookings),
+}));
+
+export const bookingsRelations = relations(bookings, ({ one }) => ({
+  tenant: one(tenants, { fields: [bookings.tenantId], references: [tenants.id] }),
+  branch: one(branches, { fields: [bookings.branchId], references: [branches.id] }),
+  staff: one(staff, { fields: [bookings.staffId], references: [staff.id] }),
+  service: one(services, { fields: [bookings.serviceId], references: [services.id] }),
+}));
