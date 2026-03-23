@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { bookings, services, staff, blocks } from "@/db/schema";
-import { eq, and, gte, lte, or, isNull } from "drizzle-orm";
+import { eq, and, gte, lte, or, isNull, desc } from "drizzle-orm";
 import { addMinutes, format, parseISO, startOfDay, endOfDay, isBefore, isAfter, max, min } from "date-fns";
 
 /**
@@ -117,5 +117,68 @@ export async function createBookingAction(data: {
   } catch (error) {
     console.error("Error creating booking:", error);
     return { success: false, error: "Failed to create booking" };
+  }
+}
+
+/**
+ * Actualiza una reserva existente.
+ */
+export async function updateBookingAction(data: {
+  id: string;
+  tenantId: string;
+  customerName?: string;
+  customerEmail?: string;
+  startTime?: Date;
+  endTime?: Date;
+  status?: string;
+}) {
+  try {
+    await db.update(bookings)
+      .set({
+        customerName: data.customerName,
+        customerEmail: data.customerEmail,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        status: data.status as any,
+      })
+      .where(and(eq(bookings.id, data.id), eq(bookings.tenantId, data.tenantId)));
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating booking:", error);
+    return { success: false, error: "Failed to update booking" };
+  }
+}
+
+/**
+ * Elimina (cancela) una reserva.
+ */
+export async function deleteBookingAction(id: string, tenantId: string) {
+  try {
+    await db.delete(bookings).where(and(eq(bookings.id, id), eq(bookings.tenantId, tenantId)));
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting booking:", error);
+    return { success: false, error: "Failed to delete booking" };
+  }
+}
+
+/**
+ * Obtiene todas las reservas de un tenant con detalles de servicio y sucursal.
+ */
+export async function getBookingsAction(tenantId: string) {
+  try {
+    return await db.query.bookings.findMany({
+      where: eq(bookings.tenantId, tenantId),
+      with: {
+        service: true,
+        branch: true,
+        staff: true
+      },
+      orderBy: [desc(bookings.startTime)]
+    });
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+    return [];
   }
 }

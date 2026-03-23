@@ -30,6 +30,7 @@ export default async function Home({ params }: { params: { locale: string, slug:
           whatsappNumber={tenant.whatsappNumber || ''}
           homeServiceTerms={tenant.homeServiceTerms || ''}
           homeServiceTermsEnabled={tenant.homeServiceTermsEnabled}
+          waMessageTemplate={tenant.waMessageTemplate}
         />
       ) : (
         <div className="min-h-screen bg-black text-white flex items-center justify-center">

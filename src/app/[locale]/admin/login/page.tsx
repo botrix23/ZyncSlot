@@ -28,7 +28,6 @@ export default function LoginPage() {
     const result = await loginAction(formData, locale);
 
     if (result.success) {
-      // Redirigir según el rol devuelto por el server action
       if (result.role === 'SUPER_ADMIN') {
         window.location.href = `/${locale}/admin/super`;
       } else {
@@ -44,20 +43,17 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-black flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background decoration */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
       </div>
 
       <div className="z-10 w-full max-w-md">
-        {/* Toggles */}
         <div className="absolute top-8 right-8 flex gap-2">
           <ThemeToggle />
           <LangToggle />
         </div>
 
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-600 rounded-2xl shadow-xl shadow-purple-500/20 mb-4 animate-bounce-slow">
             <Calendar className="text-white w-8 h-8" />
@@ -66,12 +62,10 @@ export default function LoginPage() {
           <p className="text-slate-500 dark:text-zinc-500 font-medium mt-2">Gestión de Reservas Premium</p>
         </div>
 
-        {/* Card */}
         <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-3xl p-8 shadow-2xl shadow-purple-500/5">
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">{t('title')}</h2>
 
           <form onSubmit={handleLogin} className="space-y-5">
-            {/* Email */}
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{t('emailLabel')}</label>
               <div className="relative">
@@ -87,7 +81,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password con show/hide */}
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{t('passwordLabel')}</label>
               <div className="relative">
@@ -105,14 +98,17 @@ export default function LoginPage() {
                   onClick={() => setShowPass(p => !p)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors"
                   tabIndex={-1}
-                  aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 >
                   {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              <div className="flex justify-end pr-1">
+                <a href={`/${locale}/admin/forgot-password`} className="text-xs font-bold text-purple-600 hover:text-purple-500 transition-colors">
+                  {t('forgotPassword')}
+                </a>
+              </div>
             </div>
 
-            {/* Error message */}
             {error && (
               <div className="flex items-center gap-2 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 text-xs font-bold animate-shake">
                 <AlertCircle className="w-4 h-4 shrink-0" />

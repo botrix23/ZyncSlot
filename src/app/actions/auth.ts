@@ -27,6 +27,18 @@ function generateSlug(name: string): string {
 }
 
 /**
+ * Valida la complejidad de la contraseña según estándares.
+ */
+function validatePasswordComplexity(password: string) {
+  if (password.length < 8) return { success: false, error: "Mínimo 8 caracteres." };
+  if (!/[A-Z]/.test(password)) return { success: false, error: "Debe incluir una Mayúscula." };
+  if (!/[a-z]/.test(password)) return { success: false, error: "Debe incluir una Minúscula." };
+  if (!/[0-9]/.test(password)) return { success: false, error: "Debe incluir un Número." };
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return { success: false, error: "Debe incluir un Carácter Especial (!@#$%)." };
+  return { success: true };
+}
+
+/**
  * Login: valida credenciales y establece cookie de sesión.
  */
 export async function loginAction(formData: FormData, locale: string) {
@@ -90,12 +102,10 @@ export async function registerTenantAction(formData: FormData, locale: string) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
-  // 0. Validaciones de Seguridad
-  if (password.length < 8) {
-    return { success: false, error: "La contraseña debe tener al menos 8 caracteres." };
-  }
-  if (!/(?=.*[a-zA-Z])(?=.*[0-9])/.test(password)) {
-    return { success: false, error: "La contraseña debe incluir al menos una letra y un número." };
+  // 0. Validaciones de Seguridad (Estándares de la Industria)
+  const passwordResult = validatePasswordComplexity(password);
+  if (!passwordResult.success) {
+    return { success: false, error: passwordResult.error };
   }
 
   try {
@@ -151,4 +161,73 @@ export async function registerTenantAction(formData: FormData, locale: string) {
 export async function logoutAction(locale: string) {
   cookies().delete("zync_session");
   redirect(`/${locale}/admin/login`);
+}
+
+/**
+ * Genera un token de recuperación y lo guarda.
+ */
+export async function forgotPasswordAction(email: string) {
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, email)
+    });
+
+    if (!user) {
+      // Por seguridad, no decimos si el email existe o no
+      return { success: true }; 
+    }
+
+    const token = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    const expires = new Date();
+    expires.setHours(expires.getHours() + 1); // 1 hora de validez
+
+    await db.update(users)
+      .set({
+        resetPasswordToken: token,
+        resetPasswordExpiresAt: expires
+      })
+      .where(eq(users.id, user.id));
+
+    // MOCK: En un sistema real aquí se enviaría el email con el link
+    console.log(`[PASS_RESET] Token para ${email}: ${token}`);
+    
+    return { success: true, token }; // Solo devolvemos el token para pruebas (luego quitar)
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: "Error al procesar la solicitud." };
+  }
+}
+
+/**
+ * Resetea la contraseña usando un token.
+ */
+export async function resetPasswordAction(token: string, newPassword: string) {
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.resetPasswordToken, token)
+    });
+
+    if (!user || !user.resetPasswordExpiresAt || user.resetPasswordExpiresAt < new Date()) {
+      return { success: false, error: "Token inválido o expirado." };
+    }
+
+    // Validar complejidad
+    const complexity = validatePasswordComplexity(newPassword);
+    if (!complexity.success) return { success: false, error: complexity.error };
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await db.update(users)
+      .set({
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpiresAt: null
+      })
+      .where(eq(users.id, user.id));
+
+    return { success: true };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: "Error al resetear la contraseña." };
+  }
 }

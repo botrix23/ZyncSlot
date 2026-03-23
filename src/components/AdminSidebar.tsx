@@ -1,7 +1,16 @@
 "use client";
 
 import { 
-  LayoutDashboard, Settings, Calendar, Users, Scissors, Package, LogOut, ShieldAlert, ArrowLeft
+  LayoutDashboard,
+  Settings,
+  Calendar,
+  Users,
+  Scissors,
+  Package,
+  LogOut,
+  ShieldAlert,
+  ArrowLeft,
+  MapPin
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -19,11 +28,12 @@ export function AdminSidebar({ user, locale }: { user: SessionUser | null, local
   
   const baseItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: `/${locale}/admin`, active: pathname === `/${locale}/admin` },
-    { name: 'Citas', icon: Calendar, href: `/${locale}/admin/bookings` },
-    { name: 'Servicios', icon: Scissors, href: `/${locale}/admin/services` },
-    { name: 'Staff / Equipo', icon: Users, href: `/${locale}/admin/staff` },
-    { name: 'Productos', icon: Package, href: `/${locale}/admin/products` },
-    { name: 'Configuración', icon: Settings, href: `/${locale}/admin/settings` },
+    { name: 'Citas', icon: Calendar, href: `/${locale}/admin/bookings`, active: pathname.includes('/bookings') },
+    { name: 'Servicios', icon: Scissors, href: `/${locale}/admin/services`, active: pathname.includes('/services') },
+    { name: 'Staff / Equipo', icon: Users, href: `/${locale}/admin/staff`, active: pathname.includes('/staff') },
+    { name: 'Sucursales', icon: MapPin, href: `/${locale}/admin/branches`, active: pathname.includes('/branches') },
+    { name: 'Productos', icon: Package, href: `/${locale}/admin/products`, active: pathname.includes('/products') },
+    { name: 'Configuración', icon: Settings, href: `/${locale}/admin/settings`, active: pathname.includes('/settings') },
   ];
 
   const handleEndImpersonation = async () => {

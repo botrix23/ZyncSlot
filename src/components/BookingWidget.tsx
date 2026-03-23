@@ -41,7 +41,8 @@ export default function BookingWidget({
   tenantLogo,
   whatsappNumber,
   homeServiceTerms,
-  homeServiceTermsEnabled
+  homeServiceTermsEnabled,
+  waMessageTemplate
 }: { 
   branches: Branch[], 
   services: Service[], 
@@ -51,7 +52,8 @@ export default function BookingWidget({
   tenantLogo?: string,
   whatsappNumber?: string,
   homeServiceTerms?: string,
-  homeServiceTermsEnabled?: boolean
+  homeServiceTermsEnabled?: boolean,
+  waMessageTemplate?: string | null
 }) {
   const t = useTranslations('BookingWidget');
   const [step, setStep] = useState(1);
@@ -172,15 +174,27 @@ export default function BookingWidget({
       if (modality === 'domicilio') {
         // Usar el número WA configurado por el negocio (o fallback genérico)
         const waNumber = whatsappNumber || '50370000000';
-        const whatsappMsg = encodeURIComponent(
-          `¡Hola! Me gustaría confirmar mi cita para *${selectedService.name}*.\n\n` +
-          `📅 *Fecha:* ${selectedDate}\n` +
-          `⏰ *Hora:* ${selectedTime}\n` +
-          `📍 *Modalidad:* Servicio a Domicilio\n` +
-          `👤 *Cliente:* ${guestName}\n` +
-          `📞 *Teléfono:* ${selectedCountry.prefix} ${guestPhone}`
-        );
-        window.open(`https://wa.me/${waNumber}?text=${whatsappMsg}`, '_blank');
+        
+        let message = waMessageTemplate;
+        if (!message) {
+          // Fallback default message (sin rombos ◆)
+          message = "¡Hola! Me gustaría confirmar mi cita para *{servicio}*.\n\n" +
+                    "📅 *Fecha:* {fecha}\n" +
+                    "⏰ *Hora:* {hora}\n" +
+                    "📍 *Modalidad:* Servicio a Domicilio\n" +
+                    "👤 *Cliente:* {cliente}\n" +
+                    "📞 *Teléfono:* {telefono}";
+        }
+
+        // Reemplazar variables
+        const formattedMsg = message
+          .replace(/{servicio}/g, selectedService.name)
+          .replace(/{fecha}/g, selectedDate)
+          .replace(/{hora}/g, selectedTime)
+          .replace(/{cliente}/g, guestName)
+          .replace(/{telefono}/g, `${selectedCountry.prefix} ${guestPhone}`);
+
+        window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(formattedMsg)}`, '_blank');
       }
       setStep(5);
     } else {

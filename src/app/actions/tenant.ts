@@ -14,6 +14,7 @@ export async function updateTenantSettingsAction(data: {
   whatsappNumber?: string;
   homeServiceTerms?: string;
   homeServiceTermsEnabled?: boolean;
+  waMessageTemplate?: string | null;
 }) {
   try {
     const session = await getSession();
@@ -24,6 +25,7 @@ export async function updateTenantSettingsAction(data: {
         whatsappNumber: data.whatsappNumber,
         homeServiceTerms: data.homeServiceTerms,
         homeServiceTermsEnabled: data.homeServiceTermsEnabled,
+        waMessageTemplate: data.waMessageTemplate,
         updatedAt: new Date()
       })
       .where(eq(tenants.id, data.tenantId));

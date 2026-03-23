@@ -11,6 +11,9 @@ export async function createServiceAction(data: {
   durationMinutes: number;
   price: string;
   description?: string;
+  includes?: string[];
+  excludes?: string[];
+  sortOrder?: number;
 }) {
   try {
     const [newService] = await db.insert(services).values({
@@ -19,6 +22,9 @@ export async function createServiceAction(data: {
       durationMinutes: data.durationMinutes,
       price: data.price,
       description: data.description,
+      includes: data.includes || [],
+      excludes: data.excludes || [],
+      sortOrder: data.sortOrder || 0,
     }).returning();
 
     revalidatePath("/[locale]/admin/services", "page");
@@ -37,6 +43,9 @@ export async function updateServiceAction(data: {
   durationMinutes?: number;
   price?: string;
   description?: string;
+  includes?: string[];
+  excludes?: string[];
+  sortOrder?: number;
 }) {
   try {
     await db.update(services)
@@ -45,6 +54,9 @@ export async function updateServiceAction(data: {
         durationMinutes: data.durationMinutes,
         price: data.price,
         description: data.description,
+        includes: data.includes,
+        excludes: data.excludes,
+        sortOrder: data.sortOrder,
         updatedAt: new Date(),
       })
       .where(and(eq(services.id, data.id), eq(services.tenantId, data.tenantId)));
@@ -67,5 +79,21 @@ export async function deleteServiceAction(id: string, tenantId: string) {
   } catch (error) {
     console.error("Error deleting service:", error);
     return { success: false, error: "Failed to delete service" };
+  }
+}
+
+export async function reorderServicesAction(tenantId: string, orderedIds: string[]) {
+  try {
+    for (let i = 0; i < orderedIds.length; i++) {
+      await db.update(services)
+        .set({ sortOrder: i })
+        .where(and(eq(services.id, orderedIds[i]), eq(services.tenantId, tenantId)));
+    }
+    revalidatePath("/[locale]/admin/services", "page");
+    revalidatePath("/[locale]/[slug]", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Error reordering services:", error);
+    return { success: false };
   }
 }
