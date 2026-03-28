@@ -32,6 +32,14 @@ export default async function Home({ params }: { params: { locale: string, slug:
           homeServiceTermsEnabled={tenant.homeServiceTermsEnabled}
           waMessageTemplate={tenant.waMessageTemplate}
           bookingSettings={tenant.bookingSettings}
+          primaryColor={tenant.primaryColor}
+          coverUrl={tenant.coverUrl}
+          forcedTheme={tenant.theme}
+          tenantLogo={tenant.logoUrl || undefined}
+          instagramUrl={tenant.instagramUrl || undefined}
+          facebookUrl={tenant.facebookUrl || undefined}
+          tiktokUrl={tenant.tiktokUrl || undefined}
+          allowsHomeService={tenant.allowsHomeService}
         />
       ) : (
         <div className="min-h-screen bg-black text-white flex items-center justify-center">

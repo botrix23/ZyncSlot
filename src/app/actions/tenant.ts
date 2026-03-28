@@ -44,3 +44,55 @@ export async function updateTenantSettingsAction(data: {
     return { success: false, error: "Failed to update settings" };
   }
 }
+
+export async function updatePortalSettingsAction(data: {
+  tenantId: string;
+  name: string;
+  primaryColor: string;
+  theme: string;
+  coverUrl?: string | null;
+  logoUrl?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  tiktokUrl?: string | null;
+  whatsappNumber?: string | null;
+  homeServiceTerms?: string | null;
+  homeServiceTermsEnabled: boolean;
+  waMessageTemplate?: string | null;
+  allowsHomeService: boolean;
+}) {
+  try {
+    const session = await getSession();
+    await db.update(tenants)
+      .set({
+        name: data.name,
+        primaryColor: data.primaryColor,
+        theme: data.theme,
+        coverUrl: data.coverUrl,
+        logoUrl: data.logoUrl || null,
+        instagramUrl: data.instagramUrl || null,
+        facebookUrl: data.facebookUrl || null,
+        tiktokUrl: data.tiktokUrl || null,
+        whatsappNumber: data.whatsappNumber || null,
+        homeServiceTerms: data.homeServiceTerms || null,
+        homeServiceTermsEnabled: data.homeServiceTermsEnabled,
+        waMessageTemplate: data.waMessageTemplate || null,
+        allowsHomeService: data.allowsHomeService,
+        updatedAt: new Date()
+      })
+      .where(eq(tenants.id, data.tenantId));
+
+    await logAuditEvent({
+      action: 'APPEARANCE_UPDATED',
+      userId: session?.userId,
+      tenantId: data.tenantId,
+      details: { theme: data.theme, primaryColor: data.primaryColor },
+    });
+
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating appearance:", error);
+    return { success: false, error: "Failed to update appearance" };
+  }
+}

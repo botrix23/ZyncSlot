@@ -58,8 +58,8 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-600 rounded-2xl shadow-xl shadow-purple-500/20 mb-4 animate-bounce-slow">
             <Calendar className="text-white w-8 h-8" />
           </div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">ZyncAdmin</h1>
-          <p className="text-slate-500 dark:text-zinc-500 font-medium mt-2">Gestión de Reservas Premium</p>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">ZincSlot</h1>
+          <p className="text-slate-500 dark:text-zinc-500 font-medium mt-2">{t('subtitle')}</p>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-3xl p-8 shadow-2xl shadow-purple-500/5">
@@ -67,7 +67,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{t('emailLabel')}</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 tracking-widest ml-1">{t('emailLabel')}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
@@ -82,7 +82,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{t('passwordLabel')}</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 tracking-widest ml-1">{t('passwordLabel')}</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input

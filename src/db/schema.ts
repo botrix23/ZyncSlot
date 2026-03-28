@@ -24,7 +24,14 @@ export const tenants = pgTable('tenants', {
   subscriptionExpiresAt: timestamp('subscription_expires_at', { withTimezone: true, mode: 'date' }),
   homeServiceTerms: text('home_service_terms'),
   homeServiceTermsEnabled: boolean('home_service_terms_enabled').default(false).notNull(),
+  allowsHomeService: boolean('allows_home_service').default(true).notNull(),
   slug: varchar('slug', { length: 255 }).notNull().unique(),
+  coverUrl: text('cover_url'),
+  primaryColor: varchar('primary_color', { length: 20 }).default('#9333ea').notNull(),
+  theme: varchar('theme', { length: 20 }).default('light').notNull(),
+  instagramUrl: varchar('instagram_url', { length: 255 }),
+  facebookUrl: varchar('facebook_url', { length: 255 }),
+  tiktokUrl: varchar('tiktok_url', { length: 255 }),
   bookingSettings: json('booking_settings').$type<{
     step1Title?: string;
     step2Title?: string;
@@ -100,11 +107,33 @@ export const bookings = pgTable('bookings', {
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
 
-// 7. Blocks (Bloqueos de calendario)
+// 7. StaffAssignments (Asignaciones de staff a sucursales y rotaciones)
+export const staffAssignments = pgTable('staff_assignments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  staffId: uuid('staff_id').notNull().references(() => staff.id, { onDelete: 'cascade' }),
+  branchId: uuid('branch_id').notNull().references(() => branches.id, { onDelete: 'cascade' }),
+  // Rango de fechas (null en startDate significa "siempre")
+  startDate: timestamp('start_date', { withTimezone: true, mode: 'date' }),
+  endDate: timestamp('end_date', { withTimezone: true, mode: 'date' }),
+  startTime: varchar('start_time', { length: 5 }),
+  endTime: varchar('end_time', { length: 5 }),
+  // Días de la semana que aplica esta asignación
+  daysOfWeek: json('days_of_week').$type<string[]>().default(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+});
+
+export const staffAssignmentsRelations = relations(staffAssignments, ({ one }) => ({
+  tenant: one(tenants, { fields: [staffAssignments.tenantId], references: [tenants.id] }),
+  staff: one(staff, { fields: [staffAssignments.staffId], references: [staff.id] }),
+  branch: one(branches, { fields: [staffAssignments.branchId], references: [branches.id] }),
+}));
+
+// 8. Blocks (Bloqueos de calendario)
 export const blocks = pgTable('blocks', {
   id: uuid('id').primaryKey().defaultRandom(),
   tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
-  branchId: uuid('branch_id').notNull().references(() => branches.id, { onDelete: 'cascade' }),
+  branchId: uuid('branch_id').references(() => branches.id, { onDelete: 'cascade' }),
   // Si staffId es null, el bloqueo aplica a toda la sucursal
   staffId: uuid('staff_id').references(() => staff.id, { onDelete: 'cascade' }),
   reason: varchar('reason', { length: 255 }),
@@ -168,6 +197,7 @@ export const staffRelations = relations(staff, ({ one, many }) => ({
   tenant: one(tenants, { fields: [staff.tenantId], references: [tenants.id] }),
   branch: one(branches, { fields: [staff.branchId], references: [branches.id] }),
   bookings: many(bookings),
+  assignments: many(staffAssignments),
 }));
 
 export const servicesRelations = relations(services, ({ one, many }) => ({

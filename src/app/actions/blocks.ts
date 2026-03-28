@@ -23,7 +23,9 @@ export async function createBlockAction(data: {
       endTime: data.endTime,
     }).returning();
 
-    revalidatePath("/admin/branches");
+    revalidatePath("/[locale]/admin/(dashboard)/absences", "page");
+    revalidatePath("/[locale]/admin/(dashboard)/branches", "page");
+    revalidatePath("/[locale]/admin/(dashboard)/bookings", "page");
     return { success: true, block: newBlock };
   } catch (error) {
     console.error("Error creating block:", error);
@@ -54,7 +56,9 @@ export async function deleteBlockAction(id: string, tenantId: string) {
         eq(blocks.tenantId, tenantId)
       )
     );
-    revalidatePath("/admin/branches");
+    revalidatePath("/[locale]/admin/(dashboard)/absences", "page");
+    revalidatePath("/[locale]/admin/(dashboard)/branches", "page");
+    revalidatePath("/[locale]/admin/(dashboard)/bookings", "page");
     return { success: true };
   } catch (error) {
     console.error("Error deleting block:", error);

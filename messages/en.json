@@ -1,4 +1,27 @@
 {
+  "Auth": {
+    "resetPassword": {
+      "title": "Create your new password",
+      "subtitle": "Make sure it's secure and hard to guess.",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "requirements": "Security requirements",
+      "rules": {
+        "length": "Min 8 chars",
+        "upper": "One uppercase",
+        "lower": "One lowercase",
+        "number": "One number",
+        "special": "Special char",
+        "match": "Match"
+      },
+      "submit": "Reset password",
+      "success": "Password reset successfully!",
+      "redirecting": "Redirecting to login...",
+      "invalidToken": "Invalid link",
+      "invalidTokenDesc": "This recovery link is invalid or has already expired.",
+      "requestNew": "Request new link"
+    }
+  },
   "BookingWidget": {
     "hero_subtitle": "Book your appointment instantly. Let's just complete the key details.",
     "no_slots_available": "No slots available for this selection.",
@@ -9,8 +32,9 @@
     "home_service": "Home Service",
     "home_service_desc": "Finish scheduling via WhatsApp (Requires 7 days notice)",
     "title_service": "Step 2: Choose your Service",
-    "includes": "Includes:",
-    "excludes": "Does not include:",
+    "select_multiple_services": "You can select one or more services",
+    "includes": "Included:",
+    "excludes": "Not included:",
     "title_specialist": "Step 3: Specialist & Date",
     "who_attends": "Who will attend you?",
     "anyone": "Anyone",
@@ -23,6 +47,7 @@
     "title_data": "Step 4: Your Details",
     "full_name": "Full Name",
     "email": "Email Address *",
+    "email_placeholder": "Email",
     "phone": "Phone *",
     "no_account": "",
     "finish_booking": "FINISH BOOKING",
@@ -47,6 +72,7 @@
   },
   "Login": {
     "title": "Login",
+    "subtitle": "Premium booking management",
     "emailLabel": "Email",
     "emailPlaceholder": "Email",
     "passwordLabel": "Password",
@@ -57,14 +83,302 @@
     "noAccount": "Don't have an account?",
     "register": "Register now"
   },
+  "ForgotPassword": {
+    "title": "Forgot your password?",
+    "subtitle": "Don't worry, we'll send you instructions to recover it.",
+    "emailLabel": "Email address",
+    "submit": "Send instructions",
+    "backToLogin": "Back to login",
+    "successMessage": "If the email is registered, you will receive a link to reset your password in a few minutes.",
+    "errorMessage": "An error occurred. Please try again."
+  },
   "Register": {
     "title": "Create your Account",
     "businessName": "Business Name",
+    "businessNamePlaceholder": "e.g. Imperial Salon",
     "adminName": "Your Name",
+    "adminNamePlaceholder": "Your name",
     "email": "Email Address",
     "password": "Password",
     "submit": "Start now",
     "hasAccount": "Already have an account?",
     "login": "Login"
+  },
+  "Dashboard": {
+    "technical": {
+      "restrictedArea": "Restricted area",
+      "title": "System configuration",
+      "subtitle": "Technical management and global infrastructure tools.",
+      "safeMode": "Safe mode active",
+      "metrics": {
+        "dbStatus": "Database status",
+        "cpuUsage": "CPU usage",
+        "ram": "RAM memory",
+        "latency": "Average latency"
+      },
+      "logsTitle": "Infrastructure logs",
+      "globalControls": "Global controls",
+      "maintenanceMode": "Maintenance mode",
+      "maintenanceDesc": "Block client access",
+      "openRegistrations": "Open registrations",
+      "registrationsDesc": "Allow new businesses",
+      "save": "Save global changes",
+      "trafficSummary": "Traffic summary",
+      "systemStable": "Current system load stable. No actions required.",
+      "uptime": "30 days uptime"
+    },
+    "branches": {
+      "title": "Branches",
+      "subtitle": "Manage the physical locations of your business.",
+      "new": "New branch",
+      "searchPlaceholder": "Search by name or address...",
+      "noBranches": "No branches yet",
+      "noBranchesDesc": "Add your first business location to start receiving appointments.",
+      "nameLabel": "Branch name",
+      "addressLabel": "Address",
+      "phoneLabel": "Phone",
+      "hoursLabel": "Business hours",
+      "save": "Save changes",
+      "create": "Create branch",
+      "blocks": "Blocks",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Are you sure you want to delete the branch \"{name}\"?",
+      "errorSave": "Error saving branch",
+      "errorDelete": "Error deleting branch"
+    },
+    "services": {
+      "title": "Services",
+      "subtitle": "Manage your service catalog, inclusions and order of appearance.",
+      "new": "New service",
+      "searchPlaceholder": "Search by name...",
+      "table": {
+        "order": "Order",
+        "service": "Service",
+        "inclusions": "Inclusions / Exclusions",
+        "price": "Price",
+        "actions": "Actions"
+      },
+      "form": {
+        "nameLabel": "Service name",
+        "durationLabel": "Duration (min)",
+        "priceLabel": "Price ($)",
+        "descriptionLabel": "Description (optional)",
+        "descriptionPlaceholder": "Describe what the service includes...",
+        "includesLabel": "Inclusions",
+        "newIncludePlaceholder": "New inclusion...",
+        "excludesLabel": "Exclusions",
+        "newExcludePlaceholder": "New exclusion...",
+        "save": "Save changes",
+        "create": "Create service",
+        "edit": "Edit service"
+      },
+      "confirmDelete": "Are you sure you want to delete this service?",
+      "errorSave": "Error saving service",
+      "errorDelete": "Error deleting service"
+    },
+    "bookings": {
+      "title": "Appointments / bookings",
+      "subtitle": "Schedule control and client tracking.",
+      "viewList": "List",
+      "viewCalendar": "Calendar",
+      "prevDay": "Previous",
+      "nextDay": "Next",
+      "today": "Today",
+      "filter": "Filter",
+      "new": "Schedule appointment",
+      "tabs": {
+        "Todas": "All",
+        "Pendientes": "Pending",
+        "Confirmadas": "Confirmed",
+        "Finalizadas": "Finished",
+        "Canceladas": "Cancelled"
+      },
+      "searchPlaceholder": "Search client...",
+      "noBookings": "No appointments found.",
+      "status": {
+        "CONFIRMED": "Confirmed",
+        "PENDING": "Pending",
+        "FINALIZADA": "Finished",
+        "CANCELLED": "Cancelled"
+      },
+      "table": {
+        "service": "Service",
+        "dateTime": "Date and time",
+        "staff": "Served by",
+        "branch": "Branch"
+      },
+      "form": {
+        "titleNew": "New appointment",
+        "titleEdit": "Edit appointment",
+        "customerName": "Customer name",
+        "customerEmail": "Email",
+        "status": "Appointment status",
+        "customerPhone": "Phone",
+        "service": "Service",
+        "staff": "Staff",
+        "duration": "Duration (min)",
+        "date": "Date",
+        "time": "Time",
+        "save": "Save changes",
+        "create": "Create appointment"
+      },
+      "confirmCancel": "Are you sure you want to cancel this appointment?",
+      "errorSave": "Error saving appointment",
+      "errorDelete": "Error deleting appointment"
+    },
+    "staff": {
+      "title": "Staff / team",
+      "subtitle": "Manage the professionals who provide services in your business.",
+      "new": "Add member",
+      "searchPlaceholder": "Search by name...",
+      "verified": "Verified",
+      "role": "Professional",
+      "noEmail": "No email",
+      "form": {
+        "titleNew": "Add member",
+        "titleEdit": "Edit member",
+        "nameLabel": "Full name",
+        "namePlaceholder": "e.g. Example Person",
+        "emailLabel": "Email address",
+        "branchLabel": "Primary branch",
+        "branchPlaceholder": "Select a branch",
+        "save": "Save changes",
+        "create": "Add member",
+        "rotationTitle": "Staff Management and Rotations",
+        "assignmentsLabel": "Assignments and Rotations (Max 3)",
+        "addAssignment": "Add Period",
+        "branchSelect": "Branch",
+        "from": "From (Optional)",
+        "to": "To (Optional)",
+        "daysOfWeek": "Days of the week"
+      },
+      "confirmDelete": "Are you sure you want to delete \"{name}\"?",
+      "errorSave": "Error saving team member",
+      "errorDelete": "Error deleting team member"
+    },
+    "absences": {
+      "title": "Absences & Blocks",
+      "subtitle": "Manage vacations, medical leaves, and temporal agenda blocks.",
+      "new": "Register absence",
+      "searchPlaceholder": "Search staff...",
+      "noBlocks": "No upcoming absences registered.",
+      "allStaff": "Applies to entire branch",
+      "form": {
+        "titleNew": "Register new absence",
+        "titleEdit": "Edit absence",
+        "branchSelect": "Affected branch",
+        "staffSelect": "Team member",
+        "staffAll": "Everyone (general block)",
+        "reasonLabel": "Reason",
+        "reasonPlaceholder": "e.g. Annual vacations",
+        "startDate": "Start date",
+        "startTime": "Start time",
+        "endDate": "End date",
+        "endTime": "End time",
+        "save": "Save absence",
+        "create": "Register absence"
+      },
+      "confirmDelete": "Are you sure you want to delete this absence record?",
+      "errorSave": "Error saving absence record",
+      "errorDelete": "Error deleting absence"
+    },
+    "clients": {
+      "title": "Clients",
+      "subtitle": "History and metrics of your most frequent customers.",
+      "searchPlaceholder": "Search client by name or email...",
+      "noClients": "No clients registered yet.",
+      "table": {
+        "client": "Client",
+        "contact": "Contact",
+        "services": "Services consumed",
+        "totalAppointments": "Total Bookings",
+        "totalSpent": "Total Spent ({currency})",
+        "lastVisit": "Last Visit"
+      }
+    },
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "bookings": "Bookings",
+      "services": "Services",
+      "staff": "Staff / team",
+      "absences": "Absences",
+      "clients": "Clients",
+      "branches": "Branches",
+      "products": "Products",
+      "appearance": "My Web Portal",
+      "supportMode": "Support mode",
+      "viewing": "Viewing",
+      "as": "As",
+      "exitSupport": "Back to super admin",
+      "exiting": "Exiting...",
+      "logout": "Logout",
+      "business": "Business"
+    },
+    "portal": {
+      "title": "My Web Portal",
+      "subtitle": "Configure the Identity and Rules of your public booking site.",
+      "successSave": "Settings saved successfully.",
+      "errorSave": "Error saving settings.",
+      "errorLogo": "Please select an image.",
+      "logoLoaded": "Logo loaded. Don't forget to save changes.",
+      "sections": {
+        "identity": "Identity & Social",
+        "homeService": "Home Service",
+        "whatsapp": "WhatsApp Messaging"
+      },
+      "form": {
+        "businessName": "Business Name",
+        "logoUrl": "Logo URL",
+        "logoLabel": "Business Logo",
+        "clean": "Clean",
+        "changeImage": "Change Image",
+        "uploadLogo": "Click to upload logo",
+        "uploadHint": "Recommended: 512x512px (PNG/JPG)",
+        "phone": "Phone",
+        "terms": "Terms and Conditions",
+        "termsRequired": "Required when booking at home",
+        "termsContent": "Terms Content",
+        "termsHint": "These terms will be shown to the customer when they choose home service.",
+        "termsPlaceholder": "e.g. The cost of home service varies by zone. Payment is made at the end of the service...",
+        "waTemplate": "Message Template (Home)",
+        "waTemplatePlaceholder": "Example: Hi! I confirm my appointment for {service} on {fecha} at {hora}. My name is {cliente} and phone is {telefono}.",
+        "variablesGuide": "Variables guide",
+        "quickEmojis": "Quick emojis:",
+        "save": "Save changes"
+      }
+    },
+    "header": {
+      "searchPlaceholder": "Search appointments, clients...",
+      "superAdmin": "Super admin",
+      "admin": "Admin"
+    },
+    "home": {
+      "title": "Admin dashboard",
+      "welcome": "Welcome back. Here is a summary of your business today.",
+      "reports": "Reports",
+      "newBooking": "New appointment",
+      "stats": {
+        "todayBookings": "Today's bookings",
+        "totalClients": "Total clients",
+        "estimatedRevenue": "Estimated revenue",
+        "occupancy": "Occupancy"
+      },
+      "recentBookings": {
+        "title": "Recent appointments",
+        "viewAll": "View all",
+        "noBookings": "No recent appointments.",
+        "statusConfirmed": "Confirmed"
+      },
+      "quickSettings": {
+        "title": "Quick settings",
+        "subtitle": "Customize your booking widget and opening hours instantly.",
+        "editServices": "Edit services",
+        "branchHours": "Branch hours",
+        "customizeBrand": "Customize brand",
+        "premiumExpire": "Your Premium account expires in {days} days",
+        "renewNow": "Renew now"
+      }
+    }
   }
 }

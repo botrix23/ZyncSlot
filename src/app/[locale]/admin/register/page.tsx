@@ -92,7 +92,7 @@ export default function RegisterPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-600 rounded-2xl shadow-xl shadow-purple-500/20 mb-4">
             <Calendar className="text-white w-8 h-8" />
           </div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">ZyncSlot</h1>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">ZincSlot</h1>
           <p className="text-slate-500 dark:text-zinc-500 font-medium mt-2">La nueva era de las reservas</p>
         </div>
 
@@ -103,28 +103,28 @@ export default function RegisterPage() {
             {/* Nombre del negocio + Nombre del admin */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{t('businessName')}</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 tracking-widest ml-1">{t('businessName')}</label>
                 <div className="relative">
                   <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
                     value={businessName}
                     onChange={e => setBusinessName(e.target.value)}
-                    placeholder="ej. Salon Imperial"
+                    placeholder={t('businessNamePlaceholder')}
                     className="w-full bg-slate-100 dark:bg-white/5 border border-transparent focus:border-purple-500/50 rounded-2xl py-3 pl-11 pr-4 text-slate-900 dark:text-white outline-none transition-all text-sm"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{t('adminName')}</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 tracking-widest ml-1">{t('adminName')}</label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
                     value={adminName}
                     onChange={e => setAdminName(e.target.value)}
-                    placeholder="Tu nombre"
+                    placeholder={t('adminNamePlaceholder')}
                     className="w-full bg-slate-100 dark:bg-white/5 border border-transparent focus:border-purple-500/50 rounded-2xl py-3 pl-11 pr-4 text-slate-900 dark:text-white outline-none transition-all text-sm"
                     required
                   />
@@ -134,14 +134,14 @@ export default function RegisterPage() {
 
             {/* Email */}
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{t('email')}</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 tracking-widest ml-1">{t('email')}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="admin@negocio.com"
+                  placeholder="Email"
                   className="w-full bg-slate-100 dark:bg-white/5 border border-transparent focus:border-purple-500/50 rounded-2xl py-3 pl-11 pr-4 text-slate-900 dark:text-white outline-none transition-all text-sm"
                   required
                 />
@@ -150,7 +150,7 @@ export default function RegisterPage() {
 
             {/* Contraseña con show/hide + strength meter */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{t('password')}</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-zinc-500 tracking-widest ml-1">{t('password')}</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input

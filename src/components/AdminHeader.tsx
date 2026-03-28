@@ -10,15 +10,17 @@ import {
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LangToggle } from '@/components/LangToggle';
 import { SessionUser } from '@/lib/auth-session';
+import { useTranslations } from "next-intl";
 
 export function AdminHeader({ user }: { user: SessionUser | null }) {
+  const t = useTranslations('Dashboard.header');
   return (
     <header className="h-20 border-b border-slate-200 dark:border-white/5 px-8 flex items-center justify-between bg-white/50 dark:bg-black/50 backdrop-blur-xl shrink-0 z-40 sticky top-0">
       <div className="flex items-center gap-4 bg-slate-100 dark:bg-white/5 px-4 py-2 rounded-xl border border-transparent focus-within:border-purple-500/50 transition-all w-96">
         <Search className="w-4 h-4 text-slate-400" />
         <input 
           type="text" 
-          placeholder="Buscar citas, clientes..." 
+          placeholder={t('searchPlaceholder')} 
           className="bg-transparent border-none focus:outline-none text-sm w-full placeholder:text-slate-500 dark:placeholder:text-zinc-500"
         />
       </div>
@@ -43,14 +45,14 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
             </p>
             <div className="flex items-center justify-end gap-1 mt-1">
                 {user?.role === 'SUPER_ADMIN' ? (
-                    <span className="text-[9px] font-black bg-purple-600 text-white px-1.5 py-0.5 rounded flex items-center gap-1 uppercase tracking-tighter shadow-lg shadow-purple-500/20">
+                    <span className="text-[9px] font-black bg-purple-600 text-white px-1.5 py-0.5 rounded flex items-center gap-1 tracking-tighter shadow-lg shadow-purple-500/20">
                         <ShieldCheck className="w-2.5 h-2.5" />
-                        Super Admin
+                        {t('superAdmin')}
                     </span>
                 ) : (
-                    <span className="text-[9px] font-bold bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 px-1.5 py-0.5 rounded flex items-center gap-1 uppercase tracking-tighter">
+                    <span className="text-[9px] font-bold bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 px-1.5 py-0.5 rounded flex items-center gap-1 tracking-tighter">
                         <UserCircle className="w-2.5 h-2.5" />
-                        Admin
+                        {t('admin')}
                     </span>
                 )}
             </div>

@@ -2,6 +2,9 @@ import { getSession } from "@/lib/auth-session";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { AdminHeader } from "@/components/AdminHeader";
 import { redirect } from "next/navigation";
+import { db } from "@/db";
+import { tenants } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export default async function AdminLayout({
   children,
@@ -13,18 +16,23 @@ export default async function AdminLayout({
   const session = await getSession();
   const locale = params.locale || 'es';
 
-  // Si no hay sesión y no estamos en login, redirigir
-  // Nota: Next.js layouts para rutas hijas también se ejecutan. 
-  // No redirigimos aquí si la ruta es /login para evitar bucles infinitos.
-  // Pero el layout general de admin envuelve a login.
-  
-  // SOLUCIÓN: El layout detecta si es login para no aplicar sidebar, pero permitimos el paso.
-  // En una app real, usaríamos Middleware para proteger rutas.
+  // Obtener nombre de la empresa para el sidebar
+  let tenantName = "";
+  if (session) {
+    if (session.role === 'SUPER_ADMIN' && session.impersonatedTenantName) {
+      tenantName = session.impersonatedTenantName;
+    } else if (session.tenantId) {
+      const tenant = await db.query.tenants.findFirst({
+        where: eq(tenants.id, session.tenantId)
+      });
+      tenantName = tenant?.name || "";
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white flex overflow-hidden">
       {/* Sidebar - Solo si hay sesión para evitar flash */}
-      <AdminSidebar user={session} locale={locale} />
+      <AdminSidebar user={session} locale={locale} tenantName={tenantName} />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-h-screen max-h-screen overflow-hidden">

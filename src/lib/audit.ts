@@ -21,6 +21,7 @@ export type AuditAction =
   | 'IMPERSONATION_STARTED'   // Super admin accede como admin de un tenant
   | 'IMPERSONATION_ENDED'
   | 'SETTINGS_UPDATED'
+  | 'APPEARANCE_UPDATED'
   | 'SERVICE_CREATED'
   | 'SERVICE_UPDATED'
   | 'SERVICE_DELETED'

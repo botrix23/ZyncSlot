@@ -5,12 +5,15 @@ import {
   Settings,
   Calendar,
   Users,
-  Scissors,
+  Sparkles,
   Package,
   LogOut,
   ShieldAlert,
   ArrowLeft,
-  MapPin
+  MapPin,
+  CalendarOff,
+  Contact,
+  Palette
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -18,22 +21,26 @@ import { logoutAction } from '@/app/actions/auth';
 import { endImpersonationAction } from '@/app/actions/superAdmin';
 import { SessionUser } from '@/lib/auth-session';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
-export function AdminSidebar({ user, locale }: { user: SessionUser | null, locale: string }) {
+export function AdminSidebar({ user, locale, tenantName }: { user: SessionUser | null, locale: string, tenantName?: string }) {
   const pathname = usePathname();
   const router = useRouter();
+  const t = useTranslations('Dashboard.sidebar');
   const [endingImpersonation, setEndingImpersonation] = useState(false);
 
   const isImpersonating = user?.role === 'SUPER_ADMIN' && !!user?.impersonatedTenantId;
   
   const baseItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, href: `/${locale}/admin`, active: pathname === `/${locale}/admin` },
-    { name: 'Citas', icon: Calendar, href: `/${locale}/admin/bookings`, active: pathname.includes('/bookings') },
-    { name: 'Servicios', icon: Scissors, href: `/${locale}/admin/services`, active: pathname.includes('/services') },
-    { name: 'Staff / Equipo', icon: Users, href: `/${locale}/admin/staff`, active: pathname.includes('/staff') },
-    { name: 'Sucursales', icon: MapPin, href: `/${locale}/admin/branches`, active: pathname.includes('/branches') },
-    { name: 'Productos', icon: Package, href: `/${locale}/admin/products`, active: pathname.includes('/products') },
-    { name: 'Configuración', icon: Settings, href: `/${locale}/admin/settings`, active: pathname.includes('/settings') },
+    { name: t('dashboard'), icon: LayoutDashboard, href: `/${locale}/admin`, active: pathname === `/${locale}/admin` },
+    { name: t('bookings'), icon: Calendar, href: `/${locale}/admin/bookings`, active: pathname.includes('/bookings') },
+    { name: t('services'), icon: Sparkles, href: `/${locale}/admin/services`, active: pathname.includes('/services') },
+    { name: t('staff'), icon: Users, href: `/${locale}/admin/staff`, active: pathname.includes('/staff') },
+    { name: t('absences'), icon: CalendarOff, href: `/${locale}/admin/absences`, active: pathname.includes('/absences') },
+    { name: t('clients'), icon: Contact, href: `/${locale}/admin/clients`, active: pathname.includes('/clients') },
+    { name: t('branches'), icon: MapPin, href: `/${locale}/admin/branches`, active: pathname.includes('/branches') },
+    { name: t('products'), icon: Package, href: `/${locale}/admin/products`, active: pathname.includes('/products') },
+    { name: t('appearance'), icon: Palette, href: `/${locale}/admin/appearance`, active: pathname.includes('/appearance') },
   ];
 
   const handleEndImpersonation = async () => {
@@ -52,11 +59,11 @@ export function AdminSidebar({ user, locale }: { user: SessionUser | null, local
           <div className="flex items-start gap-2 mb-2">
             <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
             <div className="min-w-0">
-              <p className="text-xs font-black text-amber-500 uppercase tracking-wide">Modo Soporte</p>
+              <p className="text-xs font-black text-amber-500 uppercase tracking-wide">{t('supportMode')}</p>
               <p className="text-xs text-amber-400/80 truncate font-medium">
-                Viendo: <strong className="text-amber-300">{user.impersonatedTenantName}</strong>
+                {t('viewing')}: <strong className="text-amber-300">{user.impersonatedTenantName}</strong>
               </p>
-              <p className="text-xs text-amber-400/60 truncate">Como: {user.email}</p>
+              <p className="text-xs text-amber-400/60 truncate">{t('as')}: {user.email}</p>
             </div>
           </div>
           <button
@@ -65,7 +72,7 @@ export function AdminSidebar({ user, locale }: { user: SessionUser | null, local
             className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold rounded-xl transition-all disabled:opacity-60"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            {endingImpersonation ? 'Saliendo...' : 'Regresar al Super Admin'}
+            {endingImpersonation ? t('exiting') : t('exitSupport')}
           </button>
         </div>
       )}
@@ -75,7 +82,7 @@ export function AdminSidebar({ user, locale }: { user: SessionUser | null, local
           <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
             <Calendar className="text-white w-6 h-6" />
           </div>
-          <span className="text-xl font-bold tracking-tight">ZyncAdmin</span>
+          <span className="text-xl font-bold tracking-tight">ZincSlot</span>
         </div>
       </div>
 
@@ -98,14 +105,22 @@ export function AdminSidebar({ user, locale }: { user: SessionUser | null, local
         ))}
       </nav>
 
-      <div className="p-6 border-t border-slate-200 dark:border-white/5">
+      <div className="p-6 border-t border-slate-200 dark:border-white/5 space-y-4">
+        {/* Company Name Badge */}
+        {tenantName && (
+          <div className="px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1">{t('business') || 'EMPRESA'}</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{tenantName}</p>
+          </div>
+        )}
+
         {!isImpersonating && (
           <button 
             onClick={() => logoutAction(locale)}
-            className="flex items-center gap-3 px-4 py-3 w-full text-rose-500 font-semibold hover:bg-rose-500/5 rounded-2xl transition-all"
+            className="flex items-center gap-3 px-4 py-3 w-full text-rose-500 font-semibold hover:bg-rose-500/5 rounded-2xl transition-all group"
           >
-            <LogOut className="w-5 h-5" />
-            Salir
+            <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            {t('logout')}
           </button>
         )}
       </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { db } from '@/db';
 import { getSession, getEffectiveTenantId } from '@/lib/auth-session';
 import { redirect } from 'next/navigation';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, lt } from 'drizzle-orm';
 import { bookings as bookingsTable, services, staff } from '@/db/schema';
 import BookingsClient from './BookingsClient';
 
@@ -16,12 +16,24 @@ export default async function BookingsPage() {
     redirect('/admin/login');
   }
 
+  // 1. Auto-finalizar citas pasadas (SOLO las que están CONFIRMED)
+  await db.update(bookingsTable)
+    .set({ status: 'FINALIZADA' })
+    .where(
+      and(
+        eq(bookingsTable.tenantId, tenantId),
+        eq(bookingsTable.status, 'CONFIRMED'),
+        lt(bookingsTable.endTime, new Date())
+      )
+    );
+
   const [dbBookings, dbServices, dbStaff] = await Promise.all([
     db.query.bookings.findMany({
       where: eq(bookingsTable.tenantId, tenantId),
       with: {
-          service: true,
-          staff: true
+        service: true,
+        staff: true,
+        branch: true
       },
       orderBy: [desc(bookingsTable.startTime)]
     }),

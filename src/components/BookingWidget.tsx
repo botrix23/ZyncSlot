@@ -5,31 +5,32 @@ import { useTranslations } from "next-intl";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
 import { getAvailableSlots, createBookingAction } from "@/app/actions/booking";
-import { Calendar, Clock, ChevronRight, Check, X, ArrowLeft, User, MapPin, Truck, Mail, Phone, UserCircle, Loader2 } from "lucide-react";
+import { Calendar, Clock, ChevronRight, Check, X, ArrowLeft, User, MapPin, Truck, Mail, Phone, UserCircle, Loader2, CheckCircle2, XCircle, Instagram, Facebook, Music } from "lucide-react";
 
 type Branch = { id: string; name: string };
 type Service = { id: string; name: string; durationMinutes: number; price: string; includes: string[]; excludes: string[] };
 type Staff = { id: string; name: string };
 
 const COUNTRIES = [
-  { code: 'SV', name: 'El Salvador', prefix: '+503', flag: '🇸🇻' },
-  { code: 'US', name: 'USA', prefix: '+1', flag: '🇺🇸' },
-  { code: 'GT', name: 'Guatemala', prefix: '+502', flag: '🇬🇹' },
-  { code: 'HN', name: 'Honduras', prefix: '+504', flag: '🇭🇳' },
-  { code: 'CR', name: 'Costa Rica', prefix: '+506', flag: '🇨🇷' },
-  { code: 'MX', name: 'México', prefix: '+52', flag: '🇲🇽' },
-  { code: 'ES', name: 'España', prefix: '+34', flag: '🇪🇸' },
+  { code: 'SV', name: 'El Salvador', prefix: '+503', flag: '🇸🇻', minLen: 8, maxLen: 8 },
+  { code: 'US', name: 'USA', prefix: '+1', flag: '🇺🇸', minLen: 10, maxLen: 10 },
+  { code: 'GT', name: 'Guatemala', prefix: '+502', flag: '🇬🇹', minLen: 8, maxLen: 8 },
+  { code: 'HN', name: 'Honduras', prefix: '+504', flag: '🇭🇳', minLen: 8, maxLen: 8 },
+  { code: 'CR', name: 'Costa Rica', prefix: '+506', flag: '🇨🇷', minLen: 8, maxLen: 8 },
+  { code: 'MX', name: 'México', prefix: '+52', flag: '🇲🇽', minLen: 10, maxLen: 10 },
+  { code: 'ES', name: 'España', prefix: '+34', flag: '🇪🇸', minLen: 9, maxLen: 9 },
 ];
 
 const AVAILABLE_TIMES = [
+  { time: "09:00 AM", available: true },
   { time: "10:00 AM", available: true },
-  { time: "10:30 AM", available: true },
   { time: "11:00 AM", available: false },
-  { time: "11:30 AM", available: true },
-  { time: "01:00 PM", available: false },
-  { time: "01:30 PM", available: true },
-  { time: "02:00 PM", available: true },
-  { time: "04:30 PM", available: true }
+  { time: "12:00 PM", available: true },
+  { time: "01:00 PM", available: true },
+  { time: "02:00 PM", available: false },
+  { time: "03:00 PM", available: true },
+  { time: "04:00 PM", available: true },
+  { time: "05:00 PM", available: true }
 ];
 
 export default function BookingWidget({ 
@@ -43,7 +44,14 @@ export default function BookingWidget({
   homeServiceTerms,
   homeServiceTermsEnabled,
   waMessageTemplate,
-  bookingSettings
+  bookingSettings,
+  primaryColor,
+  coverUrl,
+  forcedTheme,
+  instagramUrl,
+  facebookUrl,
+  tiktokUrl,
+  allowsHomeService
 }: { 
   branches: Branch[], 
   services: Service[], 
@@ -61,7 +69,14 @@ export default function BookingWidget({
     step3Title?: string;
     step4Title?: string;
     showSummaryOnLeft?: boolean;
-  }
+  },
+  primaryColor?: string;
+  coverUrl?: string | null;
+  forcedTheme?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  tiktokUrl?: string;
+  allowsHomeService?: boolean;
 }) {
   const t = useTranslations('BookingWidget');
   const [step, setStep] = useState(1);
@@ -96,6 +111,14 @@ export default function BookingWidget({
     else if (tz.includes('Europe/Madrid')) setSelectedCountry(COUNTRIES.find(c => c.code === 'ES') || COUNTRIES[0]);
   }, []);
 
+  useEffect(() => {
+     if (forcedTheme) {
+        document.documentElement.classList.remove('light', 'dark');
+        document.documentElement.classList.add(forcedTheme === 'dark' ? 'dark' : 'light');
+        document.documentElement.style.colorScheme = forcedTheme === 'dark' ? 'dark' : 'light';
+     }
+  }, [forcedTheme]);
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   // Botón habilitado cuando: nombre + email + teléfono válidos
   // Y si es domicilio Y los términos están activados: también debe aceptarlos
@@ -105,7 +128,7 @@ export default function BookingWidget({
   const isFormValid =
     guestName.trim() !== '' &&
     emailRegex.test(guestEmail) &&
-    guestPhone.length >= 7 &&
+    guestPhone.length >= (selectedCountry as any).minLen &&
     (modality !== 'domicilio' || !homeServiceTermsEnabled || agreedToTerms);
 
   // Cargar horarios reales cuando cambien los filtros
@@ -123,10 +146,11 @@ export default function BookingWidget({
           );
           console.log("Found slots:", times.length, "for date:", selectedDate);
           
-          // Convert HH:mm to 12h format for UI consistency
+          // Keep both raw (24h) and formatted (12h) for logic and UI
           const formattedTimes = times.map((t: {time: string, available: boolean}) => ({
             ...t,
-            time: formatTo12h(t.time)
+            rawTime: t.time,
+            displayTime: formatTo12h(t.time)
           }));
 
           setAvailableTimes(formattedTimes);
@@ -277,13 +301,47 @@ export default function BookingWidget({
     return dt.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
   };
 
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-start md:justify-center p-4 sm:p-6 md:p-8 lg:p-12 relative overflow-x-hidden bg-slate-50 dark:bg-black/95">
-      {/* Decorative ambient background blobs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
+  const brand = primaryColor || '#9333ea';
 
-      <div className="z-10 w-full max-w-7xl flex flex-col lg:flex-row gap-8 lg:gap-12 items-start justify-center">
+  return (
+    <main id={`widget-${tenantId}`} className="flex min-h-screen flex-col items-center justify-start md:justify-center relative overflow-x-hidden bg-slate-50 dark:bg-black/95">
+      <style dangerouslySetInnerHTML={{__html: `
+         #widget-${tenantId} .bg-purple-600 { background-color: ${brand} !important; }
+         #widget-${tenantId} .hover\\:bg-purple-500:hover { background-color: ${brand} !important; filter: brightness(1.2); }
+         #widget-${tenantId} .text-purple-600 { color: ${brand} !important; }
+         #widget-${tenantId} .text-purple-500 { color: ${brand} !important; }
+         #widget-${tenantId} .text-purple-400 { color: ${brand} !important; filter: brightness(1.2); }
+         #widget-${tenantId} .border-purple-500 { border-color: ${brand} !important; }
+         #widget-${tenantId} .border-l-purple-500 { border-left-color: ${brand} !important; }
+         #widget-${tenantId} .hover\\:border-purple-500\\/40:hover { border-color: ${brand}66 !important; }
+         #widget-${tenantId} .bg-purple-500\\/5 { background-color: ${brand}0D !important; }
+         #widget-${tenantId} .bg-purple-500\\/10 { background-color: ${brand}1A !important; }
+         #widget-${tenantId} .hover\\:bg-purple-500\\/10:hover { background-color: ${brand}1A !important; }
+         #widget-${tenantId} .bg-purple-500\\/20 { background-color: ${brand}33 !important; }
+         #widget-${tenantId} .border-purple-500\\/10 { border-color: ${brand}1A !important; }
+         #widget-${tenantId} .border-purple-500\\/20 { border-color: ${brand}33 !important; }
+         #widget-${tenantId} .ring-purple-500 { --tw-ring-color: ${brand} !important; }
+         #widget-${tenantId} .ring-purple-500\\/20 { --tw-ring-color: ${brand}33 !important; }
+         #widget-${tenantId} .ring-purple-500\\/30 { --tw-ring-color: ${brand}4D !important; }
+         #widget-${tenantId} .shadow-purple-500\\/20 { --tw-shadow-color: ${brand}33 !important; --tw-shadow: var(--tw-shadow-colored) !important; }
+      `}} />
+
+      {coverUrl && (
+         <div className="absolute top-0 left-0 w-full h-[30vh] sm:h-[40vh] z-0 overflow-hidden">
+            <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-slate-50 dark:to-black/95"></div>
+         </div>
+      )}
+
+      {/* Decorative ambient background blobs */}
+      {!coverUrl && (
+        <>
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl -z-10 mix-blend-screen" style={{ backgroundColor: `${brand}33` }}></div>
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
+        </>
+      )}
+
+      <div className="z-10 w-full max-w-7xl flex flex-col lg:flex-row gap-8 lg:gap-12 items-start justify-center p-4 sm:p-6 md:p-8 lg:p-12 mt-[10vh]">
         
         {/* Left Side: Business Info / Contextual Selection */}
         <div className="w-full lg:flex-1 space-y-6 pt-8 lg:pt-12 lg:sticky top-12">
@@ -309,11 +367,20 @@ export default function BookingWidget({
             <p className="text-slate-500 dark:text-zinc-400 text-lg leading-relaxed max-w-xl">
               {t("hero_subtitle")}
             </p>
+          
+          {/* Redes Sociales */}
+          {(instagramUrl || facebookUrl || tiktokUrl) && (
+            <div className="flex items-center gap-3 mt-4">
+               {instagramUrl && <a href={instagramUrl} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:scale-110 hover:bg-purple-100 dark:hover:bg-purple-500/20 hover:text-purple-600 transition-all text-slate-400 shadow-sm"><Instagram className="w-5 h-5"/></a>}
+               {facebookUrl && <a href={facebookUrl} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:scale-110 hover:bg-blue-100 dark:hover:bg-blue-500/20 hover:text-blue-600 transition-all text-slate-400 shadow-sm"><Facebook className="w-5 h-5"/></a>}
+               {tiktokUrl && <a href={tiktokUrl} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:scale-110 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-black dark:hover:text-white transition-all text-slate-400 shadow-sm"><Music className="w-5 h-5"/></a>}
+            </div>
+          )}
           </div>
           
           {(modality || selectedServices.length > 0) && (
             <div className="bg-white dark:bg-white/5 backdrop-blur-md rounded-2xl p-6 space-y-4 border-l-4 border-l-purple-500 border border-slate-200 dark:border-white/10 transition-all duration-300 shadow-xl">
-              <h3 className="text-zinc-100 font-medium tracking-wide text-sm uppercase">{t("your_appointment")}</h3>
+              <h3 className="text-zinc-100 font-medium tracking-wide text-xs">{t("your_appointment")}</h3>
               
               {modality && (
                 <div className="flex items-center gap-3 text-slate-600 dark:text-zinc-300">
@@ -328,7 +395,7 @@ export default function BookingWidget({
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-3 text-slate-600 dark:text-zinc-300">
                     <Clock className="w-5 h-5 text-blue-400" />
-                    <span className="font-bold text-sm uppercase tracking-wider">{t("selected_services")}:</span>
+                    <span className="font-bold text-sm tracking-wider">{t("selected_services")}:</span>
                   </div>
                   <div className="pl-8 space-y-1">
                     {selectedServices.map(s => (
@@ -364,7 +431,7 @@ export default function BookingWidget({
               {selectedServices.length > 0 && (
                 <div className="pt-6 border-t border-slate-200 dark:border-white/10 mt-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
                    <div className="flex flex-col gap-1 p-4 bg-purple-500/5 rounded-2xl border border-purple-500/10">
-                      <p className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em] mb-1">{t("resume")}</p>
+                      <p className="text-[10px] font-black text-purple-400 tracking-[0.2em] mb-1">{t("resume")}</p>
                       <div className="flex items-baseline justify-between">
                         <p className="text-2xl font-black text-slate-900 dark:text-white">
                           ${totalPrice.toFixed(2)}
@@ -384,8 +451,8 @@ export default function BookingWidget({
         </div>
 
         {/* Right Side: Interactive Booking Widget */}
-        <div className="flex-[1.5] w-full bg-white dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-5 sm:p-8 shadow-2xl relative min-h-[500px] flex flex-col rounded-3xl overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-3xl pointer-events-none"></div>
+        <div className="flex-[1.5] w-full bg-white/95 dark:bg-zinc-950/85 backdrop-blur-2xl border border-slate-200 dark:border-white/10 p-5 sm:p-8 shadow-2xl relative min-h-[500px] flex flex-col rounded-3xl overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent dark:from-white/5 rounded-3xl pointer-events-none"></div>
           
           {/* STEP 1: Branch & Modality */}
           {step === 1 && (
@@ -394,7 +461,7 @@ export default function BookingWidget({
                 {bookingSettings?.step1Title || t("title_branch")}
               </h2>
               <div className="space-y-4">
-                <p className="text-slate-500 dark:text-zinc-400 text-sm font-semibold uppercase tracking-wider mb-2">{t("visit_branch")}</p>
+                <p className="text-slate-500 dark:text-zinc-400 text-xs font-semibold tracking-wider mb-2">{t("visit_branch")}</p>
                 {branches.map(b => (
                   <button 
                     key={b.id}
@@ -409,17 +476,21 @@ export default function BookingWidget({
                   </button>
                 ))}
 
-                <p className="text-slate-500 dark:text-zinc-400 text-sm font-semibold uppercase tracking-wider mt-8 mb-2">{t("or_home")}</p>
-                <button 
-                  onClick={() => handleSelectModality('domicilio')}
-                  className="w-full p-5 bg-white dark:bg-white/5 hover:bg-emerald-500/10 border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 rounded-xl flex items-center gap-4 transition-all duration-300 group shadow-lg text-left relative overflow-hidden"
-                >
-                  <div className="bg-emerald-500/20 p-3 rounded-full text-emerald-400"><Truck /></div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-emerald-400">{t("home_service")}</h3>
-                    <p className="text-slate-400 dark:text-zinc-500 text-sm">{t("home_service_desc")}</p>
-                  </div>
-                </button>
+                {allowsHomeService && (
+                  <>
+                    <p className="text-slate-500 dark:text-zinc-400 text-xs font-semibold tracking-wider mt-8 mb-2">{t("or_home")}</p>
+                    <button 
+                      onClick={() => handleSelectModality('domicilio')}
+                      className="w-full p-5 bg-white dark:bg-white/5 hover:bg-emerald-500/10 border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 rounded-xl flex items-center gap-4 transition-all duration-300 group shadow-lg text-left relative overflow-hidden"
+                    >
+                      <div className="bg-emerald-500/20 p-3 rounded-full text-emerald-400"><Truck /></div>
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-emerald-400">{t("home_service")}</h3>
+                        <p className="text-slate-400 dark:text-zinc-500 text-sm">{t("home_service_desc")}</p>
+                      </div>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -434,9 +505,14 @@ export default function BookingWidget({
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                  {bookingSettings?.step2Title || t("title_service")}
-                </h2>
+                <div className="flex flex-col">
+                  <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    {bookingSettings?.step2Title || t("title_service")}
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-zinc-400 mt-0.5">
+                    {t("select_multiple_services")}
+                  </p>
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 overflow-y-auto flex-1 pr-2 custom-scrollbar items-start content-start">
                 {services.map((srv) => {
@@ -453,8 +529,10 @@ export default function BookingWidget({
                     >
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
                         <div className="flex items-center gap-2">
-                          {isSelected && <div className="p-0.5 bg-purple-500 rounded-full"><Check className="w-2.5 h-2.5 text-white" /></div>}
-                          <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-purple-400 transition-colors uppercase tracking-tight">{srv.name}</h3>
+                          <div className={`p-0.5 rounded-full transition-all duration-300 ${isSelected ? 'bg-purple-500 opacity-100 scale-100' : 'bg-transparent opacity-0 scale-75'}`}>
+                            <Check className="w-2.5 h-2.5 text-white" />
+                          </div>
+                          <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-purple-400 transition-colors tracking-tight">{srv.name}</h3>
                         </div>
                         <span className="text-purple-400 font-bold bg-purple-500/10 px-2.5 py-0.5 rounded-full text-xs inline-block self-start sm:self-auto">${srv.price}</span>
                       </div>
@@ -462,26 +540,32 @@ export default function BookingWidget({
                         <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500" /> {srv.durationMinutes} min</span>
                       </div>
                       
-                      <div className="grid grid-cols-1 gap-y-3 text-[11px] border-t border-slate-200 dark:border-white/5 pt-3">
+                      <div className="grid grid-cols-1 gap-y-4 text-[11px] border-t border-slate-200 dark:border-white/5 pt-4">
                         <div>
-                          <p className="text-slate-800 dark:text-zinc-200 font-semibold mb-1 flex items-center gap-2 font-black uppercase text-[9px] tracking-widest"><Check className="w-3.5 h-3.5 text-emerald-400"/> {t("includes")}</p>
-                          <ul className="space-y-1">
-                            {srv.includes?.slice(0, 3).map((inc, i) => (
-                              <li key={i} className="flex items-start gap-2 text-slate-500 dark:text-zinc-400 leading-tight truncate">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                            <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">{t("includes")}</span>
+                          </div>
+                          <ul className="space-y-1.5 ml-1">
+                            {srv.includes?.map((inc, i) => (
+                              <li key={i} className="flex items-start gap-2 text-slate-500 dark:text-zinc-400 leading-tight">
                                 <span className="w-1 h-1 rounded-full bg-emerald-500/50 mt-1.5 shrink-0"></span>
-                                {inc}
+                                <span className="flex-1">{inc}</span>
                               </li>
                             ))}
                           </ul>
                         </div>
                         {srv.excludes && srv.excludes.length > 0 && (
                           <div>
-                            <p className="text-slate-800 dark:text-zinc-200 font-semibold mb-1 flex items-center gap-2 font-black uppercase text-[9px] tracking-widest"><X className="w-3.5 h-3.5 text-rose-400"/> {t("excludes")}</p>
-                            <ul className="space-y-1">
-                              {srv.excludes.slice(0, 3).map((exc, i) => (
-                                <li key={i} className="flex items-start gap-2 text-slate-500 dark:text-zinc-400 leading-tight truncate">
+                            <div className="flex items-center gap-1.5 mb-2">
+                              <XCircle className="w-4 h-4 text-rose-500" />
+                              <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">{t("excludes")}</span>
+                            </div>
+                            <ul className="space-y-1.5 ml-1">
+                              {srv.excludes.map((exc, i) => (
+                                <li key={i} className="flex items-start gap-2 text-slate-500 dark:text-zinc-400 leading-tight">
                                   <span className="w-1 h-1 rounded-full bg-rose-500/50 mt-1.5 shrink-0"></span>
-                                  {exc}
+                                  <span className="flex-1">{exc}</span>
                                 </li>
                               ))}
                             </ul>
@@ -498,7 +582,7 @@ export default function BookingWidget({
                 <div className="mt-6 pt-6 border-t border-slate-200 dark:border-white/5 animate-in slide-in-from-bottom-4 duration-300">
                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-purple-500/10 rounded-2xl border border-purple-500/20">
                       <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t("resume")}</p>
+                        <p className="text-xs font-bold text-slate-400 tracking-widest">{t("resume")}</p>
                         <p className="text-lg font-black text-slate-900 dark:text-white">
                           {selectedServices.length} {selectedServices.length === 1 ? 'servicio' : 'servicios'} · {totalDuration} min
                         </p>
@@ -528,7 +612,7 @@ export default function BookingWidget({
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
-                <h2 className="text-xl font-bold tracking-tight">
+                <h2 className="text-2xl font-bold tracking-tight">
                   {bookingSettings?.step3Title || t("title_specialist")}
                 </h2>
               </div>
@@ -570,7 +654,7 @@ export default function BookingWidget({
                 <div className="flex flex-col md:flex-row gap-6 flex-1 overflow-hidden min-h-0">
                   {/* DATE SELECTION - Vertical List or Mini Calendar */}
                   <div className="w-full md:w-1/3 flex flex-col">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                    <p className="text-[10px] font-bold text-slate-400 tracking-widest mb-2">
                        {modality === 'domicilio' ? t("dates_home") : t("dates")}
                     </p>
                     <div className="flex md:flex-col gap-2 overflow-auto custom-scrollbar md:pr-2 pb-2 md:pb-0">
@@ -596,41 +680,67 @@ export default function BookingWidget({
 
                   {/* TIME SELECTION - Grid */}
                   <div className="flex-1 flex flex-col overflow-hidden">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">{t("times")}</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 overflow-y-auto custom-scrollbar pr-1 flex-1 pb-4">
+                    <p className="text-[10px] font-bold text-slate-400 tracking-widest mb-2">{t("times")}</p>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-6 pb-4">
                       {isLoadingTimes ? (
-                        <div className="col-span-full flex flex-col items-center justify-center py-12">
+                        <div className="flex flex-col items-center justify-center py-12">
                           <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
                           <p className="mt-2 text-xs text-slate-400">Verificando...</p>
                         </div>
                       ) : !selectedDate ? (
-                        <div className="col-span-full flex flex-col items-center justify-center py-12 text-slate-400 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
+                        <div className="flex flex-col items-center justify-center py-12 text-slate-400 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
                           <Calendar className="w-8 h-8 mb-2 opacity-20" />
                           <p className="text-sm">Elige un día primero</p>
                         </div>
                       ) : availableTimes.length === 0 ? (
-                        <div className="col-span-full flex flex-col items-center justify-center py-12 text-slate-400 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
+                        <div className="flex flex-col items-center justify-center py-12 text-slate-400 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
                           <Clock className="w-8 h-8 mb-2 opacity-20" />
                           <p className="text-sm px-4 text-center">{t("no_slots_available")}</p>
                         </div>
                       ) : (
-                        availableTimes.map(({time, available}) => (
-                          <button 
-                            key={time}
-                            onClick={() => available && handleSelectTime(time)}
-                            disabled={!available}
-                            className={`px-3 py-3 rounded-xl transition-all duration-300 flex flex-col items-center justify-center border ${
-                              !available
-                                ? "bg-slate-50 dark:bg-black/40 text-slate-300 dark:text-zinc-700 border-slate-100 dark:border-white/5 cursor-not-allowed"
-                                : selectedTime === time 
-                                  ? "bg-purple-600 text-white border-purple-500 shadow-md ring-2 ring-purple-500/20" 
-                                  : "bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-300"
-                            }`}
-                          >
-                            <span className={`font-bold text-sm ${!available ? 'opacity-40' : ''}`}>{time}</span>
-                            {!available && <span className="text-[8px] uppercase font-black text-rose-500 mt-0.5">{t("occupied")}</span>}
-                          </button>
-                        ))
+                        <>
+                          {[
+                            { label: "Mañana", icon: "🌅", range: [0, 11] },
+                            { label: "Tarde", icon: "☀️", range: [12, 17] },
+                            { label: "Noche", icon: "🌙", range: [18, 23] }
+                          ].map((section) => {
+                            const sectionTimes = (availableTimes as any[]).filter(t => {
+                              const hour = parseInt(t.rawTime.split(':')[0], 10);
+                              return hour >= section.range[0] && hour <= section.range[1];
+                            });
+
+                            if (sectionTimes.length === 0) return null;
+
+                            return (
+                              <div key={section.label} className="space-y-3">
+                                <div className="flex items-center gap-2 border-b border-slate-200 dark:border-white/5 pb-2">
+                                  <span className="text-lg">{section.icon}</span>
+                                  <h3 className="text-xs font-bold tracking-widest text-slate-600 dark:text-zinc-400">
+                                    {section.label}
+                                  </h3>
+                                </div>
+                                <div className="grid grid-cols-4 gap-1.5">
+                                  {sectionTimes.map(({displayTime, rawTime, available}) => (
+                                    <button 
+                                      key={rawTime}
+                                      onClick={() => available && handleSelectTime(displayTime)}
+                                      disabled={!available}
+                                      className={`px-2 py-3 rounded-xl transition-all duration-300 flex flex-col items-center justify-center border ${
+                                        !available
+                                          ? "bg-slate-50 dark:bg-black/40 text-slate-300 dark:text-zinc-700 border-slate-100 dark:border-white/5 cursor-not-allowed hidden" // Hiddens occupied to save space as requested
+                                          : selectedTime === displayTime 
+                                            ? "bg-purple-600 text-white border-purple-500 shadow-md ring-2 ring-purple-500/20" 
+                                            : "bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-300"
+                                      }`}
+                                    >
+                                      <span className="font-bold text-[10px]">{displayTime}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </>
                       )}
                     </div>
                   </div>
@@ -670,7 +780,7 @@ export default function BookingWidget({
               
               <div className="space-y-5 mb-8">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-2">{t("full_name")}</label>
+                  <label className="block text-sm font-semibold text-slate-500 dark:text-zinc-400 tracking-wider mb-2">{t("full_name")}</label>
                   <div className="relative">
                     <UserCircle className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
                     <input type="text" value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Nombre y Apellido" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"/>
@@ -678,15 +788,15 @@ export default function BookingWidget({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-2">{t("email")}</label>
+                  <label className="block text-sm font-semibold text-slate-500 dark:text-zinc-400 tracking-wider mb-2">{t("email")}</label>
                   <div className="relative">
                     <Mail className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
-                    <input type="email" value={guestEmail} onChange={e => setGuestEmail(e.target.value)} placeholder="tuemail@ejemplo.com" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"/>
+                    <input type="email" value={guestEmail} onChange={e => setGuestEmail(e.target.value)} placeholder={t("email_placeholder")} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"/>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-2">{t("phone")}</label>
+                  <label className="block text-sm font-semibold text-slate-500 dark:text-zinc-400 tracking-wider mb-2">{t("phone")}</label>
                   <div className="flex gap-2">
                     <div className="relative">
                       <button 

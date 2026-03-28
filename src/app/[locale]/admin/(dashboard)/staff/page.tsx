@@ -15,12 +15,15 @@ export default async function StaffPage() {
     redirect('/admin/login');
   }
 
-  // Obtener staff y sucursales (para el selector en el modal)
+  // Obtener staff con sus asignaciones y sucursales
   const [dbStaff, dbBranches] = await Promise.all([
-    db.select()
-      .from(staffTable)
-      .where(eq(staffTable.tenantId, tenantId))
-      .orderBy(desc(staffTable.createdAt)),
+    db.query.staff.findMany({
+      where: eq(staffTable.tenantId, tenantId),
+      with: {
+        assignments: true,
+      },
+      orderBy: desc(staffTable.createdAt),
+    }),
     db.select()
       .from(branchesTable)
       .where(eq(branchesTable.tenantId, tenantId))

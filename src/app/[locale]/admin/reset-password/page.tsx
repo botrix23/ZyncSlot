@@ -14,8 +14,10 @@ import {
 } from 'lucide-react';
 import { useRouter, useSearchParams } from "next/navigation";
 import { resetPasswordAction } from "@/app/actions/auth";
+import { useTranslations } from "next-intl";
 
 export default function ResetPasswordPage({ params: { locale } }: { params: { locale: string } }) {
+  const t = useTranslations('Auth.resetPassword');
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [password, setPassword] = useState("");
@@ -46,12 +48,12 @@ export default function ResetPasswordPage({ params: { locale } }: { params: { lo
     const result = await resetPasswordAction(token, password);
 
     if (result.success) {
-      setMessage({ type: 'success', text: '¡Contraseña restablecida con éxito!' });
+      setMessage({ type: 'success', text: t('success') });
       setTimeout(() => {
         router.push(`/${locale}/admin/login`);
       }, 3000);
     } else {
-      setMessage({ type: 'error', text: result.error || 'Error al restablecer la contraseña.' });
+      setMessage({ type: 'error', text: result.error || t('error') });
     }
     setIsLoading(false);
   };
@@ -61,9 +63,9 @@ export default function ResetPasswordPage({ params: { locale } }: { params: { lo
       <div className="min-h-screen bg-[#FDFCFD] dark:bg-black flex flex-col items-center justify-center p-6">
         <div className="bg-rose-500/5 border border-rose-500/20 p-8 rounded-3xl text-center space-y-4 max-w-md">
             <XCircle className="w-12 h-12 text-rose-500 mx-auto" />
-            <h2 className="text-2xl font-black">Enlace Inválido</h2>
-            <p className="text-slate-500">Este enlace de recuperación no es válido o ya ha expirado.</p>
-            <button onClick={() => router.push(`/${locale}/admin/forgot-password`)} className="text-sm font-bold text-purple-600 hover:underline">Solicitar nuevo enlace</button>
+            <h2 className="text-2xl font-black">{t('invalidToken')}</h2>
+            <p className="text-slate-500">{t('invalidTokenDesc')}</p>
+            <button onClick={() => router.push(`/${locale}/admin/forgot-password`)} className="text-sm font-bold text-purple-600 hover:underline">{t('requestNew')}</button>
         </div>
       </div>
     );
@@ -77,8 +79,8 @@ export default function ResetPasswordPage({ params: { locale } }: { params: { lo
           <div className="inline-flex p-4 rounded-3xl bg-purple-500/10 border border-purple-500/20 mb-2">
             <ShieldCheck className="w-10 h-10 text-purple-600" />
           </div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Crea tu nueva contraseña</h1>
-          <p className="text-slate-500 font-medium">Asegúrate de que sea segura y difícil de adivinar.</p>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">{t('title')}</h1>
+          <p className="text-slate-500 font-medium">{t('subtitle')}</p>
         </div>
 
         {message ? (
@@ -89,14 +91,14 @@ export default function ResetPasswordPage({ params: { locale } }: { params: { lo
               {message.type === 'success' ? <CheckCircle2 className="w-12 h-12" /> : <AlertCircle className="w-12 h-12" />}
             </div>
             <p className="font-bold">{message.text}</p>
-            {message.type === 'success' && <p className="text-xs">Redirigiendo al login...</p>}
+            {message.type === 'success' && <p className="text-xs">{t('redirecting')}</p>}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
                 {/* Nueva Contraseña */}
                 <div className="space-y-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Nueva Contraseña</label>
+                    <label className="text-xs font-black tracking-widest text-slate-400 ml-1">{t('newPassword')}</label>
                     <div className="relative group">
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-purple-500 transition-colors" />
                         <input 
@@ -118,7 +120,7 @@ export default function ResetPasswordPage({ params: { locale } }: { params: { lo
 
                 {/* Confirmar Contraseña */}
                 <div className="space-y-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Confirmar Contraseña</label>
+                    <label className="text-xs font-black tracking-widest text-slate-400 ml-1">{t('confirmPassword')}</label>
                     <div className="relative group">
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-purple-500 transition-colors" />
                         <input 
@@ -134,25 +136,25 @@ export default function ResetPasswordPage({ params: { locale } }: { params: { lo
 
             {/* Complexity Indicator Grid */}
             <div className="bg-slate-50 dark:bg-white/5 p-5 rounded-3xl border border-slate-200 dark:border-white/10 space-y-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Requisitos de Seguridad</p>
+                <p className="text-[10px] font-black tracking-widest text-slate-400">{t('requirements')}</p>
                 <div className="grid grid-cols-2 gap-2 text-[10px] font-bold">
                     <div className={`flex items-center gap-1.5 ${checks.length ? 'text-emerald-500' : 'text-slate-400'}`}>
-                        {checks.length ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />} Mínimo 8 chars
+                        {checks.length ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />} {t('rules.length')}
                     </div>
                     <div className={`flex items-center gap-1.5 ${checks.upper ? 'text-emerald-500' : 'text-slate-400'}`}>
-                        {checks.upper ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />} Una Mayúscula
+                        {checks.upper ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />} {t('rules.upper')}
                     </div>
                     <div className={`flex items-center gap-1.5 ${checks.lower ? 'text-emerald-500' : 'text-slate-400'}`}>
-                        {checks.lower ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />} Una Minúscula
+                        {checks.lower ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />} {t('rules.lower')}
                     </div>
                     <div className={`flex items-center gap-1.5 ${checks.number ? 'text-emerald-500' : 'text-slate-400'}`}>
-                        {checks.number ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />} Un Número
+                        {checks.number ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />} {t('rules.number')}
                     </div>
                     <div className={`flex items-center gap-1.5 ${checks.special ? 'text-emerald-500' : 'text-slate-400'}`}>
-                        {checks.special ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />} Carácter Especial
+                        {checks.special ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />} {t('rules.special')}
                     </div>
                     <div className={`flex items-center gap-1.5 ${checks.match ? 'text-emerald-500' : 'text-slate-400'}`}>
-                        {checks.match ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />} Coinciden
+                        {checks.match ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />} {t('rules.match')}
                     </div>
                 </div>
             </div>
@@ -160,10 +162,10 @@ export default function ResetPasswordPage({ params: { locale } }: { params: { lo
             <button 
               type="submit" 
               disabled={isLoading || !isFormValid}
-              className="w-full bg-slate-900 dark:bg-white dark:text-black text-white py-5 rounded-3xl font-black text-sm uppercase tracking-widest hover:opacity-90 transition-all shadow-2xl active:scale-[0.98] disabled:opacity-30 flex items-center justify-center gap-3"
+              className="w-full bg-slate-900 dark:bg-white dark:text-black text-white py-5 rounded-3xl font-black text-sm tracking-widest hover:opacity-90 transition-all shadow-2xl active:scale-[0.98] disabled:opacity-30 flex items-center justify-center gap-3"
             >
               {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                <>Restablecer Contraseña <ArrowRight className="w-5 h-5" /></>
+                <>{t('submit')} <ArrowRight className="w-5 h-5" /></>
               )}
             </button>
           </form>

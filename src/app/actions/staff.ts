@@ -1,15 +1,23 @@
 "use server";
 
 import { db } from "@/db";
-import { staff } from "@/db/schema";
+import { staff, staffAssignments } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function createStaffAction(data: {
   tenantId: string;
-  branchId: string;
+  branchId: string; // Legacy/Primary branch
   name: string;
   email?: string;
+  assignments?: Array<{
+    branchId: string;
+    startDate?: Date;
+    endDate?: Date;
+    startTime?: string;
+    endTime?: string;
+    daysOfWeek: string[];
+  }>;
 }) {
   try {
     const [newStaff] = await db.insert(staff).values({
@@ -19,7 +27,31 @@ export async function createStaffAction(data: {
       email: data.email,
     }).returning();
 
+    if (data.assignments && data.assignments.length > 0) {
+      await db.insert(staffAssignments).values(
+        data.assignments.map(a => ({
+          tenantId: data.tenantId,
+          staffId: newStaff.id,
+          branchId: a.branchId,
+          startDate: a.startDate,
+          endDate: a.endDate,
+          startTime: a.startTime,
+          endTime: a.endTime,
+          daysOfWeek: a.daysOfWeek,
+        }))
+      );
+    } else {
+      // Crear asignación por defecto basada en branchId primario
+      await db.insert(staffAssignments).values({
+        tenantId: data.tenantId,
+        staffId: newStaff.id,
+        branchId: data.branchId,
+        daysOfWeek: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+      });
+    }
+
     revalidatePath("/[locale]/admin/staff", "page");
+    revalidatePath("/[locale]/admin/bookings", "page");
     revalidatePath("/[locale]/[slug]", "page");
     return { success: true, staff: newStaff };
   } catch (error) {
@@ -34,18 +66,50 @@ export async function updateStaffAction(data: {
   branchId?: string;
   name?: string;
   email?: string;
+  assignments?: Array<{
+    branchId: string;
+    startDate?: Date;
+    endDate?: Date;
+    startTime?: string;
+    endTime?: string;
+    daysOfWeek: string[];
+  }>;
 }) {
   try {
-    await db.update(staff)
-      .set({
-        branchId: data.branchId,
-        name: data.name,
-        email: data.email,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(staff.id, data.id), eq(staff.tenantId, data.tenantId)));
+    await db.transaction(async (tx) => {
+      // 1. Actualizar datos básicos
+      await tx.update(staff)
+        .set({
+          branchId: data.branchId,
+          name: data.name,
+          email: data.email,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(staff.id, data.id), eq(staff.tenantId, data.tenantId)));
+
+      // 2. Si vienen asignaciones, reemplazar las anteriores
+      if (data.assignments) {
+        await tx.delete(staffAssignments).where(eq(staffAssignments.staffId, data.id));
+        
+        if (data.assignments.length > 0) {
+          await tx.insert(staffAssignments).values(
+            data.assignments.map(a => ({
+              tenantId: data.tenantId,
+              staffId: data.id,
+              branchId: a.branchId,
+              startDate: a.startDate ? new Date(a.startDate) : null,
+              endDate: a.endDate ? new Date(a.endDate) : null,
+              startTime: a.startTime || null,
+              endTime: a.endTime || null,
+              daysOfWeek: a.daysOfWeek,
+            }))
+          );
+        }
+      }
+    });
 
     revalidatePath("/[locale]/admin/staff", "page");
+    revalidatePath("/[locale]/admin/bookings", "page");
     revalidatePath("/[locale]/[slug]", "page");
     return { success: true };
   } catch (error) {

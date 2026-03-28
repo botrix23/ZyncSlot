@@ -4,7 +4,7 @@ import { useState } from "react";
 import { 
   Plus, 
   Search, 
-  Scissors, 
+  Sparkles, 
   Clock, 
   DollarSign, 
   Trash2,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { createServiceAction, updateServiceAction, deleteServiceAction, reorderServicesAction } from "@/app/actions/services";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 export default function ServicesClient({ 
   initialServices,
@@ -26,6 +27,7 @@ export default function ServicesClient({
   initialServices: any[],
   tenantId: string 
 }) {
+  const t = useTranslations('Dashboard.services');
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<any | null>(null);
@@ -97,19 +99,19 @@ export default function ServicesClient({
       setIsModalOpen(false);
       router.refresh();
     } else {
-      alert("Error al guardar el servicio");
+      alert(t('errorSave'));
     }
     setIsLoading(false);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Estás seguro de eliminar este servicio?")) return;
+    if (!confirm(t('confirmDelete'))) return;
     
     const result = await deleteServiceAction(id, tenantId);
     if (result.success) {
       router.refresh();
     } else {
-      alert("Error al eliminar el servicio");
+      alert(t('errorDelete'));
     }
   };
 
@@ -152,15 +154,15 @@ export default function ServicesClient({
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Servicios</h1>
-          <p className="text-slate-500 dark:text-zinc-400 mt-1">Gestiona el catálogo de servicios, inclusiones y el orden de aparición.</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title')}</h1>
+          <p className="text-slate-500 dark:text-zinc-400 mt-1">{t('subtitle')}</p>
         </div>
         <button 
           onClick={() => handleOpenModal()}
           className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl text-sm font-bold shadow-xl shadow-purple-500/20 transition-all active:scale-95"
         >
           <Plus className="w-5 h-5" />
-          Nuevo servicio
+          {t('new')}
         </button>
       </div>
 
@@ -170,7 +172,7 @@ export default function ServicesClient({
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input 
             type="text" 
-            placeholder="Buscar por nombre..." 
+            placeholder={t('searchPlaceholder')} 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm text-slate-900 dark:text-white outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-400 shadow-sm"
@@ -183,11 +185,11 @@ export default function ServicesClient({
         <table className="w-full text-left">
           <thead className="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
             <tr>
-              <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest w-12">Orden</th>
-              <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest">Servicio</th>
-              <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest">Inclusiones / Exclusiones</th>
-              <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest w-32">Precio</th>
-              <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest w-32">Acciones</th>
+              <th className="px-6 py-5 text-xs font-bold text-slate-500 tracking-widest w-12">{t('table.order')}</th>
+              <th className="px-6 py-5 text-xs font-bold text-slate-500 tracking-widest">{t('table.service')}</th>
+              <th className="px-6 py-5 text-xs font-bold text-slate-500 tracking-widest">{t('table.inclusions')}</th>
+              <th className="px-6 py-5 text-xs font-bold text-slate-500 tracking-widest w-32">{t('table.price')}</th>
+              <th className="px-6 py-5 text-xs font-bold text-slate-500 tracking-widest w-32">{t('table.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-slate-600 dark:text-zinc-300">
@@ -214,7 +216,7 @@ export default function ServicesClient({
                 <td className="px-6 py-6">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-600">
-                      <Scissors className="w-5 h-5" />
+                      <Sparkles className="w-5 h-5" />
                     </div>
                     <div>
                       <span className="font-bold text-slate-900 dark:text-white block">{service.name}</span>
@@ -279,7 +281,7 @@ export default function ServicesClient({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5 shrink-0">
-              <h3 className="text-xl font-bold">{editingService ? 'Editar servicio' : 'Nuevo servicio'}</h3>
+              <h3 className="text-xl font-bold">{editingService ? t('form.edit') : t('form.new')}</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
                 <X className="w-6 h-6" />
               </button>
@@ -288,7 +290,7 @@ export default function ServicesClient({
             <form onSubmit={handleSave} className="p-6 space-y-6 overflow-y-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">Nombre del servicio</label>
+                  <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.nameLabel')}</label>
                   <input 
                     required
                     type="text" 
@@ -301,7 +303,7 @@ export default function ServicesClient({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">Duración (min)</label>
+                    <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.durationLabel')}</label>
                     <input 
                       required
                       type="number" 
@@ -311,7 +313,7 @@ export default function ServicesClient({
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">Precio ($)</label>
+                    <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.priceLabel')}</label>
                     <input 
                       required
                       type="text" 
@@ -324,12 +326,12 @@ export default function ServicesClient({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">Descripción (Opcional)</label>
+                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.descriptionLabel')}</label>
                 <textarea 
                   value={formData.description}
                   onChange={e => setFormData({...formData, description: e.target.value})}
                   className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm min-h-[80px] resize-none"
-                  placeholder="Describe qué incluye el servicio..."
+                  placeholder={t('form.descriptionPlaceholder')}
                 />
               </div>
 
@@ -337,7 +339,7 @@ export default function ServicesClient({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <label className="text-sm font-bold text-emerald-500 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" /> Inclusiones
+                    <CheckCircle2 className="w-4 h-4" /> {t('form.includesLabel')}
                   </label>
                   <div className="flex gap-2">
                     <input 
@@ -346,7 +348,7 @@ export default function ServicesClient({
                       onChange={e => setNewInclude(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag('includes'))}
                       className="flex-1 p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs outline-none focus:border-emerald-500/50"
-                      placeholder="Nueva inclusión..."
+                      placeholder={t('form.newIncludePlaceholder')}
                     />
                     <button type="button" onClick={() => addTag('includes')} className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl hover:bg-emerald-500 hover:text-white transition-all">
                       <Plus className="w-4 h-4" />
@@ -364,7 +366,7 @@ export default function ServicesClient({
 
                 <div className="space-y-3">
                   <label className="text-sm font-bold text-rose-500 flex items-center gap-2">
-                    <XCircle className="w-4 h-4" /> Exclusiones
+                    <XCircle className="w-4 h-4" /> {t('form.excludesLabel')}
                   </label>
                   <div className="flex gap-2">
                     <input 
@@ -373,7 +375,7 @@ export default function ServicesClient({
                       onChange={e => setNewExclude(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag('excludes'))}
                       className="flex-1 p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs outline-none focus:border-rose-500/50"
-                      placeholder="Nueva exclusión..."
+                      placeholder={t('form.newExcludePlaceholder')}
                     />
                     <button type="button" onClick={() => addTag('excludes')} className="p-3 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all">
                       <Plus className="w-4 h-4" />
@@ -399,7 +401,7 @@ export default function ServicesClient({
                   {isLoading ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
                   ) : (
-                    editingService ? 'Guardar cambios' : 'Crear servicio'
+                    editingService ? t('form.save') : t('form.create')
                   )}
                 </button>
               </div>

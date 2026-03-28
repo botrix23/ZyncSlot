@@ -8,7 +8,10 @@ import {
   ChevronRight,
   Plus,
   MoreVertical,
-  Activity
+  Activity,
+  Share2,
+  Copy,
+  ExternalLink
 } from 'lucide-react';
 import { db } from '@/db';
 import { bookings, services, tenants } from '@/db/schema';
@@ -16,8 +19,11 @@ import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { getSession } from '@/lib/auth-session';
 import { redirect } from 'next/navigation';
 import { startOfDay, endOfDay, format } from 'date-fns';
+import { getTranslations } from 'next-intl/server';
+import Link from 'next/link';
 
-export default async function AdminDashboard() {
+export default async function AdminDashboard({ params: { locale } }: { params: { locale: string } }) {
+  const t = await getTranslations('Dashboard.home');
   const session = await getSession();
   
   // Determinar el tenantId activo:
@@ -60,13 +66,19 @@ export default async function AdminDashboard() {
     orderBy: [desc(bookings.createdAt)]
   });
 
+  // 3. Obtener datos del tenant para el slug
+  const tenantData = await db.query.tenants.findFirst({
+    where: eq(tenants.id, tenantId)
+  });
+
   const totalRevenue = allBookings.reduce((acc, curr) => acc + parseFloat(curr.service?.price || '0'), 0);
 
+
   const stats = [
-    { label: 'Reservas Hoy', value: bookingsToday.length.toString(), icon: Calendar, trend: '+20%', color: 'from-purple-600 to-indigo-600' },
-    { label: 'Clientes (Total)', value: allBookings.length.toString(), icon: Users, trend: '+12%', color: 'from-blue-600 to-cyan-600' },
-    { label: 'Ingresos Estimados', value: `$${totalRevenue.toFixed(2)}`, icon: TrendingUp, trend: '+8.5%', color: 'from-emerald-600 to-teal-600' },
-    { label: 'Ocupación', value: '85%', icon: Clock, trend: '+5%', color: 'from-orange-600 to-amber-600' },
+    { label: t('stats.todayBookings'), value: bookingsToday.length.toString(), icon: Calendar, trend: '+20%', color: 'from-purple-600 to-indigo-600' },
+    { label: t('stats.totalClients'), value: allBookings.length.toString(), icon: Users, trend: '+12%', color: 'from-blue-600 to-cyan-600' },
+    { label: t('stats.estimatedRevenue'), value: `$${totalRevenue.toFixed(2)}`, icon: TrendingUp, trend: '+8.5%', color: 'from-emerald-600 to-teal-600' },
+    { label: t('stats.occupancy'), value: '85%', icon: Clock, trend: '+5%', color: 'from-orange-600 to-amber-600' },
   ];
 
   const recentBookingsDisplay = allBookings.slice(0, 5).map(b => ({
@@ -74,7 +86,7 @@ export default async function AdminDashboard() {
     customer: b.customerName,
     service: b.service?.name || 'Servicio desconocido',
     time: format(b.startTime, "hh:mm a"),
-    status: b.status === 'CONFIRMED' ? 'Confirmada' : b.status,
+    status: b.status === 'CONFIRMED' ? t('recentBookings.statusConfirmed') : b.status,
     avatar: b.customerName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }));
 
@@ -83,20 +95,53 @@ export default async function AdminDashboard() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Dashboard Admin</h1>
-          <p className="text-slate-500 dark:text-zinc-400 mt-1">Bienvenido de nuevo. Aquí tienes un resumen de tu negocio hoy.</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title')}</h1>
+          <p className="text-slate-500 dark:text-zinc-400 mt-1">{t('welcome')}</p>
         </div>
         <div className="flex gap-3">
           <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-all">
             <Activity className="w-4 h-4" />
-            Reportes
+            {t('reports')}
           </button>
           <button className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-purple-500/25 transition-all">
             <Plus className="w-4 h-4" />
-            Nueva Cita
+            {t('newBooking')}
           </button>
         </div>
       </div>
+      
+      {/* Portal Share Link Quick Access */}
+      <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm overflow-hidden relative group">
+        <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
+          <Share2 className="w-32 h-32" />
+        </div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-purple-600/10 flex items-center justify-center text-purple-600">
+              <Share2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">Tu Enlace de Reservas</h3>
+              <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">Comparte este link con tus clientes para recibir citas directamente.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 p-2 rounded-2xl border border-slate-200 dark:border-white/10 group-hover:border-purple-500/30 transition-colors">
+            <code id="portal-url" className="px-3 py-2 text-sm font-mono text-purple-600 dark:text-purple-400 select-all truncate max-w-[250px]">
+              {`/${tenantData?.slug || 'portal'}`}
+            </code>
+            <a 
+              href={`/${tenantData?.slug}`} 
+              target="_blank"
+
+              className="p-2.5 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 rounded-xl hover:text-purple-600 transition-all border border-slate-200 dark:border-white/10"
+              title="Abrir portal"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          </div>
+        </div>
+      </div>
+
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -122,9 +167,9 @@ export default async function AdminDashboard() {
         {/* Recent Bookings */}
         <div className="lg:col-span-2 bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-white/5 rounded-3xl p-8 overflow-hidden">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Citas Recientes</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('recentBookings.title')}</h2>
             <button className="text-purple-500 hover:text-purple-400 text-sm font-semibold flex items-center gap-1">
-              Ver todas <ChevronRight className="w-4 h-4" />
+              {t('recentBookings.viewAll')} <ChevronRight className="w-4 h-4" />
             </button>
           </div>
           
@@ -156,7 +201,7 @@ export default async function AdminDashboard() {
                 </div>
               </div>
             )) : (
-              <p className="text-slate-500 text-center py-8">No hay citas recientes.</p>
+              <p className="text-slate-500 text-center py-8">{t('recentBookings.noBookings')}</p>
             )}
           </div>
         </div>
@@ -164,27 +209,28 @@ export default async function AdminDashboard() {
         {/* Quick Settings Card */}
         <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl shadow-purple-500/20">
           <Settings className="absolute -right-8 -top-8 w-48 h-48 opacity-10 rotate-12" />
-          <h2 className="text-xl font-bold relative z-10">Configuración Rápida</h2>
-          <p className="text-purple-200 text-sm mt-2 relative z-10 mb-8">Personaliza tu widget de reserva y horarios de atención al instante.</p>
+          <h2 className="text-xl font-bold relative z-10">{t('quickSettings.title')}</h2>
+          <p className="text-purple-200 text-sm mt-2 relative z-10 mb-8">{t('quickSettings.subtitle')}</p>
           
           <div className="space-y-4 relative z-10">
             <button className="w-full py-4 px-6 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-between transition-all group backdrop-blur-md border border-white/10">
-              <span className="font-semibold">Editar Servicios</span>
+              <span className="font-semibold">{t('quickSettings.editServices')}</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
             <button className="w-full py-4 px-6 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-between transition-all group backdrop-blur-md border border-white/10">
-              <span className="font-semibold">Horarios de Sucursal</span>
+              <span className="font-semibold">{t('quickSettings.branchHours')}</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
-            <button className="w-full py-4 px-6 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-between transition-all group backdrop-blur-md border border-white/10">
-              <span className="font-semibold">Personalizar Marca</span>
+            <Link href={`/${locale}/admin/appearance`} className="w-full py-4 px-6 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-between transition-all group backdrop-blur-md border border-white/10 text-white no-underline">
+              <span className="font-semibold">{t('quickSettings.customizeBrand')}</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
+            </Link>
           </div>
 
+
           <div className="mt-12 p-4 bg-white/5 rounded-2xl border border-white/5 text-center">
-            <p className="text-xs text-purple-300">Tu cuenta Premium vence en 24 días</p>
-            <button className="mt-2 text-sm font-bold text-white underline">Renovar ahora</button>
+            <p className="text-xs text-purple-300">{t('quickSettings.premiumExpire', { days: 24 })}</p>
+            <button className="mt-2 text-sm font-bold text-white underline">{t('quickSettings.renewNow')}</button>
           </div>
         </div>
       </div>
