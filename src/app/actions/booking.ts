@@ -41,7 +41,13 @@ function getTimezoneOffsetInMinutes(timeZone: string, date: Date = new Date()): 
 /**
  * Calcula los slots de tiempo disponibles para un servicio, fecha y sucursal/staff específicos.
  */
-export async function getAvailableSlots(dateStr: string, serviceId: string, branchId: string, staffId?: string, durationOverride?: number) {
+export async function getAvailableSlots(
+  dateStr: string,
+  serviceId: string,
+  branchId: string,
+  staffId?: string | null,
+  durationOverride?: number
+): Promise<{ slots: any[], errorType: 'BRANCH_CLOSED' | 'STAFF_UNAVAILABLE' | null }> {
   try {
     let duration = durationOverride;
     
@@ -49,7 +55,7 @@ export async function getAvailableSlots(dateStr: string, serviceId: string, bran
       const service = await db.query.services.findFirst({
         where: eq(services.id, serviceId)
       });
-      if (!service) return [];
+      if (!service) return { slots: [], errorType: null };
       duration = service.durationMinutes;
     }
 
@@ -92,7 +98,7 @@ export async function getAvailableSlots(dateStr: string, serviceId: string, bran
       }
     }
 
-    if (!isOpen || activeSlots.length === 0) return [];
+    if (!isOpen || activeSlots.length === 0) return { slots: [], errorType: 'BRANCH_CLOSED' };
 
     // 3. Obtener rangos ocupados (bookings y bloqueos)
     const localTargetDate = parseISO(dateStr);
@@ -125,13 +131,13 @@ export async function getAvailableSlots(dateStr: string, serviceId: string, bran
 
     // Si se pidió un staff específico, verificar si es de los activos
     if (staffId && !activeStaffIds.includes(staffId)) {
-        return []; // Staff no trabaja en esta sucursal ese día
+        return { slots: [], errorType: 'STAFF_UNAVAILABLE' }; // Staff no trabaja en esta sucursal ese día
     }
 
     const effectiveStaffIds = staffId ? [staffId] : activeStaffIds;
     const totalStaffCount = effectiveStaffIds.length;
 
-    if (totalStaffCount === 0) return [];
+    if (totalStaffCount === 0) return { slots: [], errorType: 'BRANCH_CLOSED' };
 
     // Consultar citas existentes
     const existingBookings = await db.select().from(bookings).where(
@@ -233,14 +239,24 @@ export async function getAvailableSlots(dateStr: string, serviceId: string, bran
       }
     });
 
-    // Consolidar slots por tiempo (si hay múltiples tramos que se solapan o para manejar Anyone)
-    // Para simplificar, si el mismo tiempo aparece varias veces, es disponible si alguno es disponible.
-    // Pero aquí solo tenemos un branch y (opcionalmente) un staff.
+    const anyAvailable = slots.some(s => s.available);
+    let errorType: 'BRANCH_CLOSED' | 'STAFF_UNAVAILABLE' | null = null;
     
-    return slots as any;
+    if (!anyAvailable) {
+      if (existingBlocks.some(b => !b.staffId)) {
+        errorType = 'BRANCH_CLOSED';
+      } else if (staffId) {
+        errorType = 'STAFF_UNAVAILABLE';
+      }
+    }
+
+    return {
+      slots,
+      errorType
+    };
   } catch (error) {
     console.error("Error fetching available slots:", error);
-    return [];
+    return { slots: [], errorType: null };
   }
 }
 

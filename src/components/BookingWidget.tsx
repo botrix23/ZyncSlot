@@ -94,6 +94,7 @@ export default function BookingWidget({
   // Real-time Availability States
   const [availableTimes, setAvailableTimes] = useState<{time: string, available: boolean}[]>([]);
   const [isLoadingTimes, setIsLoadingTimes] = useState(false);
+  const [errorType, setErrorType] = useState<'BRANCH_CLOSED' | 'STAFF_UNAVAILABLE' | null>(null);
   
   // Guest Data States
   const [guestName, setGuestName] = useState("");
@@ -135,40 +136,33 @@ export default function BookingWidget({
     guestPhone.length >= (selectedCountry as any).minLen &&
     (modality !== 'domicilio' || !homeServiceTermsEnabled || agreedToTerms);
 
-  // Cargar horarios reales cuando cambien los filtros
   useEffect(() => {
     if (step === 3 && selectedDate && selectedServices.length > 0) {
       const fetchTimes = async () => {
         setIsLoadingTimes(true);
+        setErrorType(null);
         try {
-          const times = await getAvailableSlots(
+          const res = await getAvailableSlots(
             selectedDate, 
             selectedServices[0]?.id || '', 
             selectedBranch?.id || branches[0]?.id || '', 
             selectedStaff?.id,
             totalDuration
           );
-          console.log("Found slots:", times.length, "for date:", selectedDate);
           
-          // Keep both raw (24h) and formatted (12h) for logic and UI
-          const formattedTimes = times.map((t: {time: string, available: boolean}) => ({
-            ...t,
-            rawTime: t.time,
-            displayTime: formatTo12h(t.time)
-          }));
-
-          setAvailableTimes(formattedTimes);
-          // Si cambiamos de fecha o staff, limpiamos el tiempo seleccionado
-          // Pero NO lo limpiamos si solo se refrescaron los slots
+          setAvailableTimes(res.slots || []);
+          setErrorType(res.errorType || null);
         } catch (error) {
           console.error("Failed to fetch slots:", error);
+          setAvailableTimes([]);
+          setErrorType(null);
         } finally {
           setIsLoadingTimes(false);
         }
       };
       fetchTimes();
     }
-  }, [step, selectedDate, selectedServices, selectedStaff, selectedBranch]);
+  }, [step, selectedDate, selectedServices, selectedStaff, selectedBranch, branches, totalDuration]);
 
   // Handlers
   const handleSelectModality = (mod: 'local' | 'domicilio', branch: Branch | null = null) => {
@@ -783,69 +777,87 @@ export default function BookingWidget({
 
                   {/* TIME SELECTION - Grid */}
                   <div className="flex-1 flex flex-col overflow-hidden">
-                    <p className="text-[10px] font-bold text-slate-400 tracking-widest mb-2">{t("times")}</p>
-                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-6 pb-4">
-                      {isLoadingTimes ? (
-                        <div className="flex flex-col items-center justify-center py-12">
-                          <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-                          <p className="mt-2 text-xs text-slate-400">Verificando disponibilidad...</p>
-                        </div>
-                      ) : !selectedDate ? (
-                        <div className="flex flex-col items-center justify-center py-12 text-slate-400 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl animate-in fade-in zoom-in-95 duration-500">
-                          <Calendar className="w-8 h-8 mb-2 opacity-20" />
-                          <p className="text-sm font-medium">Selecciona un día en el calendario</p>
-                          <p className="text-[10px] opacity-50 mt-1 max-w-[150px] text-center">Escoge una fecha para ver los horarios disponibles</p>
-                        </div>
-                      ) : availableTimes.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-12 text-slate-400 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
-                          <Clock className="w-8 h-8 mb-2 opacity-20" />
-                          <p className="text-sm px-4 text-center">{t("no_slots_available")}</p>
-                        </div>
-                      ) : (
-                        <>
-                          {[
-                            { label: "Mañana", icon: "🌅", range: [0, 11] },
-                            { label: "Tarde", icon: "☀️", range: [12, 17] },
-                            { label: "Noche", icon: "🌙", range: [18, 23] }
-                          ].map((section) => {
-                            const sectionTimes = (availableTimes as any[]).filter(t => {
-                              const hour = parseInt(t.rawTime.split(':')[0], 10);
-                              return hour >= section.range[0] && hour <= section.range[1];
-                            });
+                    <div className="flex flex-col h-full bg-slate-50/50 dark:bg-black/20 rounded-2xl border border-slate-200/60 dark:border-white/5 p-4 sm:p-6 ml-0 md:ml-2">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5" />
+                        Horarios disponibles
+                      </h3>
 
-                            if (sectionTimes.length === 0) return null;
+                      <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-6 pb-4">
+                        {isLoadingTimes ? (
+                          <div className="flex flex-col items-center justify-center py-12">
+                            <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+                            <p className="mt-2 text-xs text-slate-400">Verificando disponibilidad...</p>
+                          </div>
+                        ) : errorType ? (
+                          <div className="flex flex-col items-center justify-center py-12 px-6 text-center bg-rose-500/5 border border-dashed border-rose-500/20 rounded-2xl animate-in fade-in zoom-in-95 duration-500">
+                            <XCircle className="w-10 h-10 mb-3 text-rose-500/60" />
+                            <p className="text-sm font-bold text-rose-600 dark:text-rose-400">
+                              {errorType === 'BRANCH_CLOSED'
+                                ? 'La sucursal no se encuentra disponible en este momento'
+                                : 'El agente no se encuentra disponible en este horario'}
+                            </p>
+                            <p className="mt-2 text-[10px] text-slate-400 leading-relaxed">
+                              Por favor intenta con otra fecha.
+                            </p>
+                          </div>
+                        ) : !selectedDate ? (
+                          <div className="flex flex-col items-center justify-center py-12 text-slate-400 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl animate-in fade-in zoom-in-95 duration-500">
+                            <Calendar className="w-8 h-8 mb-2 opacity-20" />
+                            <p className="text-sm font-medium">Selecciona un día en el calendario</p>
+                            <p className="text-[10px] opacity-50 mt-1 max-w-[150px] text-center">Escoge una fecha para ver los horarios disponibles</p>
+                          </div>
+                        ) : availableTimes.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-12 text-slate-400 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
+                            <Clock className="w-8 h-8 mb-2 opacity-20" />
+                            <p className="text-sm px-4 text-center">{t("no_slots_available")}</p>
+                          </div>
+                        ) : (
+                          <>
+                            {[
+                              { label: "Mañana", icon: "🌅", range: [0, 11] },
+                              { label: "Tarde", icon: "☀️", range: [12, 17] },
+                              { label: "Noche", icon: "🌙", range: [18, 23] }
+                            ].map((section) => {
+                              const sectionTimes = (availableTimes as any[]).filter(t => {
+                                const hour = parseInt(t.time.split(':')[0], 10); // getAvailableSlots returns 24h 'time'
+                                return hour >= section.range[0] && hour <= section.range[1];
+                              });
 
-                            return (
-                              <div key={section.label} className="space-y-3">
-                                <div className="flex items-center gap-2 border-b border-slate-200 dark:border-white/5 pb-2">
-                                  <span className="text-lg">{section.icon}</span>
-                                  <h3 className="text-xs font-bold tracking-widest text-slate-600 dark:text-zinc-400">
-                                    {section.label}
-                                  </h3>
+                              if (sectionTimes.length === 0) return null;
+
+                              return (
+                                <div key={section.label} className="space-y-3">
+                                  <div className="flex items-center gap-2 border-b border-slate-200 dark:border-white/5 pb-2">
+                                    <span className="text-lg">{section.icon}</span>
+                                    <h3 className="text-xs font-bold tracking-widest text-slate-600 dark:text-zinc-400">
+                                      {section.label}
+                                    </h3>
+                                  </div>
+                                  <div className="grid grid-cols-4 gap-1.5">
+                                    {sectionTimes.map(({time, available}) => (
+                                      <button 
+                                        key={time}
+                                        onClick={() => available && setSelectedTime(time)}
+                                        disabled={!available}
+                                        className={`px-2 py-3 rounded-xl transition-all duration-300 flex flex-col items-center justify-center border ${
+                                          !available
+                                            ? "bg-slate-50 dark:bg-black/40 text-slate-300 dark:text-zinc-700 border-slate-100 dark:border-white/5 cursor-not-allowed hidden"
+                                            : selectedTime === time 
+                                              ? "bg-purple-600 text-white border-purple-500 shadow-md ring-2 ring-purple-500/20" 
+                                              : "bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-300"
+                                        }`}
+                                      >
+                                        <span className="font-bold text-[10px]">{time}</span>
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
-                                <div className="grid grid-cols-4 gap-1.5">
-                                  {sectionTimes.map(({displayTime, rawTime, available}) => (
-                                    <button 
-                                      key={rawTime}
-                                      onClick={() => available && handleSelectTime(displayTime)}
-                                      disabled={!available}
-                                      className={`px-2 py-3 rounded-xl transition-all duration-300 flex flex-col items-center justify-center border ${
-                                        !available
-                                          ? "bg-slate-50 dark:bg-black/40 text-slate-300 dark:text-zinc-700 border-slate-100 dark:border-white/5 cursor-not-allowed hidden" // Hiddens occupied to save space as requested
-                                          : selectedTime === displayTime 
-                                            ? "bg-purple-600 text-white border-purple-500 shadow-md ring-2 ring-purple-500/20" 
-                                            : "bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-300"
-                                      }`}
-                                    >
-                                      <span className="font-bold text-[10px]">{displayTime}</span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </>
-                      )}
+                              );
+                            })}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -856,7 +868,7 @@ export default function BookingWidget({
                   type="button"
                   onClick={(e) => {
                     e.preventDefault();
-                    handleConfirmTimes();
+                    setStep(4);
                   }}
                   disabled={!selectedTime || !selectedDate}
                   className="w-full py-4 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-100 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-zinc-600 text-white rounded-xl font-bold tracking-widest transition-all duration-300 shadow-lg active:scale-[0.98]"
