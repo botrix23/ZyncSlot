@@ -1,5 +1,5 @@
 import { db } from './index';
-import { tenants, branches, staff, services, products, bookings, users } from './schema';
+import { tenants, branches, staff, services, products, bookings, users, staffAssignments } from './schema';
 import bcrypt from 'bcryptjs';
 
 async function main() {
@@ -143,6 +143,19 @@ async function main() {
     ]).returning();
 
     console.log(`✅ ${newServices.length} servicios registrados`);
+
+    // 4.5 Asignar staff a la sucursal (Indispensable para disponibilidad)
+    await db.insert(staffAssignments).values(
+      newStaff.map(s => ({
+        tenantId: tenant.id,
+        staffId: s.id,
+        branchId: branchMain.id,
+        startTime: '08:00',
+        endTime: '18:00',
+        daysOfWeek: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+      }))
+    );
+    console.log('✅ Disponibilidad de staff configurada');
 
     // 5. Crear Productos Físicos en Venta
     await db.insert(products).values([

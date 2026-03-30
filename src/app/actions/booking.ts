@@ -222,9 +222,11 @@ export async function getAvailableSlots(dateStr: string, serviceId: string, bran
           }
         }
 
+        const isPast = isBefore(slotStart, new Date());
+
         slots.push({
           time: format(slotStart, "HH:mm"),
-          available: !isOccupied
+          available: !isOccupied && !isPast
         });
         
         current = addMinutes(current, 15); // Intervalos de 15 minutos

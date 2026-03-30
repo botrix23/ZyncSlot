@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isBefore, startOfToday } from "date-fns";
+import { es } from "date-fns/locale";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
 import { getAvailableSlots, createBookingAction } from "@/app/actions/booking";
 import { Calendar, Clock, ChevronRight, Check, X, ArrowLeft, User, MapPin, Truck, Mail, Phone, UserCircle, Loader2, CheckCircle2, XCircle, Instagram, Facebook, Music } from "lucide-react";
 
-type Branch = { id: string; name: string };
+type Branch = { id: string; name: string; businessHours?: string | null };
 type Service = { id: string; name: string; durationMinutes: number; price: string; includes: string[]; excludes: string[] };
 type Staff = { id: string; name: string };
 
@@ -101,6 +103,8 @@ export default function BookingWidget({
   const [showCountryList, setShowCountryList] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showCalendar, setShowCalendar] = useState(false);
 
   // Auto-detect country roughly by timezone
   useEffect(() => {
@@ -300,6 +304,70 @@ export default function BookingWidget({
     const dt = new Date(y, m - 1, d);
     return dt.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
   };
+
+  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+
+  // Helper to check if branch is open on a specific date
+  const isBranchOpen = (date: Date) => {
+    const targetBranch = selectedBranch || branches[0];
+    if (!targetBranch?.businessHours) return true; // Default open if no config
+
+    try {
+      const bh = JSON.parse(targetBranch.businessHours);
+      const dateStr = format(date, "yyyy-MM-dd");
+      const dayOfWeek = format(date, 'EEEE').toLowerCase(); // monday, etc.
+
+      // Check special dates first
+      if (bh.special?.[dateStr]) {
+        return bh.special[dateStr].isOpen;
+      }
+
+      // Check regular schedule
+      if (bh.regular?.[dayOfWeek]) {
+        return bh.regular[dayOfWeek].isOpen;
+      }
+
+      // Fallback for simple format: {"open": "08:00", "close": "18:00"}
+      if (bh.open && bh.close) return true;
+
+      return true; // Default open
+    } catch (e) {
+      return true;
+    }
+  };
+
+  const calendarDays = useMemo(() => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(monthStart);
+    const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
+    const rows = [];
+    let days = [];
+    let day = startDate;
+
+    while (day <= endDate) {
+      for (let i = 0; i < 7; i++) {
+        const formattedDate = format(day, "yyyy-MM-dd");
+        const isPast = isBefore(day, startOfToday());
+        const isOpen = isBranchOpen(day);
+        
+        days.push({
+          day,
+          formattedDate,
+          isDisabled: isPast || !isOpen,
+          isClosed: !isOpen && !isPast,
+          isCurrentMonth: isSameMonth(day, monthStart),
+          isSelected: selectedDate === formattedDate
+        });
+        day = addDays(day, 1);
+      }
+      rows.push(days);
+      days = [];
+    }
+    return rows;
+  }, [currentMonth, selectedDate, selectedBranch, branches]);
 
   const brand = primaryColor || '#9333ea';
 
@@ -652,29 +720,64 @@ export default function BookingWidget({
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-6 flex-1 overflow-hidden min-h-0">
-                  {/* DATE SELECTION - Vertical List or Mini Calendar */}
-                  <div className="w-full md:w-1/3 flex flex-col">
-                    <p className="text-[10px] font-bold text-slate-400 tracking-widest mb-2">
+                  {/* DATE SELECTION - Interactive Calendar */}
+                  <div className="w-full md:w-[280px] lg:w-[320px] flex flex-col shrink-0">
+                    <p className="text-[10px] font-bold text-slate-400 tracking-widest mb-3 uppercase">
                        {modality === 'domicilio' ? t("dates_home") : t("dates")}
                     </p>
-                    <div className="flex md:flex-col gap-2 overflow-auto custom-scrollbar md:pr-2 pb-2 md:pb-0">
-                      {nextDays.map((day) => (
-                        <button 
-                          key={day.fullDate}
-                          onClick={() => setSelectedDate(day.fullDate)}
-                          className={`flex items-center justify-between md:w-full min-w-[70px] px-3 py-2.5 rounded-xl border-2 transition-all duration-300 shrink-0 ${
-                            selectedDate === day.fullDate
-                              ? 'bg-purple-500/20 border-purple-500 text-purple-700 dark:text-purple-400 shadow-sm'
-                              : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 hover:border-slate-300 dark:hover:border-white/20'
-                          }`}
-                        >
-                          <div className="text-left">
-                            <p className="text-[10px] uppercase opacity-60 font-bold">{day.dayName}</p>
-                            <p className="text-lg font-black leading-none">{day.dayNum}</p>
-                          </div>
-                          {selectedDate === day.fullDate && <Check className="w-4 h-4 hidden md:block" />}
-                        </button>
-                      ))}
+                    
+                    <div className="bg-white/5 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 p-4 shadow-xl overflow-hidden relative group">
+                       {/* Month Navigation */}
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-black capitalize dark:text-white">
+                          {format(currentMonth, "MMMM yyyy", { locale: es })}
+                        </h3>
+                        <div className="flex gap-1">
+                          <button onClick={prevMonth} className="p-1 px-1.5 hover:bg-white/10 rounded-lg transition-colors border border-transparent hover:border-white/10">
+                            <ArrowLeft className="w-4 h-4" />
+                          </button>
+                          <button onClick={nextMonth} className="p-1 px-1.5 hover:bg-white/10 rounded-lg transition-colors border border-transparent hover:border-white/10">
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Weekday Names */}
+                      <div className="grid grid-cols-7 mb-2">
+                        {['LU', 'MA', 'MI', 'JU', 'VI', 'SA', 'DO'].map(d => (
+                          <div key={d} className="text-[10px] font-bold text-slate-500 text-center">{d}</div>
+                        ))}
+                      </div>
+
+                      {/* Calendar Grid */}
+                      <div className="grid grid-cols-7 gap-1">
+                        {calendarDays.flat().map((d, i) => (
+                          <button
+                            key={i}
+                            disabled={d.isDisabled}
+                            onClick={() => {
+                              setSelectedDate(d.formattedDate);
+                              // If it's a padding day from another month, navigate to that month too
+                              if (!d.isCurrentMonth) {
+                                setCurrentMonth(startOfMonth(d.day));
+                              }
+                            }}
+                            className={`
+                              h-9 sm:h-10 text-xs font-bold rounded-lg transition-all duration-300 relative
+                              ${d.isDisabled ? 'text-slate-300 dark:text-zinc-700 opacity-50 cursor-not-allowed' : 'hover:scale-110'}
+                              ${!d.isCurrentMonth ? 'opacity-40 grayscale-[0.5]' : ''}
+                              ${d.isClosed ? 'bg-rose-500/10 text-rose-500/50' : ''}
+                              ${d.isSelected 
+                                ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30 ring-2 ring-purple-500/50 scale-105 !opacity-100 !grayscale-0' 
+                                : d.isDisabled ? '' : 'bg-white dark:bg-white/5 text-slate-700 dark:text-white border border-transparent hover:border-purple-500/30'}
+                            `}
+                          >
+                            {format(d.day, "d")}
+                            {d.isClosed && !d.isSelected && <div className="absolute top-1 right-1 w-1 h-1 bg-rose-500 rounded-full"></div>}
+                            {d.isSelected && <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full"></div>}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -685,12 +788,13 @@ export default function BookingWidget({
                       {isLoadingTimes ? (
                         <div className="flex flex-col items-center justify-center py-12">
                           <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-                          <p className="mt-2 text-xs text-slate-400">Verificando...</p>
+                          <p className="mt-2 text-xs text-slate-400">Verificando disponibilidad...</p>
                         </div>
                       ) : !selectedDate ? (
-                        <div className="flex flex-col items-center justify-center py-12 text-slate-400 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
+                        <div className="flex flex-col items-center justify-center py-12 text-slate-400 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl animate-in fade-in zoom-in-95 duration-500">
                           <Calendar className="w-8 h-8 mb-2 opacity-20" />
-                          <p className="text-sm">Elige un día primero</p>
+                          <p className="text-sm font-medium">Selecciona un día en el calendario</p>
+                          <p className="text-[10px] opacity-50 mt-1 max-w-[150px] text-center">Escoge una fecha para ver los horarios disponibles</p>
                         </div>
                       ) : availableTimes.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-slate-400 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
