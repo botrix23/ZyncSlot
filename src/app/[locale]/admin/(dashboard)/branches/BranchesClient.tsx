@@ -11,7 +11,6 @@ import {
   Edit2,
   X,
   Clock,
-  Calendar as CalendarIcon,
   MoreVertical
 } from 'lucide-react';
 import { createBranchAction, updateBranchAction, deleteBranchAction } from "@/app/actions/branches";
@@ -19,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useCallback } from "react";
 import PhoneInput from "@/components/PhoneInput";
 import BusinessHoursPicker from "@/components/BusinessHoursPicker";
-import BlockManager from "../../../../../components/BlockManager";
+
 import { useTranslations } from "next-intl";
 
 export default function BranchesClient({ 
@@ -34,8 +33,7 @@ export default function BranchesClient({
   const t = useTranslations('Dashboard.branches');
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
-  const [selectedBranchForBlocks, setSelectedBranchForBlocks] = useState<any | null>(null);
+
   const [editingBranch, setEditingBranch] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -327,19 +325,7 @@ export default function BranchesClient({
           </div>
         </div>
       )}
-      {/* Block Manager Modal */}
-      {isBlockModalOpen && selectedBranchForBlocks && (
-        <BlockManager 
-          branchId={selectedBranchForBlocks.id}
-          branchName={selectedBranchForBlocks.name}
-          tenantId={tenantId}
-          staff={staff}
-          onClose={() => {
-            setIsBlockModalOpen(false);
-            setSelectedBranchForBlocks(null);
-          }}
-        />
-      )}
+
 
       {/* Actions Dropdown */}
       {openMenu && menuPos && (
@@ -348,19 +334,7 @@ export default function BranchesClient({
           style={{ position: 'fixed', top: menuPos.top, left: menuPos.left, zIndex: 9999 }}
           className="w-44 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
         >
-          <button 
-            onClick={() => {
-              const b = initialBranches.find(b => b.id === openMenu);
-              if (b) {
-                setSelectedBranchForBlocks(b);
-                setIsBlockModalOpen(true);
-                setOpenMenu(null);
-              }
-            }}
-            className="w-full text-left px-4 py-3 text-sm text-slate-700 dark:text-zinc-300 hover:bg-purple-500/10 hover:text-purple-500 transition-colors flex items-center gap-2 font-bold"
-          >
-            <CalendarIcon className="w-4 h-4" /> {t('blocks')}
-          </button>
+
           <button 
             onClick={() => {
               const b = initialBranches.find(b => b.id === openMenu);

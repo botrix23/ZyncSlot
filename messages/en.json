@@ -249,8 +249,8 @@
         "assignmentsLabel": "Assignments and Rotations (Max 3)",
         "addAssignment": "Add Period",
         "branchSelect": "Branch",
-        "from": "From (Optional)",
-        "to": "To (Optional)",
+        "from": "Start date (optional)",
+        "to": "End date (optional)",
         "daysOfWeek": "Days of the week"
       },
       "confirmDelete": "Are you sure you want to delete \"{name}\"?",

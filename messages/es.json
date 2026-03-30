@@ -249,8 +249,8 @@
         "assignmentsLabel": "Asignaciones y Rotación (Máx 3)",
         "addAssignment": "Añadir Periodo",
         "branchSelect": "Sucursal",
-        "from": "Desde (Opcional)",
-        "to": "Hasta (Opcional)",
+        "from": "Fecha de inicio (opcional)",
+        "to": "Fecha de fin (opcional)",
         "daysOfWeek": "Días de la semana"
       },
       "confirmDelete": "¿Estás seguro de eliminar a \"{name}\"?",

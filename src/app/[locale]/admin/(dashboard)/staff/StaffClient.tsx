@@ -10,7 +10,11 @@ import {
   Edit2,
   X,
   ChevronRight,
-  MoreVertical
+  MoreVertical,
+  Infinity,
+  CalendarDays,
+  Clock,
+  Building2
 } from 'lucide-react';
 import { createStaffAction, updateStaffAction, deleteStaffAction } from "@/app/actions/staff";
 import { useRouter } from "next/navigation";
@@ -319,106 +323,185 @@ export default function StaffClient({
               </div>
 
               <div className="space-y-4">
+                {/* Header de sección */}
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{t('form.assignmentsLabel')}</label>
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{t('form.assignmentsLabel')}</label>
+                    <p className="text-[10px] text-slate-400 dark:text-zinc-500 ml-1 mt-0.5">Define dónde y cuándo trabaja este agente</p>
+                  </div>
                   {formData.assignments.length < 3 && (
                     <button 
                       type="button"
                       onClick={handleAddAssignment}
-                      className="text-[10px] font-black uppercase tracking-widest text-purple-600 hover:text-purple-500 flex items-center gap-1 transition-colors"
+                      className="text-[10px] font-black text-purple-600 hover:text-purple-500 flex items-center gap-1.5 transition-colors bg-purple-500/10 hover:bg-purple-500/20 px-3 py-2 rounded-xl"
                     >
-                      <Plus className="w-3 h-3" /> {t('form.addAssignment')}
+                      <Building2 className="w-3 h-3" /> + Añadir sucursal
                     </button>
                   )}
                 </div>
 
-                <div className="space-y-6">
-                  {formData.assignments.map((assignment, index) => (
-                    <div key={index} className="p-6 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[24px] space-y-4 relative animate-in slide-in-from-top-2 duration-300">
-                      {formData.assignments.length > 1 && (
-                        <button 
-                          type="button"
-                          onClick={() => handleRemoveAssignment(index)}
-                          className="absolute top-4 right-4 p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2 md:col-span-2">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.branchSelect')}</label>
-                            <select 
-                                required
-                                value={assignment.branchId}
-                                onChange={e => handleAssignmentChange(index, 'branchId', e.target.value)}
-                                className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold focus:ring-2 focus:ring-purple-500 outline-none"
-                            >
-                                <option value="">{t('form.branchPlaceholder')}</option>
-                                {branches.map(b => (
-                                    <option key={b.id} value={b.id}>{b.name}</option>
-                                ))}
-                            </select>
+                <div className="space-y-4">
+                  {formData.assignments.map((assignment, index) => {
+                    const isTemporary = !!(assignment.startDate || assignment.endDate);
+                    return (
+                    <div key={index} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[20px] overflow-hidden animate-in slide-in-from-top-2 duration-300">
+                      
+                      {/* Header de la asignación */}
+                      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200/60 dark:border-white/5">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-3.5 h-3.5 text-purple-500" />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-zinc-400">
+                            {index === 0 ? 'Sucursal principal' : `Sucursal ${index + 1}`}
+                          </span>
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.from')} (Fecha)</label>
-                            <input 
+                        {formData.assignments.length > 1 && (
+                          <button 
+                            type="button"
+                            onClick={() => handleRemoveAssignment(index)}
+                            className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="p-5 space-y-5">
+                        {/* Selector de sucursal */}
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Sucursal</label>
+                          <select 
+                            required
+                            value={assignment.branchId}
+                            onChange={e => handleAssignmentChange(index, 'branchId', e.target.value)}
+                            className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold focus:ring-2 focus:ring-purple-500 outline-none"
+                          >
+                            <option value="">Seleccionar sucursal...</option>
+                            {branches.map(b => (
+                              <option key={b.id} value={b.id}>{b.name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Toggle Permanente / Temporal */}
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Tipo de asignación</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleAssignmentChange(index, 'startDate', '');
+                                handleAssignmentChange(index, 'endDate', '');
+                              }}
+                              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all border ${
+                                !isTemporary
+                                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                                  : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-white/10 text-slate-400 hover:border-slate-300'
+                              }`}
+                            >
+                              <Infinity className="w-3.5 h-3.5" />
+                              Permanente
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!assignment.startDate) {
+                                  const today = new Date().toISOString().split('T')[0];
+                                  handleAssignmentChange(index, 'startDate', today);
+                                }
+                              }}
+                              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all border ${
+                                isTemporary
+                                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400 shadow-sm'
+                                  : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-white/10 text-slate-400 hover:border-slate-300'
+                              }`}
+                            >
+                              <CalendarDays className="w-3.5 h-3.5" />
+                              Temporal
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Fechas — solo visibles en modo Temporal */}
+                        {isTemporary && (
+                          <div className="grid grid-cols-2 gap-3 p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl animate-in fade-in slide-in-from-top-1 duration-200">
+                            <div className="space-y-1.5">
+                              <label className="text-[9px] font-black uppercase tracking-widest text-amber-600/70">Desde</label>
+                              <input 
                                 type="date"
                                 value={assignment.startDate}
                                 onChange={e => handleAssignmentChange(index, 'startDate', e.target.value)}
-                                className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold focus:ring-2 focus:ring-purple-500 outline-none"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.to')} (Fecha)</label>
-                            <input 
+                                className="w-full p-2.5 bg-white dark:bg-zinc-800 border border-amber-300/40 dark:border-amber-500/20 rounded-lg text-xs font-bold focus:ring-2 focus:ring-amber-400 outline-none"
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-[9px] font-black uppercase tracking-widest text-amber-600/70">Hasta <span className="normal-case font-medium opacity-60">(opcional)</span></label>
+                              <input 
                                 type="date"
                                 value={assignment.endDate}
                                 onChange={e => handleAssignmentChange(index, 'endDate', e.target.value)}
-                                className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold focus:ring-2 focus:ring-purple-500 outline-none"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Hora Inicio</label>
-                            <input 
+                                className="w-full p-2.5 bg-white dark:bg-zinc-800 border border-amber-300/40 dark:border-amber-500/20 rounded-lg text-xs font-bold focus:ring-2 focus:ring-amber-400 outline-none"
+                              />
+                            </div>
+                            {!assignment.endDate && (
+                              <p className="col-span-2 text-[9px] text-amber-600/60 -mt-1">
+                                💡 Sin fecha de fin, el agente permanece activo desde el inicio indefinidamente.
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Horario de trabajo */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="w-3 h-3 text-slate-400" />
+                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Horario de trabajo</label>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-[9px] text-slate-400 font-medium">Entrada</label>
+                              <input 
                                 type="time"
                                 value={assignment.startTime}
                                 onChange={e => handleAssignmentChange(index, 'startTime', e.target.value)}
-                                className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold focus:ring-2 focus:ring-purple-500 outline-none"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Hora Fin</label>
-                            <input 
+                                className="w-full p-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-lg text-xs font-bold focus:ring-2 focus:ring-purple-500 outline-none"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[9px] text-slate-400 font-medium">Salida</label>
+                              <input 
                                 type="time"
                                 value={assignment.endTime}
                                 onChange={e => handleAssignmentChange(index, 'endTime', e.target.value)}
-                                className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold focus:ring-2 focus:ring-purple-500 outline-none"
-                            />
+                                className="w-full p-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-lg text-xs font-bold focus:ring-2 focus:ring-purple-500 outline-none"
+                              />
+                            </div>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="space-y-2">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.daysOfWeek')}</label>
-                        <div className="flex flex-wrap gap-2">
+                        {/* Días activos */}
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Días activos</label>
+                          <div className="flex flex-wrap gap-1.5">
                             {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => (
-                                <button
-                                    key={day}
-                                    type="button"
-                                    onClick={() => toggleDay(index, day)}
-                                    className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                                        assignment.daysOfWeek.includes(day)
-                                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                                        : 'bg-white dark:bg-zinc-800 text-slate-400 border border-slate-200 dark:border-white/10'
-                                    }`}
-                                >
-                                    {dayAbbreviations[day]}
-                                </button>
+                              <button
+                                key={day}
+                                type="button"
+                                onClick={() => toggleDay(index, day)}
+                                className={`w-10 h-10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                                  assignment.daysOfWeek.includes(day)
+                                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20 scale-105'
+                                    : 'bg-white dark:bg-zinc-800 text-slate-400 border border-slate-200 dark:border-white/10 hover:border-purple-400/50'
+                                }`}
+                              >
+                                {dayAbbreviations[day]}
+                              </button>
                             ))}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 

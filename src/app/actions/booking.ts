@@ -112,13 +112,18 @@ export async function getAvailableSlots(
     const dayEndRange = addMinutes(localDayEnd, -offsetMinutes);
 
     // 4. Identificar STAFF ACTIVO en esta sucursal para este día
-    // Un staff es activo si tiene una asignación que cubra esta fecha y el día de la semana.
+    // Usamos límites UTC seguros para la comparación de fechas:
+    // Las fechas de asignación se guardan a mediodía UTC (T12:00:00Z), así que
+    // comparamos contra el inicio del día UTC (T00:00:00Z) y el fin del día UTC (T23:59:59Z)
+    const utcDayStart = new Date(`${dateStr}T00:00:00Z`);
+    const utcDayEnd   = new Date(`${dateStr}T23:59:59Z`);
+
     const activeAssignments = await db.query.staffAssignments.findMany({
       where: and(
         eq(staffAssignments.branchId, branchId),
-        // Rango de fechas
-        or(isNull(staffAssignments.startDate), lte(staffAssignments.startDate, localDayEnd)),
-        or(isNull(staffAssignments.endDate), gte(staffAssignments.endDate, localDayStart))
+        // Rango de fechas (tolerante a timezone)
+        or(isNull(staffAssignments.startDate), lte(staffAssignments.startDate, utcDayEnd)),
+        or(isNull(staffAssignments.endDate), gte(staffAssignments.endDate, utcDayStart))
       )
     });
 
