@@ -68,7 +68,9 @@
     "i_agree_to_terms": "Acepto los términos y condiciones",
     "selected_services": "Servicios seleccionados",
     "resume": "Resumen",
-    "continue": "Continuar"
+    "continue": "Continuar",
+    "comments": "Comentarios / Notas",
+    "comments_placeholder": "¿Algo que debamos saber? (Opcional)"
   },
   "Login": {
     "title": "Iniciar sesión",
@@ -244,6 +246,7 @@
       "verified": "Verificado",
       "role": "Profesional",
       "noEmail": "Sin email",
+      "noPhone": "Sin teléfono",
       "form": {
         "titleNew": "Añadir miembro",
         "titleEdit": "Editar miembro",
@@ -252,6 +255,8 @@
         "emailLabel": "Correo electrónico",
         "branchLabel": "Sucursal principal",
         "branchPlaceholder": "Selecciona una sucursal",
+        "phoneLabel": "Número de teléfono",
+        "phonePlaceholder": "Ej: +503 7000-0000",
         "save": "Guardar cambios",
         "create": "Añadir miembro",
         "rotationTitle": "Gestión de Staff y Rotaciones",
@@ -391,5 +396,18 @@
         "renewNow": "Renovar ahora"
       }
     }
+  },
+  "Review": {
+    "title": "¿Cómo fue tu experiencia?",
+    "subtitle": "Cuéntanos qué tal te atendió {staff} hoy.",
+    "ratingLabel": "Calificación",
+    "commentLabel": "Comentario (Opcional)",
+    "commentPlaceholder": "Tu feedback nos ayuda a mejorar...",
+    "submit": "Enviar reseña",
+    "success": "¡Gracias por tu feedback!",
+    "successSubtitle": "Apreciamos tu tiempo y preferencia.",
+    "alreadyReviewed": "Esta cita ya ha sido calificada.",
+    "notFound": "Cita no encontrada.",
+    "invalidRating": "Por favor selecciona una calificación."
   }
 }

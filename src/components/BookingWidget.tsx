@@ -122,6 +122,7 @@ export default function BookingWidget({
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
+  const [guestNotes, setGuestNotes] = useState("");
   const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
   const [showCountryList, setShowCountryList] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -347,6 +348,7 @@ export default function BookingWidget({
         customerEmail: guestEmail,
         customerPhone: guestPhone ? `${selectedCountry.prefix} ${guestPhone}` : undefined,
         zoneId: selectedZone?.id,
+        notes: guestNotes,
         bookings: sessionBookingsData
       });
 
@@ -1243,6 +1245,17 @@ export default function BookingWidget({
                       <input type="tel" value={guestPhone} onChange={e => setGuestPhone(e.target.value.replace(/\D/g, ''))} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"/>
                     </div>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-500 dark:text-zinc-400 tracking-wider mb-2">{t("comments")}</label>
+                  <textarea 
+                    value={guestNotes} 
+                    onChange={e => setGuestNotes(e.target.value)} 
+                    placeholder={t("comments_placeholder")} 
+                    rows={3}
+                    className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-4 px-4 text-slate-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all resize-none"
+                  />
                 </div>
 
                 {modality === 'domicilio' && homeServiceTermsEnabled && (

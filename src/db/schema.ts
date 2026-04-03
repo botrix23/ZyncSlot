@@ -62,6 +62,7 @@ export const staff = pgTable('staff', {
   branchId: uuid('branch_id').notNull().references(() => branches.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }),
+  phone: varchar('phone', { length: 30 }),
   allowsHomeService: boolean('allows_home_service').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
@@ -119,6 +120,7 @@ export const bookingSessions = pgTable('booking_sessions', {
   customerEmail: varchar('customer_email', { length: 255 }).notNull(),
   customerPhone: varchar('customer_phone', { length: 30 }),
   totalPrice: decimal('total_price', { precision: 10, scale: 2 }).notNull().default('0.00'),
+  notes: text('notes'),
   status: varchar('status', { length: 50 }).notNull().default('PENDING'), 
   zoneId: uuid('zone_id').references(() => coverageZones.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
@@ -205,6 +207,17 @@ export const auditLogs = pgTable('audit_logs', {
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
 
+// 11. Reviews (Calificaciones de clientes al staff)
+export const reviews = pgTable('reviews', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  bookingId: uuid('booking_id').notNull().references(() => bookings.id, { onDelete: 'cascade' }),
+  staffId: uuid('staff_id').notNull().references(() => staff.id, { onDelete: 'cascade' }),
+  rating: integer('rating').notNull(), // 1 to 5
+  comment: text('comment'),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+});
+
 export const tenantsRelations = relations(tenants, ({ many }) => ({
   users: many(users),
   branches: many(branches),
@@ -227,6 +240,7 @@ export const staffRelations = relations(staff, ({ one, many }) => ({
   branch: one(branches, { fields: [staff.branchId], references: [branches.id] }),
   bookings: many(bookings),
   assignments: many(staffAssignments),
+  reviews: many(reviews),
 }));
 
 export const servicesRelations = relations(services, ({ one, many }) => ({
@@ -247,6 +261,7 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
   staff: one(staff, { fields: [bookings.staffId], references: [staff.id] }),
   service: one(services, { fields: [bookings.serviceId], references: [services.id] }),
   session: one(bookingSessions, { fields: [bookings.sessionId], references: [bookingSessions.id] }),
+  review: one(reviews, { fields: [bookings.id], references: [reviews.bookingId] }),
 }));
 
 export const bookingSessionsRelations = relations(bookingSessions, ({ one, many }) => ({
@@ -258,4 +273,10 @@ export const bookingSessionsRelations = relations(bookingSessions, ({ one, many 
 export const coverageZonesRelations = relations(coverageZones, ({ one, many }) => ({
   tenant: one(tenants, { fields: [coverageZones.tenantId], references: [tenants.id] }),
   sessions: many(bookingSessions),
+}));
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  tenant: one(tenants, { fields: [reviews.tenantId], references: [tenants.id] }),
+  booking: one(bookings, { fields: [reviews.bookingId], references: [bookings.id] }),
+  staff: one(staff, { fields: [reviews.staffId], references: [staff.id] }),
 }));

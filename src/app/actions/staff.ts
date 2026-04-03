@@ -10,6 +10,7 @@ export async function createStaffAction(data: {
   branchId: string; // Legacy/Primary branch
   name: string;
   email?: string;
+  phone?: string;
   allowsHomeService?: boolean;
   assignments?: Array<{
     branchId: string;
@@ -27,6 +28,7 @@ export async function createStaffAction(data: {
       branchId: data.branchId,
       name: data.name,
       email: data.email,
+      phone: data.phone,
       allowsHomeService: data.allowsHomeService ?? true,
     }).returning();
 
@@ -71,6 +73,7 @@ export async function updateStaffAction(data: {
   branchId?: string;
   name?: string;
   email?: string;
+  phone?: string;
   allowsHomeService?: boolean;
   assignments?: Array<{
     branchId: string;
@@ -90,6 +93,7 @@ export async function updateStaffAction(data: {
           branchId: data.branchId,
           name: data.name,
           email: data.email,
+          phone: data.phone,
           allowsHomeService: data.allowsHomeService,
           updatedAt: new Date(),
         })

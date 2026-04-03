@@ -377,6 +377,7 @@ export async function createBookingSessionAction(data: {
   customerEmail: string;
   customerPhone?: string;
   zoneId?: string;
+  notes?: string;
   bookings: {
     branchId: string;
     serviceId: string;
@@ -437,6 +438,7 @@ export async function createBookingSessionAction(data: {
         customerEmail: data.customerEmail,
         customerPhone: data.customerPhone,
         zoneId: data.zoneId,
+        notes: data.notes,
         totalPrice: finalTotalPrice,
         status: 'CONFIRMED'
       }).returning();
@@ -542,6 +544,26 @@ export async function deleteBookingAction(id: string, tenantId: string) {
   } catch (error) {
     console.error("Error deleting booking:", error);
     return { success: false, error: "Failed to delete booking" };
+  }
+}
+
+/**
+ * Obtiene una reserva por ID con todos sus detalles.
+ */
+export async function getBookingAction(id: string) {
+  try {
+    return await db.query.bookings.findFirst({
+      where: eq(bookings.id, id),
+      with: {
+        service: true,
+        branch: true,
+        staff: true,
+        tenant: true
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching booking:", error);
+    return null;
   }
 }
 

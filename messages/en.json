@@ -68,7 +68,9 @@
     "i_agree_to_terms": "I agree to the terms and conditions",
     "selected_services": "Selected services",
     "resume": "Resume",
-    "continue": "Continue"
+    "continue": "Continue",
+    "comments": "Comments / Notes",
+    "comments_placeholder": "Anything we should know? (Optional)"
   },
   "Login": {
     "title": "Login",
@@ -244,6 +246,7 @@
       "verified": "Verified",
       "role": "Professional",
       "noEmail": "No email",
+      "noPhone": "No phone",
       "form": {
         "titleNew": "Add member",
         "titleEdit": "Edit member",
@@ -252,6 +255,8 @@
         "emailLabel": "Email address",
         "branchLabel": "Primary branch",
         "branchPlaceholder": "Select a branch",
+        "phoneLabel": "Phone number",
+        "phonePlaceholder": "e.g. +503 7000-0000",
         "save": "Save changes",
         "create": "Add member",
         "rotationTitle": "Staff Management and Rotations",
@@ -391,5 +396,18 @@
         "renewNow": "Renew now"
       }
     }
+  },
+  "Review": {
+    "title": "How was your experience?",
+    "subtitle": "Tell us how {staff} served you today.",
+    "ratingLabel": "Rating",
+    "commentLabel": "Comment (Optional)",
+    "commentPlaceholder": "Your feedback helps us improve...",
+    "submit": "Submit Review",
+    "success": "Thank you for your feedback!",
+    "successSubtitle": "We appreciate your time and preference.",
+    "alreadyReviewed": "This booking has already been reviewed.",
+    "notFound": "Booking not found.",
+    "invalidRating": "Please select a rating."
   }
 }

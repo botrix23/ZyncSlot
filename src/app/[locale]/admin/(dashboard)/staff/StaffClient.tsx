@@ -14,7 +14,8 @@ import {
   Infinity,
   CalendarDays,
   Clock,
-  Building2
+  Building2,
+  Phone
 } from 'lucide-react';
 import { createStaffAction, updateStaffAction, deleteStaffAction } from "@/app/actions/staff";
 import { useRouter } from "next/navigation";
@@ -44,6 +45,7 @@ export default function StaffClient({
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     branchId: branches[0]?.id || "", // Mantener para compatibilidad
     assignments: [] as any[],
     allowsHomeService: true
@@ -73,6 +75,7 @@ export default function StaffClient({
       setFormData({
         name: member.name,
         email: member.email || "",
+        phone: member.phone || "",
         branchId: member.branchId,
         assignments: assignments,
         allowsHomeService: member.allowsHomeService ?? true
@@ -82,6 +85,7 @@ export default function StaffClient({
       setFormData({
         name: "",
         email: "",
+        phone: "",
         branchId: branches[0]?.id || "",
         assignments: [{
           branchId: branches[0]?.id || "",
@@ -314,6 +318,10 @@ export default function StaffClient({
                     <Mail className="w-3.5 h-3.5" />
                     <span className="text-[10px] font-bold truncate tracking-tight">{member.email || t('noEmail')}</span>
                 </div>
+                <div className="flex items-center gap-3 text-slate-500 dark:text-zinc-500 bg-slate-50 dark:bg-white/5 p-2 rounded-xl">
+                    <Phone className="w-3.5 h-3.5" />
+                    <span className="text-[10px] font-bold truncate tracking-tight">{member.phone || t('noPhone')}</span>
+                </div>
                 {!activeOverride && member.assignments?.filter((a: any) => !a.isPermanent).length > 0 && (
                    <div className="flex items-center justify-center gap-1 text-[8px] font-bold text-slate-400">
                      <Clock className="w-2.5 h-2.5" />
@@ -364,6 +372,17 @@ export default function StaffClient({
                     onChange={e => setFormData({...formData, email: e.target.value})}
                     className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-medium"
                     placeholder="email@ejemplo.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{t('form.phoneLabel')}</label>
+                  <input 
+                    type="tel" 
+                    value={formData.phone}
+                    onChange={e => setFormData({...formData, phone: e.target.value})}
+                    className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-medium"
+                    placeholder={t('form.phonePlaceholder')}
                   />
                 </div>
               </div>
