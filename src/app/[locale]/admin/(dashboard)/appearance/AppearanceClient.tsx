@@ -17,7 +17,8 @@ import { useTranslations } from "next-intl";
 import PhoneInput from "@/components/PhoneInput";
 
 export default function AppearanceClient({
-  tenant
+  tenant,
+  initialZones
 }: {
   tenant: {
     id: string;

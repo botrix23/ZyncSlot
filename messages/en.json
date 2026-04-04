@@ -329,7 +329,8 @@
       "exitSupport": "Back to super admin",
       "exiting": "Exiting...",
       "logout": "Logout",
-      "business": "Business"
+      "business": "Business",
+      "surveys": "Surveys"
     },
     "portal": {
       "title": "My Web Portal",
@@ -406,8 +407,42 @@
     "submit": "Submit Review",
     "success": "Thank you for your feedback!",
     "successSubtitle": "We appreciate your time and preference.",
-    "alreadyReviewed": "This booking has already been reviewed.",
-    "notFound": "Booking not found.",
+    "alreadyReviewed": "This appointment has already been reviewed.",
+    "notFound": "Appointment not found.",
     "invalidRating": "Please select a rating."
+  },
+  "Surveys": {
+    "title": "Surveys & Satisfaction",
+    "subtitle": "Customize the questions your clients will see after their appointment.",
+    "enableToggle": "Enable survey system",
+    "enableDesc": "Allows clients to rate the service and staff after their appointment.",
+    "addQuestion": "New Question",
+    "noQuestions": "No questions configured yet.",
+    "questionsList": "Configured questions",
+    "questionText": "Question text",
+    "questionType": "Response type",
+    "isRequired": "Required",
+    "isActive": "Active",
+    "save": "Save question",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirmDelete": "Are you sure you want to delete this question?",
+    "category": "Category",
+    "categories": {
+      "STAFF": "Staff / Team",
+      "BUSINESS": "Business / Company"
+    },
+    "types": {
+      "STARS": "Stars (1-5)",
+      "YES_NO": "Yes / No",
+      "TEXT": "Text field",
+      "NPS": "NPS (Scale 0-10)"
+    },
+    "dropzone": "Drag to reorder",
+    "upgradeRequired": "Premium Feature",
+    "upgradeDesc": "To customize your survey system with specific questions, you need a PRO or ENTERPRISE subscription.",
+    "successSave": "Question saved successfully.",
+    "successDelete": "Question deleted.",
+    "successSettings": "Settings updated."
   }
 }

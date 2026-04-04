@@ -40,6 +40,7 @@ export const tenants = pgTable('tenants', {
     step4Title?: string;
     showSummaryOnLeft?: boolean;
   }>().default({}).notNull(),
+  reviewsEnabled: boolean('reviews_enabled').default(false).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
@@ -215,7 +216,22 @@ export const reviews = pgTable('reviews', {
   staffId: uuid('staff_id').notNull().references(() => staff.id, { onDelete: 'cascade' }),
   rating: integer('rating').notNull(), // 1 to 5
   comment: text('comment'),
+  responses: json('responses').$type<Array<{ questionId: string; answer: any; questionText?: string; questionType?: string }>>().default([]).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+});
+
+// 12. SurveyQuestions (Preguntas personalizadas para la encuesta)
+export const surveyQuestions = pgTable('survey_questions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  questionText: text('question_text').notNull(),
+  questionType: varchar('question_type', { length: 50 }).notNull().default('STARS'), // 'STARS' | 'YES_NO' | 'TEXT' | 'NPS'
+  category: varchar('category', { length: 50 }).notNull().default('STAFF'), // 'STAFF' | 'BUSINESS'
+  isRequired: boolean('is_required').default(true).notNull(),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
 
 export const tenantsRelations = relations(tenants, ({ many }) => ({
@@ -279,4 +295,8 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
   tenant: one(tenants, { fields: [reviews.tenantId], references: [tenants.id] }),
   booking: one(bookings, { fields: [reviews.bookingId], references: [bookings.id] }),
   staff: one(staff, { fields: [reviews.staffId], references: [staff.id] }),
+}));
+
+export const surveyQuestionsRelations = relations(surveyQuestions, ({ one }) => ({
+  tenant: one(tenants, { fields: [surveyQuestions.tenantId], references: [tenants.id] }),
 }));

@@ -9,8 +9,15 @@ export async function createReviewAction(data: {
   tenantId: string;
   bookingId: string;
   staffId: string;
-  rating: number;
+  rating: number; // Primary/Global rating
   comment?: string;
+  responses?: Array<{ 
+    questionId: string; 
+    answer: any; 
+    questionText?: string; 
+    questionType?: string; 
+    category?: string;
+  }>;
 }) {
   try {
     // Check if review already exists for this booking
@@ -22,12 +29,28 @@ export async function createReviewAction(data: {
       return { success: false, error: "REVIEW_ALREADY_EXISTS" };
     }
 
+    // Calculate average rating from responses if rating is not provided
+    let finalRating = data.rating;
+    if (data.responses && data.responses.length > 0) {
+      // Filtrar solo preguntas de tipo ESTRELLA para el promedio general
+      const starRatings = data.responses
+        .filter(r => r.questionType === 'STARS' && typeof r.answer === 'number')
+        .map(r => r.answer as number);
+      
+      if (starRatings.length > 0) {
+        // Promedio simple redondeado
+        const avg = starRatings.reduce((a, b) => a + b, 0) / starRatings.length;
+        finalRating = Math.round(avg * 10) / 10; // Guardamos un decimal para mayor precisión en el dashboard
+      }
+    }
+
     const [newReview] = await db.insert(reviews).values({
       tenantId: data.tenantId,
       bookingId: data.bookingId,
       staffId: data.staffId,
-      rating: data.rating,
+      rating: finalRating,
       comment: data.comment,
+      responses: data.responses || [],
     }).returning();
 
     revalidatePath("/[locale]/admin/staff", "page");

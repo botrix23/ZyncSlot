@@ -15,7 +15,9 @@ import {
   CalendarDays,
   Clock,
   Building2,
-  Phone
+  Phone,
+  Star,
+  MessageSquare
 } from 'lucide-react';
 import { createStaffAction, updateStaffAction, deleteStaffAction } from "@/app/actions/staff";
 import { useRouter } from "next/navigation";
@@ -39,6 +41,8 @@ export default function StaffClient({
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [isReviewsModalOpen, setIsReviewsModalOpen] = useState(false);
+  const [selectedStaffReviews, setSelectedStaffReviews] = useState<any | null>(null);
   const router = useRouter();
 
   // Form State
@@ -220,10 +224,12 @@ export default function StaffClient({
       return;
     }
     const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-    setMenuPos({ 
-      top: rect.bottom + window.scrollY + 4, 
-      left: rect.right - 176, // 176 = w-44
-    });
+    if (rect) {
+      setMenuPos({ 
+        top: rect.bottom + window.scrollY + 4, 
+        left: rect.right - 176, // 176 = w-44
+      });
+    }
     setOpenMenu(memberId);
   }, [openMenu]);
 
@@ -269,6 +275,11 @@ export default function StaffClient({
           const permanentBranch = member.assignments?.find((a: any) => a.isPermanent)?.branchId;
           const branchName = branches.find(b => b.id === (activeOverride?.branchId || permanentBranch))?.name;
 
+          // Calcular promedio de rating
+          const avgRating = member.reviews?.length > 0 
+            ? (member.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / member.reviews.length).toFixed(1)
+            : null;
+
           return (
           <div key={member.id} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm hover:shadow-xl hover:shadow-purple-500/5 transition-all group overflow-hidden relative">
             <div className="absolute top-0 right-0 p-4">
@@ -290,26 +301,37 @@ export default function StaffClient({
                 </div>
               </div>
               
-              <div>
+              <div className="flex flex-col items-center">
                 <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{member.name}</h3>
-                <div className="mt-1 flex flex-col items-center gap-1">
-                  <p className="text-[10px] font-bold text-purple-600 tracking-widest uppercase">
-                    {branchName || 'Sin sucursal'}
-                  </p>
-                  <div className="flex flex-wrap items-center justify-center gap-1 mt-1">
-                    {activeOverride && (
-                      <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[8px] font-black rounded-full border border-amber-500/20 animate-pulse">
-                        <CalendarDays className="w-2.5 h-2.5" />
-                        TEMPORAL
-                      </span>
-                    )}
-                    {member.allowsHomeService && (
-                      <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[8px] font-black rounded-full border border-emerald-500/20">
-                        <Plus className="w-2.5 h-2.5" />
-                        HOME SERVICE OK
-                      </span>
-                    )}
+                {avgRating && (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star key={star} className={`w-2.5 h-2.5 ${star <= Math.round(Number(avgRating)) ? 'text-yellow-400 fill-current' : 'text-slate-200 dark:text-zinc-800'}`} />
+                      ))}
+                    </div>
+                    <span className="text-[10px] font-black text-slate-400 ml-1 leading-none">{avgRating}</span>
                   </div>
+                )}
+              </div>
+
+              <div className="mt-1 flex flex-col items-center gap-1 w-full">
+                <p className="text-[10px] font-bold text-purple-600 tracking-widest uppercase">
+                  {branchName || 'Sin sucursal'}
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-1 mt-1">
+                  {activeOverride && (
+                    <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[8px] font-black rounded-full border border-amber-500/20 animate-pulse">
+                      <CalendarDays className="w-2.5 h-2.5" />
+                      TEMPORAL
+                    </span>
+                  )}
+                  {member.allowsHomeService && (
+                    <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[8px] font-black rounded-full border border-emerald-500/20">
+                      <Plus className="w-2.5 h-2.5" />
+                      HOME SERVICE OK
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -555,6 +577,21 @@ export default function StaffClient({
           >
             <Edit2 className="w-4 h-4" /> {t('form.titleEdit')}
           </button>
+          
+          <button 
+            onClick={() => {
+              const m = initialStaff.find(m => m.id === openMenu);
+              if (m) {
+                setSelectedStaffReviews(m);
+                setIsReviewsModalOpen(true);
+              }
+              setOpenMenu(null);
+            }}
+            className="w-full text-left px-4 py-3 text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors flex items-center gap-2 font-bold"
+          >
+            <Star className="w-4 h-4 text-yellow-500" /> Ver Reseñas
+          </button>
+
           <div className="border-t border-slate-100 dark:border-white/5">
             <button 
               onClick={() => {
@@ -567,6 +604,67 @@ export default function StaffClient({
               <Trash2 className="w-4 h-4" /> {t('confirmDelete', { name: '' }).replace('Are you sure you want to delete ""?', 'Delete').replace('¿Estás seguro de eliminar a ""?', 'Eliminar')}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Reviews Modal */}
+      {isReviewsModalOpen && selectedStaffReviews && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[80vh]">
+              <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-zinc-800/50">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black text-xl">
+                    {selectedStaffReviews.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black tracking-tight">{selectedStaffReviews.name}</h3>
+                    <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Historial de Reseñas</p>
+                  </div>
+                </div>
+                <button onClick={() => setIsReviewsModalOpen(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full transition-all">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto custom-scrollbar space-y-4">
+                {(!selectedStaffReviews.reviews || selectedStaffReviews.reviews.length === 0) ? (
+                  <div className="text-center py-12 space-y-3">
+                    <MessageSquare className="w-12 h-12 text-slate-200 mx-auto" />
+                    <p className="text-sm font-bold text-slate-400">Aún no hay reseñas para este miembro.</p>
+                  </div>
+                ) : (
+                  selectedStaffReviews.reviews.map((r: any) => (
+                    <div key={r.id} className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 space-y-2">
+                       <div className="flex items-center justify-between">
+                          <div className="flex gap-0.5">
+                            {[1, 2, 3, 4, 5].map(star => (
+                              <Star key={star} className={`w-3 h-3 ${star <= r.rating ? 'text-yellow-400 fill-current' : 'text-slate-200 dark:text-zinc-800'}`} />
+                            ))}
+                          </div>
+                          <span className="text-[9px] font-bold text-slate-400">{new Date(r.createdAt).toLocaleDateString()}</span>
+                       </div>
+                       {r.comment ? (
+                         <p className="text-sm text-slate-700 dark:text-zinc-300 font-medium italic">"{r.comment}"</p>
+                       ) : (
+                         <p className="text-xs text-slate-400 italic">Sin comentario opcional.</p>
+                       )}
+                       
+                       {/* Render Responses if any */}
+                       {r.responses && r.responses.length > 0 && (
+                          <div className="pt-2 border-t border-slate-100 dark:border-white/5 mt-2 space-y-2">
+                            {r.responses.filter((resp: any) => resp.questionType === 'TEXT' && resp.answer).map((resp: any, idx: number) => (
+                               <div key={idx} className="space-y-1">
+                                  <p className="text-[9px] font-black uppercase text-slate-400 tracking-tight">{resp.questionText}</p>
+                                  <p className="text-xs text-slate-600 dark:text-zinc-400 font-medium">"{resp.answer}"</p>
+                               </div>
+                            ))}
+                          </div>
+                       )}
+                    </div>
+                  ))
+                )}
+              </div>
+           </div>
         </div>
       )}
     </>

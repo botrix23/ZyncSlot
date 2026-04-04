@@ -21,6 +21,7 @@ export default async function StaffPage() {
       where: eq(staffTable.tenantId, tenantId),
       with: {
         assignments: true,
+        reviews: true,
       },
       orderBy: desc(staffTable.createdAt),
     }),

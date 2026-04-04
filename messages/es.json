@@ -329,7 +329,8 @@
       "exitSupport": "Regresar al súper admin",
       "exiting": "Saliendo...",
       "logout": "Salir",
-      "business": "Empresa"
+      "business": "Empresa",
+      "surveys": "Encuestas"
     },
     "portal": {
       "title": "Mi Portal Web",
@@ -409,5 +410,39 @@
     "alreadyReviewed": "Esta cita ya ha sido calificada.",
     "notFound": "Cita no encontrada.",
     "invalidRating": "Por favor selecciona una calificación."
+  },
+  "Surveys": {
+    "title": "Encuestas y Satisfacción",
+    "subtitle": "Personaliza las preguntas que tus clientes verán al finalizar su cita.",
+    "enableToggle": "Activar sistema de encuestas",
+    "enableDesc": "Permite que los clientes califiquen el servicio y al staff después de su cita.",
+    "addQuestion": "Nueva Pregunta",
+    "noQuestions": "No has configurado preguntas aún.",
+    "questionsList": "Preguntas configuradas",
+    "questionText": "Texto de la pregunta",
+    "questionType": "Tipo de respuesta",
+    "isRequired": "Obligatoria",
+    "isActive": "Activa",
+    "save": "Guardar pregunta",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "confirmDelete": "¿Estás seguro de eliminar esta pregunta?",
+    "category": "Categoría",
+    "categories": {
+      "STAFF": "Personal / Staff",
+      "BUSINESS": "Empresa / Negocio"
+    },
+    "types": {
+      "STARS": "Estrellas (1-5)",
+      "YES_NO": "Sí / No",
+      "TEXT": "Campo de texto",
+      "NPS": "NPS (Escala 0-10)"
+    },
+    "dropzone": "Arrastra para reordenar",
+    "upgradeRequired": "Funcionalidad Premium",
+    "upgradeDesc": "Para personalizar tu sistema de encuestas con preguntas específicas necesitas una suscripción PRO o ENTERPRISE.",
+    "successSave": "Pregunta guardada correctamente.",
+    "successDelete": "Pregunta eliminada.",
+    "successSettings": "Configuración actualizada."
   }
 }

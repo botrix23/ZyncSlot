@@ -13,7 +13,8 @@ import {
   MapPin,
   CalendarOff,
   Contact,
-  Palette
+  Palette,
+  ClipboardList
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -40,6 +41,7 @@ export function AdminSidebar({ user, locale, tenantName }: { user: SessionUser |
     { name: t('clients'), icon: Contact, href: `/${locale}/admin/clients`, active: pathname.includes('/clients') },
     { name: t('branches'), icon: MapPin, href: `/${locale}/admin/branches`, active: pathname.includes('/branches') },
     { name: t('products'), icon: Package, href: `/${locale}/admin/products`, active: pathname.includes('/products') },
+    { name: t('surveys'), icon: ClipboardList, href: `/${locale}/admin/surveys`, active: pathname.includes('/surveys') },
     { name: t('appearance'), icon: Palette, href: `/${locale}/admin/appearance`, active: pathname.includes('/appearance') },
   ];
 

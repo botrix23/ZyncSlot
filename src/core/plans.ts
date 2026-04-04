@@ -13,6 +13,7 @@ export interface PlanFeatures {
   analyticsAdvanced: boolean;
   staffRotations: boolean;
   prioritySupport: boolean;
+  advancedSurveys: boolean;
 }
 
 export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
@@ -27,6 +28,7 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     analyticsAdvanced: false,
     staffRotations: false,
     prioritySupport: false,
+    advancedSurveys: false,
   },
   PRO: {
     maxBranches: 3,
@@ -39,6 +41,7 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     analyticsAdvanced: false,
     staffRotations: true,
     prioritySupport: true,
+    advancedSurveys: true,
   },
   ENTERPRISE: {
     maxBranches: 999,
@@ -51,6 +54,7 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     analyticsAdvanced: true,
     staffRotations: true,
     prioritySupport: true,
+    advancedSurveys: true,
   },
 };
 
