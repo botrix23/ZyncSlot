@@ -16,6 +16,7 @@ export async function updateTenantSettingsAction(data: {
   homeServiceTermsEnabled?: boolean;
   waMessageTemplate?: string | null;
   homeServiceLeadDays?: number;
+  vipThreshold?: number;
 }) {
   try {
     const session = await getSession();
@@ -28,6 +29,7 @@ export async function updateTenantSettingsAction(data: {
         homeServiceTermsEnabled: data.homeServiceTermsEnabled,
         waMessageTemplate: data.waMessageTemplate,
         homeServiceLeadDays: data.homeServiceLeadDays,
+        vipThreshold: data.vipThreshold,
         updatedAt: new Date()
       })
       .where(eq(tenants.id, data.tenantId));
@@ -63,6 +65,7 @@ export async function updatePortalSettingsAction(data: {
   waMessageTemplate?: string | null;
   allowsHomeService: boolean;
   homeServiceLeadDays: number;
+  vipThreshold: number;
 }) {
   try {
     const session = await getSession();
@@ -82,6 +85,7 @@ export async function updatePortalSettingsAction(data: {
         waMessageTemplate: data.waMessageTemplate || null,
         allowsHomeService: data.allowsHomeService,
         homeServiceLeadDays: data.homeServiceLeadDays,
+        vipThreshold: data.vipThreshold,
         updatedAt: new Date()
       })
       .where(eq(tenants.id, data.tenantId));

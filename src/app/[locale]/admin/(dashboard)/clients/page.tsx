@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { bookings, services } from "@/db/schema";
+import { bookings, tenants } from "@/db/schema";
 import { eq, desc, and, not } from "drizzle-orm";
 import { getSession } from "@/lib/auth-session";
 import { redirect } from "next/navigation";
@@ -23,21 +23,29 @@ export default async function ClientsPage({
 
   if (!tenantId) redirect(`/${locale}/admin`);
 
-  // Obtener citas válidas (no canceladas)
-  const tenantBookings = await db.select().from(bookings).where(
-    and(
+  // Obtener el tenant para el umbral VIP
+  const tenant = await db.query.tenants.findFirst({
+    where: eq(tenants.id, tenantId)
+  });
+
+  // Obtener citas con relaciones (Relational API)
+  const tenantBookings = await db.query.bookings.findMany({
+    where: and(
         eq(bookings.tenantId, tenantId),
         not(eq(bookings.status, 'CANCELLED'))
-    )
-  ).orderBy(desc(bookings.createdAt));
-
-  // Obtener catálogo de servicios para calcular precios
-  const tenantServices = await db.select().from(services).where(eq(services.tenantId, tenantId));
+    ),
+    with: {
+        service: true,
+        staff: true,
+        branch: true
+    },
+    orderBy: [desc(bookings.startTime)]
+  });
 
   return (
     <ClientsClient 
       bookings={tenantBookings} 
-      services={tenantServices}
+      vipThreshold={tenant?.vipThreshold || 5}
     />
   );
 }

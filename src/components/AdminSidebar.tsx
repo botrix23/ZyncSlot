@@ -35,14 +35,14 @@ export function AdminSidebar({ user, locale, tenantName }: { user: SessionUser |
   const baseItems = [
     { name: t('dashboard'), icon: LayoutDashboard, href: `/${locale}/admin`, active: pathname === `/${locale}/admin` },
     { name: t('bookings'), icon: Calendar, href: `/${locale}/admin/bookings`, active: pathname.includes('/bookings') },
+    { name: t('branches'), icon: MapPin, href: `/${locale}/admin/branches`, active: pathname.includes('/branches') },
     { name: t('services'), icon: Sparkles, href: `/${locale}/admin/services`, active: pathname.includes('/services') },
     { name: t('staff'), icon: Users, href: `/${locale}/admin/staff`, active: pathname.includes('/staff') },
     { name: t('absences'), icon: CalendarOff, href: `/${locale}/admin/absences`, active: pathname.includes('/absences') },
     { name: t('clients'), icon: Contact, href: `/${locale}/admin/clients`, active: pathname.includes('/clients') },
-    { name: t('branches'), icon: MapPin, href: `/${locale}/admin/branches`, active: pathname.includes('/branches') },
-    { name: t('products'), icon: Package, href: `/${locale}/admin/products`, active: pathname.includes('/products') },
-    { name: t('surveys'), icon: ClipboardList, href: `/${locale}/admin/surveys`, active: pathname.includes('/surveys') },
     { name: t('appearance'), icon: Palette, href: `/${locale}/admin/appearance`, active: pathname.includes('/appearance') },
+    { name: t('surveys'), icon: ClipboardList, href: `/${locale}/admin/surveys`, active: pathname.includes('/surveys') },
+    { name: t('products'), icon: Package, href: `/${locale}/admin/products`, active: pathname.includes('/products') },
   ];
 
   const handleEndImpersonation = async () => {
@@ -53,7 +53,7 @@ export function AdminSidebar({ user, locale, tenantName }: { user: SessionUser |
   };
 
   return (
-    <aside className="w-72 bg-white dark:bg-zinc-900 border-r border-slate-200 dark:border-white/5 hidden lg:flex flex-col h-screen sticky top-0 shrink-0">
+    <aside className="w-72 bg-white dark:bg-zinc-900 border-r border-slate-200 dark:border-white/5 hidden lg:flex flex-col h-screen sticky top-0 shrink-0 z-20">
       
       {/* Banner de impersonación — visible cuando el Super Admin está dentro de una empresa */}
       {isImpersonating && (
@@ -61,7 +61,7 @@ export function AdminSidebar({ user, locale, tenantName }: { user: SessionUser |
           <div className="flex items-start gap-2 mb-2">
             <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
             <div className="min-w-0">
-              <p className="text-xs font-black text-amber-500 uppercase tracking-wide">{t('supportMode')}</p>
+              <p className="text-xs font-black text-amber-500">{t('supportMode')}</p>
               <p className="text-xs text-amber-400/80 truncate font-medium">
                 {t('viewing')}: <strong className="text-amber-300">{user.impersonatedTenantName}</strong>
               </p>
@@ -111,7 +111,7 @@ export function AdminSidebar({ user, locale, tenantName }: { user: SessionUser |
         {/* Company Name Badge */}
         {tenantName && (
           <div className="px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1">{t('business') || 'EMPRESA'}</p>
+            <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 mb-1">{t('business') || 'Empresa'}</p>
             <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{tenantName}</p>
           </div>
         )}

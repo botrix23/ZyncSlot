@@ -20,6 +20,7 @@ import {
   Settings
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Portal } from "@/components/Portal";
 import { 
   updateSurveySettingsAction, 
   upsertSurveyQuestionAction, 
@@ -174,13 +175,13 @@ export default function SurveyClient({
       <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-zinc-800/50 rounded-2xl w-fit">
         <button
           onClick={() => setActiveTab('questions')}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'questions' ? 'bg-white dark:bg-zinc-900 text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300'}`}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black transition-all ${activeTab === 'questions' ? 'bg-white dark:bg-zinc-900 text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300'}`}
         >
           <Settings className="w-4 h-4" /> Configuración
         </button>
         <button
           onClick={() => setActiveTab('results')}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'results' ? 'bg-white dark:bg-zinc-900 text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300'}`}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black transition-all ${activeTab === 'results' ? 'bg-white dark:bg-zinc-900 text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300'}`}
         >
           <BarChart3 className="w-4 h-4" /> Resultados
         </button>
@@ -192,7 +193,7 @@ export default function SurveyClient({
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] p-8 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-1">
-                <h3 className="text-lg font-black text-slate-900 dark:text-white">Enlace de Satisfacción</h3>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">Enlace de satisfacción</h3>
                 <p className="text-sm text-slate-400 font-medium italic">El sistema envía este enlace automáticamente después de cada cita finalizada.</p>
               </div>
               <div className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 p-2 pr-4 rounded-2xl border border-slate-100 dark:border-white/5 overflow-hidden max-w-md">
@@ -232,12 +233,12 @@ export default function SurveyClient({
 
             <div className="border-t border-slate-50 dark:border-white/5 pt-8 space-y-6">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">
+                <h4 className="text-sm font-black tracking-widest text-slate-400">
                   {t('questionsList')}
                 </h4>
                 <button
                   onClick={() => handleOpenModal()}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-purple-500/20 transition-all active:scale-95"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-[10px] font-black tracking-widest shadow-xl shadow-purple-500/20 transition-all active:scale-95"
                 >
                   <Plus className="w-4 h-4" />
                   {t('addQuestion')}
@@ -250,7 +251,7 @@ export default function SurveyClient({
                      <Lock className="w-6 h-6" />
                   </div>
                   <div className="space-y-1">
-                    <h5 className="text-sm font-black text-amber-700 dark:text-amber-400 uppercase tracking-tight">{t('upgradeRequired')}</h5>
+                    <h5 className="text-sm font-black text-amber-700 dark:text-amber-400 tracking-tight">{t('upgradeRequired')}</h5>
                     <p className="text-xs font-medium text-amber-600 dark:text-amber-500/80 leading-relaxed">
                       {t('upgradeDesc')}
                     </p>
@@ -291,7 +292,7 @@ export default function SurveyClient({
 
                       <div className="flex-1 space-y-1">
                         <p className="text-sm font-black text-slate-800 dark:text-white leading-tight">{q.questionText}</p>
-                        <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                        <div className="flex items-center gap-3 text-[9px] font-black tracking-widest text-slate-400">
                           <span className="flex items-center gap-1.5">
                             {q.questionType === 'STARS' && <Star className="w-3 h-3 text-yellow-500" />}
                             {q.questionType === 'YES_NO' && <CheckCircle2 className="w-3 h-3 text-sky-500" />}
@@ -338,7 +339,7 @@ export default function SurveyClient({
            {/* Summary Stats */}
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] p-6 shadow-sm">
-                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Respuestas</p>
+                 <p className="text-[10px] font-black tracking-widest text-slate-400">Total Respuestas</p>
                  <div className="flex items-end gap-2 mt-1">
                     <h4 className="text-4xl font-black text-slate-900 dark:text-white">{initialReviews.length}</h4>
                     <p className="text-xs font-bold text-slate-400 mb-1.5">encuestas completadas</p>
@@ -346,7 +347,7 @@ export default function SurveyClient({
               </div>
 
               <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] p-6 shadow-sm">
-                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">NPS Global</p>
+                 <p className="text-[10px] font-black tracking-widest text-slate-400">NPS Global</p>
                  <div className="flex items-end gap-2 mt-1">
                     <h4 className={`text-4xl font-black ${npsScore === null ? 'text-slate-300' : npsScore > 50 ? 'text-emerald-500' : npsScore > 0 ? 'text-amber-500' : 'text-rose-500'}`}>
                       {npsScore !== null ? npsScore : '--'}
@@ -356,7 +357,7 @@ export default function SurveyClient({
               </div>
 
               <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] p-6 shadow-sm">
-                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Rating Promedio Staff</p>
+                 <p className="text-[10px] font-black tracking-widest text-slate-400">Rating Promedio Staff</p>
                  <div className="flex items-center gap-2 mt-1">
                     <h4 className="text-4xl font-black text-slate-900 dark:text-white">
                       {initialReviews.length > 0 
@@ -379,10 +380,10 @@ export default function SurveyClient({
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-50 dark:border-white/5">
-                      <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 px-2 text-center">Calif.</th>
-                      <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 px-4">Staff / Servicio</th>
-                      <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 px-4">Comentario</th>
-                      <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 px-4">Fecha</th>
+                      <th className="pb-4 text-[10px] font-black tracking-widest text-slate-400 px-2 text-center">Calif.</th>
+                      <th className="pb-4 text-[10px] font-black tracking-widest text-slate-400 px-4">Staff / Servicio</th>
+                      <th className="pb-4 text-[10px] font-black tracking-widest text-slate-400 px-4">Comentario</th>
+                      <th className="pb-4 text-[10px] font-black tracking-widest text-slate-400 px-4">Fecha</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50 dark:divide-white/5">
@@ -405,7 +406,7 @@ export default function SurveyClient({
                           <td className="py-5 px-4 max-w-[200px]">
                              <div className="space-y-0.5">
                                <p className="text-sm font-black text-slate-900 dark:text-white truncate">{r.booking?.staff?.name || 'Staff'}</p>
-                               <p className="text-[10px] font-bold text-slate-400 truncate uppercase">{r.booking?.service?.name || 'Servicio'}</p>
+                               <p className="text-[10px] font-bold text-slate-400 truncate">{r.booking?.service?.name || 'Servicio'}</p>
                              </div>
                           </td>
                           <td className="py-5 px-4 min-w-[300px]">
@@ -416,7 +417,7 @@ export default function SurveyClient({
                                <div className="flex flex-wrap gap-2">
                                  {r.responses?.filter((resp: any) => resp.questionType === 'TEXT' && resp.answer).slice(0, 2).map((resp: any, i: number) => (
                                    <div key={i} className="px-2 py-1 bg-purple-500/5 rounded-lg border border-purple-500/10">
-                                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">{resp.questionText}</p>
+                                      <p className="text-[8px] font-black text-slate-400 tracking-tighter">{resp.questionText}</p>
                                       <p className="text-[10px] text-purple-600 font-bold truncate max-w-[150px]">{resp.answer}</p>
                                    </div>
                                  ))}
@@ -438,114 +439,118 @@ export default function SurveyClient({
 
       {/* Modal Pregunta */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[40px] w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-8 space-y-8">
-              <div className="flex items-center justify-between">
-                <div>
-                   <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                    {editingQuestion?.id ? t('edit') : t('addQuestion')}
-                   </h3>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Configuración de Pregunta</p>
-                </div>
-                <button 
-                  onClick={() => setIsModalOpen(false)}
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-all"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                    {t('questionText')}
-                  </label>
-                  <input
-                    autoFocus
-                    type="text"
-                    value={editingQuestion?.questionText}
-                    onChange={(e) => setEditingQuestion({...editingQuestion, questionText: e.target.value})}
-                    placeholder="Ej. ¿Cómo calificarías la limpieza?"
-                    className="w-full p-5 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-white/10 rounded-[24px] focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all text-sm font-medium dark:text-white"
-                  />
+        <Portal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
+             {/* Backdrop con Blur Dinámico - Fixed para cubrir todo */}
+             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setIsModalOpen(false)} />
+            <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[40px] w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="p-8 space-y-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                      {editingQuestion?.id ? t('edit') : t('addQuestion')}
+                    </h3>
+                    <p className="text-[10px] font-black tracking-widest text-slate-400 mt-1">Configuración de Pregunta</p>
+                  </div>
+                  <button 
+                    onClick={() => setIsModalOpen(false)}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-all"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                      {t('questionType')}
+                    <label className="text-[10px] font-black tracking-widest text-slate-400 ml-1">
+                      {t('questionText')}
                     </label>
-                    <select
-                      value={editingQuestion?.questionType}
-                      onChange={(e) => setEditingQuestion({...editingQuestion, questionType: e.target.value as any})}
-                      className="w-full p-5 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-white/10 rounded-[24px] focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all text-sm font-medium dark:text-white appearance-none"
-                    >
-                      <option value="STARS">{t('types.STARS')}</option>
-                      <option value="YES_NO">{t('types.YES_NO')}</option>
-                      <option value="TEXT">{t('types.TEXT')}</option>
-                      <option value="NPS">{t('types.NPS')}</option>
-                    </select>
+                    <input
+                      autoFocus
+                      type="text"
+                      value={editingQuestion?.questionText}
+                      onChange={(e) => setEditingQuestion({...editingQuestion, questionText: e.target.value})}
+                      placeholder="Escribe aquí la pregunta..."
+                      className="w-full p-5 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-white/10 rounded-[24px] focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all text-sm font-medium dark:text-white"
+                    />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                      {t('category')}
-                    </label>
-                    <select
-                      value={editingQuestion?.category}
-                      onChange={(e) => setEditingQuestion({...editingQuestion, category: e.target.value as any})}
-                      className="w-full p-5 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-white/10 rounded-[24px] focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all text-sm font-medium dark:text-white appearance-none"
-                    >
-                      <option value="STAFF">{t('categories.STAFF')}</option>
-                      <option value="BUSINESS">{t('categories.BUSINESS')}</option>
-                    </select>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black tracking-widest text-slate-400 ml-1">
+                        {t('questionType')}
+                      </label>
+                      <select
+                        value={editingQuestion?.questionType}
+                        onChange={(e) => setEditingQuestion({...editingQuestion, questionType: e.target.value as any})}
+                        className="w-full p-5 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-white/10 rounded-[24px] focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all text-sm font-medium dark:text-white appearance-none"
+                      >
+                        <option value="STARS">{t('types.STARS')}</option>
+                        <option value="YES_NO">{t('types.YES_NO')}</option>
+                        <option value="TEXT">{t('types.TEXT')}</option>
+                        <option value="NPS">{t('types.NPS')}</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black tracking-widest text-slate-400 ml-1">
+                        {t('category')}
+                      </label>
+                      <select
+                        value={editingQuestion?.category}
+                        onChange={(e) => setEditingQuestion({...editingQuestion, category: e.target.value as any})}
+                        className="w-full p-5 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-white/10 rounded-[24px] focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all text-sm font-medium dark:text-white appearance-none"
+                      >
+                        <option value="STAFF">{t('categories.STAFF')}</option>
+                        <option value="BUSINESS">{t('categories.BUSINESS')}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-6">
+                    <div className="flex-1">
+                      <button
+                        onClick={() => setEditingQuestion({...editingQuestion, isRequired: !editingQuestion?.isRequired})}
+                        className="flex items-center gap-3 group"
+                      >
+                        <div className={`w-12 h-7 rounded-full transition-all relative ${editingQuestion?.isRequired ? 'bg-purple-600' : 'bg-slate-200 dark:bg-zinc-800'}`}>
+                            <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${editingQuestion?.isRequired ? 'left-6' : 'left-1'}`} />
+                        </div>
+                        <span className="text-[10px] font-black tracking-widest text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                            {t('isRequired')}
+                        </span>
+                      </button>
+                    </div>
+
+                    <div className="flex-1">
+                      <button
+                        onClick={() => setEditingQuestion({...editingQuestion, isActive: !editingQuestion?.isActive})}
+                        className="flex items-center gap-3 group"
+                      >
+                        <div className={`w-12 h-7 rounded-full transition-all relative ${editingQuestion?.isActive ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-zinc-800'}`}>
+                            <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${editingQuestion?.isActive ? 'left-6' : 'left-1'}`} />
+                        </div>
+                        <span className="text-[10px] font-black tracking-widest text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                            {t('isActive')}
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6">
-                  <div className="flex-1">
-                    <button
-                      onClick={() => setEditingQuestion({...editingQuestion, isRequired: !editingQuestion?.isRequired})}
-                      className="flex items-center gap-3 group"
-                    >
-                      <div className={`w-12 h-7 rounded-full transition-all relative ${editingQuestion?.isRequired ? 'bg-purple-600' : 'bg-slate-200 dark:bg-zinc-800'}`}>
-                          <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${editingQuestion?.isRequired ? 'left-6' : 'left-1'}`} />
-                      </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-                          {t('isRequired')}
-                      </span>
-                    </button>
-                  </div>
-
-                  <div className="flex-1">
-                    <button
-                      onClick={() => setEditingQuestion({...editingQuestion, isActive: !editingQuestion?.isActive})}
-                      className="flex items-center gap-3 group"
-                    >
-                      <div className={`w-12 h-7 rounded-full transition-all relative ${editingQuestion?.isActive ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-zinc-800'}`}>
-                          <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${editingQuestion?.isActive ? 'left-6' : 'left-1'}`} />
-                      </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-                          {t('isActive')}
-                      </span>
-                    </button>
-                  </div>
+                <div className="flex pt-4">
+                  <button
+                    onClick={handleSaveQuestion}
+                    disabled={isSavingQuestion || !editingQuestion?.questionText}
+                    className="w-full py-5 bg-purple-600 hover:bg-purple-500 text-white rounded-[24px] font-black tracking-widest uppercase text-xs shadow-2xl shadow-purple-500/30 transition-all active:scale-95 disabled:bg-slate-100 dark:disabled:bg-white/5 disabled:text-slate-400"
+                  >
+                    {isSavingQuestion ? "Guardando..." : t('save')}
+                  </button>
                 </div>
-              </div>
-
-              <div className="flex pt-4">
-                <button
-                  onClick={handleSaveQuestion}
-                  disabled={isSavingQuestion || !editingQuestion?.questionText}
-                  className="w-full py-5 bg-purple-600 hover:bg-purple-500 text-white rounded-[24px] font-black tracking-widest uppercase text-xs shadow-2xl shadow-purple-500/30 transition-all active:scale-95 disabled:bg-slate-100 dark:disabled:bg-white/5 disabled:text-slate-400"
-                >
-                  {isSavingQuestion ? "Guardando..." : t('save')}
-                </button>
               </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );

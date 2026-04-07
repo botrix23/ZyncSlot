@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { 
-  Palette, CheckCircle2, AlertCircle, Upload, Save, Eye, MonitorSmartphone, Monitor, Moon, Sun, MonitorCheck, LayoutTemplate, Link as LinkIcon, ExternalLink, Instagram, Facebook, Music, Building2, ImageIcon, Truck, Info, Phone, Settings, Share2, Copy
+  Palette, CheckCircle2, AlertCircle, Upload, Save, Eye, MonitorSmartphone, Monitor, Moon, Sun, MonitorCheck, LayoutTemplate, Link as LinkIcon, ExternalLink, Instagram, Facebook, Music, Building2, ImageIcon, Truck, Info, Phone, Settings, Share2, Copy, Trash2, Lock
 } from "lucide-react";
 import { updatePortalSettingsAction } from "@/app/actions/tenant";
 import { 
@@ -37,6 +37,7 @@ export default function AppearanceClient({
     waMessageTemplate?: string | null;
     allowsHomeService?: boolean;
     homeServiceLeadDays: number;
+    vipThreshold: number;
   },
   initialZones: any[];
 }) {
@@ -67,7 +68,8 @@ export default function AppearanceClient({
   const [homeServiceTermsEnabled, setHomeServiceTermsEnabled] = useState(tenant.homeServiceTermsEnabled || false);
   const [homeServiceTerms, setHomeServiceTerms] = useState(tenant.homeServiceTerms || "");
   const [waMessageTemplate, setWaMessageTemplate] = useState(tenant.waMessageTemplate || "");
-  const [homeServiceLeadDays, setHomeServiceLeadDays] = useState(tenant.homeServiceLeadDays || 7);
+  const [homeServiceLeadDays, setHomeServiceLeadDays] = useState(tenant.homeServiceLeadDays || 0);
+  const [vipThreshold, setVipThreshold] = useState(tenant.vipThreshold || 5);
   
   // Zonas de Cobertura
   const [zones, setZones] = useState<any[]>(initialZones || []);
@@ -106,11 +108,12 @@ export default function AppearanceClient({
       facebookUrl,
       tiktokUrl,
       whatsappNumber,
-      allowsHomeService,
-      homeServiceTermsEnabled,
       homeServiceTerms,
+      homeServiceTermsEnabled,
       waMessageTemplate,
-      homeServiceLeadDays
+      allowsHomeService,
+      homeServiceLeadDays,
+      vipThreshold
     });
 
     if (result.success) {
@@ -190,8 +193,8 @@ export default function AppearanceClient({
       {/* LEFT COLUMN - CONTROLS */}
       <div className="flex-1 overflow-y-auto no-scrollbar pb-12 flex flex-col gap-6 min-w-[320px]">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Mi Portal Web</h1>
-          <p className="text-slate-500 dark:text-zinc-400 mt-1">Configura la Identidad y Reglas de tu sitio público de reservas.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{tPortal('title')}</h1>
+          <p className="text-slate-500 dark:text-zinc-400 mt-1">Configura la identidad y reglas de tu sitio público de reservas.</p>
         </div>
 
         {/* COMPONENTE DE TABS */}
@@ -200,13 +203,13 @@ export default function AppearanceClient({
              onClick={() => setActiveTab('design')} 
              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'design' ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-zinc-300'}`}
            >
-             <Palette className="w-4 h-4" /> Diseño y Marca
+             <Palette className="w-4 h-4" /> Diseño y marca
            </button>
            <button 
              onClick={() => setActiveTab('rules')} 
              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'rules' ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-zinc-300'}`}
            >
-             <Settings className="w-4 h-4" /> Operación y Reglas
+             <Settings className="w-4 h-4" /> Operación y reglas
            </button>
         </div>
 
@@ -220,11 +223,10 @@ export default function AppearanceClient({
           </div>
         )}
 
-
         {/* CONTENIDO TAB 1: Diseño y Marca */}
         {activeTab === 'design' && (
           <div className="space-y-6 animate-in slide-in-from-left-4 duration-300">
-            {/* TARJETA DE ENLACE PÚBLICO (INTEGRADA) */}
+            {/* ENLACE PÚBLICO */}
             <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-6 text-white shadow-lg overflow-hidden relative group border border-white/10">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
                 <Share2 className="w-16 h-16" />
@@ -232,8 +234,8 @@ export default function AppearanceClient({
               <div className="relative z-10 flex flex-col gap-4">
                 <div className="space-y-1">
                   <h3 className="text-md font-bold tracking-tight flex items-center gap-2">
-                    Enlace de tu Portal
-                    <span className="px-2 py-0.5 bg-emerald-500 rounded-full text-[8px] font-black uppercase tracking-widest">Online</span>
+                    Enlace de tu portal
+                    <span className="px-2 py-0.5 bg-emerald-500 rounded-full text-[8px] font-black tracking-widest">Online</span>
                   </h3>
                 </div>
                 
@@ -242,7 +244,6 @@ export default function AppearanceClient({
                     {mounted ? `${window.location.host}/${tenant.slug}` : `/${tenant.slug}`}
                   </code>
                   <button 
-
                     onClick={() => {
                       const url = `${window.location.protocol}//${window.location.host}/${tenant.slug}`;
                       navigator.clipboard.writeText(url);
@@ -251,59 +252,60 @@ export default function AppearanceClient({
                     }}
                     className="px-3 py-1.5 bg-white text-purple-600 rounded-lg hover:bg-purple-50 transition-all active:scale-95 font-bold text-[10px]"
                   >
-                    COPIAR
+                    Copiar
                   </button>
                 </div>
               </div>
             </div>
+
             {/* Identidad de Negocio */}
             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-6">
               <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-white/5">
                 <div className="p-2 bg-purple-500/10 rounded-lg">
                   <Building2 className="w-5 h-5 text-purple-500" />
                 </div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Identidad y Redes</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Identidad y redes</h2>
               </div>
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Nombre Comercial</label>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Nombre comercial</label>
                   <input 
                     type="text" 
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    placeholder="Ej. ZyncSalón Spa"
+                    placeholder="Nombre del negocio"
                     className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white"
                   />
                 </div>
 
                 <div>
-                   <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Logo del Negocio</label>
+                   <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Logo del negocio</label>
                    <div className="flex items-center gap-4">
                      {logoUrl ? (
                         <div className="relative group w-20 h-20 rounded-xl border border-slate-200 dark:border-white/10 bg-white flex items-center justify-center overflow-hidden shrink-0">
                           <img src={logoUrl} alt="Logo" className="w-full h-full object-contain p-2" />
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                              <button onClick={() => setLogoUrl('')} className="text-white hover:text-rose-400 p-1">
-                               <Upload className="w-4 h-4" />
+                               <Lock className="w-4 h-4" />
                              </button>
                           </div>
                         </div>
                      ) : (
                         <button onClick={() => logoInputRef.current?.click()} className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 flex flex-col items-center justify-center text-slate-400 hover:text-purple-500 transition-all shrink-0">
                            <ImageIcon className="w-6 h-6 mb-1 opacity-50" />
-                           <span className="text-[9px] font-bold">SUBIR</span>
+                           <span className="text-[9px] font-bold">Subir</span>
                         </button>
                      )}
                      <div className="flex-1">
-                        <input type="text" value={logoUrl.startsWith('data:') ? 'Imagen cargada localmente' : logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="https://ejemplo.com/logo.png" readOnly={logoUrl.startsWith('data:')} className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white" />
+                        <input type="text" value={logoUrl.startsWith('data:') ? 'Imagen cargada localmente' : logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="URL del logo" readOnly={logoUrl.startsWith('data:')} className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white" />
                      </div>
                      <input type="file" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" accept="image/*" />
                    </div>
                 </div>
 
                 <div className="space-y-3 pt-2">
-                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Redes Sociales</label>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Redes sociales</label>
                   <div className="relative">
                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                         <Instagram className="w-4 h-4" />
@@ -326,13 +328,13 @@ export default function AppearanceClient({
               </div>
             </div>
 
-            {/* Estilos Automáticos y Tema */}
+            {/* Tema del Portal */}
             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-6">
               <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-white/10">
                 <div className="p-2 bg-purple-500/10 rounded-lg">
                   <Monitor className="w-5 h-5 text-purple-600" />
                 </div>
-                <h2 className="text-lg font-bold text-slate-800 dark:text-white">Tema del Portal</h2>
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white">Tema del portal</h2>
               </div>
               <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-black/20 p-2 rounded-2xl border border-slate-200 dark:border-white/5">
                 <button type="button" onClick={() => setTheme('light')} className={`py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${theme === 'light' ? 'bg-white dark:bg-zinc-800 text-purple-600 shadow-md transform scale-[1.02]' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'}`}>
@@ -350,7 +352,7 @@ export default function AppearanceClient({
                 <div className="p-2 bg-purple-500/10 rounded-lg">
                   <ImageIcon className="w-5 h-5 text-purple-600" />
                 </div>
-                <h2 className="text-lg font-bold text-slate-800 dark:text-white">Imagen de Portada (Cover)</h2>
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white">Imagen de portada</h2>
               </div>
 
               <div 
@@ -369,7 +371,7 @@ export default function AppearanceClient({
                      <img src={coverUrl} alt="Cover Preview" className="absolute inset-0 w-full h-full object-cover group-hover:blur-sm transition-all" />
                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
                        <Upload className="w-8 h-8 text-white mb-2" />
-                       <span className="text-white font-bold">Reemplazar Portada</span>
+                       <span className="text-white font-bold">Reemplazar portada</span>
                      </div>
                    </>
                 ) : (
@@ -387,11 +389,11 @@ export default function AppearanceClient({
               )}
             </div>
 
-            {/* Identidad de Color */}
+            {/* Color Primario */}
             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-6">
               <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-white/10">
                 <div className="p-2 bg-purple-500/10 rounded-lg"><Palette className="w-5 h-5 text-purple-600" /></div>
-                <h2 className="text-lg font-bold text-slate-800 dark:text-white">Color Primario</h2>
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white">Color primario</h2>
               </div>
               <div className="flex flex-wrap gap-4 mb-4">
                 {PRESET_COLORS.map(c => (
@@ -413,7 +415,7 @@ export default function AppearanceClient({
         {/* CONTENIDO TAB 2: Operación y Reglas */}
         {activeTab === 'rules' && (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-            {/* Servicio a Domicilio y Contacto */}
+            {/* Servicio a domicilio */}
             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-8">
               <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-white/5">
                 <div className="p-2 bg-purple-500/10 rounded-lg">
@@ -422,19 +424,17 @@ export default function AppearanceClient({
                 <h2 className="text-xl font-bold">{tPortal('sections.homeService')}</h2>
               </div>
 
-              {/* Teléfono General */}
               <div className="space-y-2">
                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">{tPortal('form.phone')}</label>
                  <PhoneInput value={whatsappNumber || ""} onChange={val => setWhatsappNumber(val)} placeholder="Teléfono del negocio" />
               </div>
 
-              {/* Master Switch: Domicilio */}
               <div className="space-y-2">
-                 <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">Ofrecer Servicio a Domicilio</label>
+                 <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">Ofrecer servicio a domicilio</label>
                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 h-[64px]">
                     <div className="pr-4">
-                       <p className="text-sm font-medium text-slate-900 dark:text-white">Permitir a los clientes elegir la modalidad "A mi domicilio"</p>
-                       <p className="text-xs text-slate-500">Si se desactiva, el portal solo mostrará agendamiento en Sucursal.</p>
+                       <p className="text-sm font-medium text-slate-900 dark:text-white">Permitir a los clientes elegir la modalidad "A domicilio"</p>
+                       <p className="text-xs text-slate-500 italic">Si se desactiva, el portal solo mostrará agendamiento en sucursal.</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                        <input type="checkbox" checked={allowsHomeService} onChange={e => setAllowsHomeService(e.target.checked)} className="sr-only peer" />
@@ -443,30 +443,116 @@ export default function AppearanceClient({
                  </div>
               </div>
 
-              {/* Reglas de Domicilio (solo si maestro activo) */}
               {allowsHomeService && (
                 <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300 border-l-2 border-purple-500 pl-4 ml-2">
-                   <div className="space-y-2">
-                     <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">{tPortal('form.terms')}</label>
-                     <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 h-[58px]">
-                       <div className="pr-4">
-                         <p className="text-sm font-medium text-slate-900 dark:text-white">{tPortal('form.termsRequired')}</p>
-                       </div>
-                       <label className="relative inline-flex items-center cursor-pointer">
-                         <input type="checkbox" checked={homeServiceTermsEnabled} onChange={(e) => setHomeServiceTermsEnabled(e.target.checked)} className="sr-only peer" />
-                         <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                       </label>
-                     </div>
+                   <div className="space-y-3">
+                      <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">{tPortal('form.terms')}</label>
+                      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10">
+                        <p className="text-sm font-medium text-slate-900 dark:text-white">{tPortal('form.termsRequired')}</p>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" checked={homeServiceTermsEnabled} onChange={(e) => setHomeServiceTermsEnabled(e.target.checked)} className="sr-only peer" />
+                          <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                      </div>
                    </div>
-                   
+
                    {homeServiceTermsEnabled && (
                       <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
                         <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-2">
-                          {tPortal('form.termsContent')} <span title="Estas políticas de costo, distancia y tiempos se mostrarán al agendar."><Info className="w-3.5 h-3.5 text-zinc-500" /></span>
+                          {tPortal('form.termsContent')} <span title="Estas políticas se mostrarán al agendar."><Info className="w-3.5 h-3.5 text-zinc-500" /></span>
                         </label>
                         <textarea value={homeServiceTerms} onChange={e => setHomeServiceTerms(e.target.value)} placeholder={tPortal('form.termsPlaceholder')} className="w-full min-h-[120px] p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all resize-none text-sm" />
                       </div>
                    )}
+
+                   {/* Logística Pro: Anticipación y Zonas */}
+                   <div className="pt-4 border-t border-slate-100 dark:border-white/10 space-y-6">
+                      {/* Anticipación */}
+                      <div className="space-y-3">
+                         <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">Anticipación requerida (Días)</label>
+                         <div className="flex items-center gap-4">
+                            <input 
+                              type="number" 
+                              min="0"
+                              max="90"
+                              value={homeServiceLeadDays}
+                              onChange={e => setHomeServiceLeadDays(parseInt(e.target.value))}
+                              className="w-24 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-black text-center"
+                            />
+                            <p className="text-xs text-slate-500 italic flex-1">Tiempo mínimo requerido para organizar la logística del traslado.</p>
+                         </div>
+                      </div>
+
+                      {/* Zonas */}
+                      <div className="space-y-4">
+                         <div className="flex items-center justify-between">
+                            <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">Zonas de cobertura y tarifas</label>
+                            <button 
+                              type="button"
+                              onClick={() => setIsAddingZone(true)}
+                              className="px-4 py-2 bg-purple-500/10 text-purple-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-500/20 transition-all active:scale-95"
+                            >
+                              Añadir zona
+                            </button>
+                         </div>
+
+                         {isAddingZone && (
+                           <div className="p-5 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 border border-purple-500/20 rounded-3xl space-y-4 animate-in zoom-in-95 duration-200 shadow-sm">
+                              <div className="grid grid-cols-2 gap-4">
+                                 <div className="col-span-2 sm:col-span-1">
+                                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Nombre zona</label>
+                                   <input 
+                                     placeholder="Nombre de la zona" 
+                                     value={newZone.name}
+                                     onChange={e => setNewZone({...newZone, name: e.target.value})}
+                                     className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold" 
+                                   />
+                                 </div>
+                                 <div className="col-span-2 sm:col-span-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Tarifa extra</label>
+                                    <div className="relative">
+                                      <span className="absolute left-3 top-3.5 text-slate-400 text-sm font-bold">$</span>
+                                      <input 
+                                        type="number"
+                                        placeholder="Monto extra" 
+                                        value={newZone.fee}
+                                        onChange={e => setNewZone({...newZone, fee: e.target.value})}
+                                        className="w-full p-3 pl-8 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-black" 
+                                      />
+                                    </div>
+                                 </div>
+                              </div>
+                              <div className="flex justify-end gap-3 pt-2">
+                                 <button type="button" onClick={() => setIsAddingZone(false)} className="text-xs font-bold text-slate-500">Cancelar</button>
+                                 <button type="button" onClick={handleAddZone} className="px-6 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-black shadow-lg shadow-purple-500/20 transition-all">Crear</button>
+                              </div>
+                           </div>
+                         )}
+
+                         <div className="flex flex-col gap-2">
+                            {zones.map(zone => (
+                              <div key={zone.id} className="flex items-center justify-between p-4 bg-white dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 group hover:border-purple-500/50 transition-all">
+                                 <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                      <Truck className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                       <p className="text-sm font-black text-slate-900 dark:text-white">{zone.name}</p>
+                                       <p className="text-[10px] text-emerald-600 font-bold tracking-tight">+${zone.fee} Tarifa traslado</p>
+                                    </div>
+                                 </div>
+                                 <button 
+                                   type="button"
+                                   onClick={() => handleDeleteZone(zone.id)}
+                                   className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                                 >
+                                    <Trash2 className="w-4 h-4" />
+                                 </button>
+                              </div>
+                            ))}
+                         </div>
+                      </div>
+                   </div>
                 </div>
               )}
             </div>
@@ -474,8 +560,8 @@ export default function AppearanceClient({
             {/* Template WhatsApp */}
             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-6">
               <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-white/5">
-                <div className="p-2 bg-purple-500/10 rounded-lg">
-                  <Phone className="w-5 h-5 text-purple-500" />
+                <div className="p-2 bg-emerald-500/10 rounded-lg">
+                  <Phone className="w-5 h-5 text-emerald-600" />
                 </div>
                 <h2 className="text-xl font-bold">{tPortal('sections.whatsapp')}</h2>
               </div>
@@ -502,6 +588,35 @@ export default function AppearanceClient({
                  </div>
               </div>
             </div>
+
+            {/* Configuración de Fidelización */}
+            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-6">
+              <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-white/5">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <MonitorCheck className="w-5 h-5 text-purple-600" />
+                </div>
+                <h2 className="text-xl font-bold">Fidelización y compensaciones</h2>
+              </div>
+              <div className="space-y-4">
+                 <div className="space-y-3">
+                   <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">Umbral de cliente frecuente (VIP)</label>
+                   <div className="flex items-center gap-4">
+                      <input 
+                        type="number" 
+                        min="1"
+                        max="100"
+                        value={vipThreshold}
+                        onChange={e => setVipThreshold(parseInt(e.target.value) || 1)}
+                        className="w-24 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-black text-center"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-slate-900 dark:text-white">Número de citas requeridas</p>
+                        <p className="text-xs text-slate-500 italic">Los clientes que alcancen este número de citas recibirán un estatus especial en su historial.</p>
+                      </div>
+                   </div>
+                 </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -512,17 +627,16 @@ export default function AppearanceClient({
             className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-all shadow-xl shadow-purple-500/20 disabled:opacity-50"
           >
             {isLoading ? <div className="w-5 h-5 border-2 border-current border-t-transparent animate-spin rounded-full" /> : <Save className="w-5 h-5" />}
-            Guardar Configuración
+            Guardar cambios
           </button>
         </div>
       </div>
 
       {/* RIGHT COLUMN - LIVE PREVIEW (Desktop only) */}
       <div className={`${activeTab === 'rules' ? 'hidden' : 'hidden xl:flex'} flex-col items-center w-[300px] xl:w-[320px] 2xl:w-[360px] shrink-0 sticky top-8 h-[calc(100vh-8rem)] max-h-[820px]`}>
-        <div className="mb-4 flex items-center justify-between w-full px-2">
-           <h3 className="font-bold text-slate-400 flex items-center gap-2 text-sm tracking-widest uppercase"><Eye className="w-4 h-4"/> Live Preview</h3>
+        <div className="mb-4 flex items-center justify-end w-full px-2">
            <Link href={`/${tenant.slug}`} target="_blank" className="text-xs text-purple-600 hover:underline flex items-center gap-1 font-bold bg-purple-50 dark:bg-purple-500/10 px-3 py-1.5 rounded-full">
-              <ExternalLink className="w-3 h-3" /> Ver Real
+              <ExternalLink className="w-3 h-3" /> {tPortal('viewLive')}
            </Link>
         </div>
         
@@ -546,94 +660,7 @@ export default function AppearanceClient({
                         <span className="text-white font-black text-2xl">{name.charAt(0) || 'Z'}</span>
                       </div>
                     )}
-
-                    {/* Logística Pro: Anticipación y Zonas */}
-                    <div className="space-y-6 pt-4 border-t border-slate-100 dark:border-white/5">
-                      <div className="space-y-2">
-                         <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">Anticipación requerida (Días)</label>
-                         <div className="flex items-center gap-4">
-                            <input 
-                              type="number" 
-                              min="0"
-                              max="90"
-                              value={homeServiceLeadDays}
-                              onChange={e => setHomeServiceLeadDays(parseInt(e.target.value))}
-                              className="w-24 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-black text-center"
-                            />
-                            <p className="text-xs text-slate-500 italic flex-1">Tiempo mínimo requerido para organizar la logística del traslado.</p>
-                         </div>
-                      </div>
-
-                      <div className="space-y-4">
-                         <div className="flex items-center justify-between">
-                            <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">Zonas de Cobertura y Tarifas</label>
-                            <button 
-                              type="button"
-                              onClick={() => setIsAddingZone(true)}
-                              className="px-4 py-2 bg-purple-500/10 text-purple-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-500/20 transition-all active:scale-95"
-                            >
-                              + Añadir Zona
-                            </button>
-                         </div>
-
-                         {isAddingZone && (
-                           <div className="p-5 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 border border-purple-500/20 rounded-3xl space-y-4 animate-in zoom-in-95 duration-200">
-                              <div className="grid grid-cols-2 gap-4">
-                                 <div className="col-span-2 sm:col-span-1">
-                                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Nombre Zona</label>
-                                   <input 
-                                     placeholder="Ej. Santa Tecla" 
-                                     value={newZone.name}
-                                     onChange={e => setNewZone({...newZone, name: e.target.value})}
-                                     className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold" 
-                                   />
-                                 </div>
-                                 <div className="col-span-2 sm:col-span-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Tarifa Extra</label>
-                                    <div className="relative">
-                                      <span className="absolute left-3 top-3.5 text-slate-400 text-sm font-bold">$</span>
-                                      <input 
-                                        type="number"
-                                        placeholder="0.00" 
-                                        value={newZone.fee}
-                                        onChange={e => setNewZone({...newZone, fee: e.target.value})}
-                                        className="w-full p-3 pl-8 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-black" 
-                                      />
-                                    </div>
-                                 </div>
-                              </div>
-                              <div className="flex justify-end gap-3 pt-2">
-                                 <button type="button" onClick={() => setIsAddingZone(false)} className="text-xs font-bold text-slate-500">CANCELAR</button>
-                                 <button type="button" onClick={handleAddZone} className="px-6 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-black shadow-lg shadow-purple-500/20 transition-all">CREAR</button>
-                              </div>
-                           </div>
-                         )}
-
-                         <div className="flex flex-col gap-2">
-                            {zones.map(zone => (
-                              <div key={zone.id} className="flex items-center justify-between p-4 bg-white dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 group hover:border-purple-500/50 transition-all">
-                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                                      <Truck className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                       <p className="text-sm font-black text-slate-900 dark:text-white">{zone.name}</p>
-                                       <p className="text-[10px] text-emerald-600 font-bold tracking-tight">+${zone.fee} Tarifa traslado</p>
-                                    </div>
-                                 </div>
-                                 <button 
-                                   type="button"
-                                   onClick={() => handleDeleteZone(zone.id)}
-                                   className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
-                                 >
-                                    <Save className="w-4 h-4 rotate-45" />
-                                 </button>
-                              </div>
-                            ))}
-                         </div>
-                      </div>
-                    </div>
-                    <h2 className="text-xl font-black tracking-tight text-white drop-shadow-md px-1 leading-tight">{name || 'Mi Negocio'}</h2>
+                    <h2 className="text-xl font-black tracking-tight text-white drop-shadow-md px-1 leading-tight line-clamp-2">{name || 'Mi negocio'}</h2>
                   </div>
                </div>
 

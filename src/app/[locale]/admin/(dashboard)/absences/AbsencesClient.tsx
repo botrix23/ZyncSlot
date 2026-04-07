@@ -6,6 +6,7 @@ import { createBlockAction, deleteBlockAction, updateBlockAction } from "@/app/a
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { format } from "date-fns";
+import { Portal } from "@/components/Portal";
 
 export default function AbsencesClient({ 
   initialBlocks,
@@ -140,11 +141,11 @@ export default function AbsencesClient({
                 <table className="w-full text-left border-collapse">
                    <thead>
                       <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-                         <th className="p-6 text-[10px] font-black tracking-widest text-slate-400 uppercase">Motivo</th>
-                         <th className="p-6 text-[10px] font-black tracking-widest text-slate-400 uppercase">Afectado</th>
-                         <th className="p-6 text-[10px] font-black tracking-widest text-slate-400 uppercase">Inicio</th>
-                         <th className="p-6 text-[10px] font-black tracking-widest text-slate-400 uppercase">Fin</th>
-                         <th className="p-6 text-[10px] font-black tracking-widest text-slate-400 uppercase text-right">Acciones</th>
+                         <th className="p-6 text-[10px] font-black text-slate-400">Motivo</th>
+                         <th className="p-6 text-[10px] font-black text-slate-400">Afectado</th>
+                         <th className="p-6 text-[10px] font-black text-slate-400">Inicio</th>
+                         <th className="p-6 text-[10px] font-black text-slate-400">Fin</th>
+                         <th className="p-6 text-[10px] font-black text-slate-400 text-right">Acciones</th>
                       </tr>
                    </thead>
                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -203,151 +204,155 @@ export default function AbsencesClient({
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5">
-              <div>
-                <h3 className="text-xl font-black tracking-tight">
-                  {editingId ? 'Editar Bloqueo' : t('form.titleNew')}
-                </h3>
+        <Portal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
+             {/* Backdrop con Blur Dinámico - Fixed para cubrir todo */}
+             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => { setIsModalOpen(false); setEditingId(null); }} />
+            <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+              <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5">
+                <div>
+                  <h3 className="text-xl font-black tracking-tight">
+                    {editingId ? t('form.titleEdit') : t('form.titleNew')}
+                  </h3>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setEditingId(null);
+                  }} 
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
+                >
+                  <X className="w-6 h-6" />
+                </button>
               </div>
-              <button 
-                type="button"
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setEditingId(null);
-                }} 
-                className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleSave} className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
               
-              <div className="space-y-4">
-                  <div className="flex gap-4 p-1 bg-slate-100 dark:bg-white/5 rounded-xl w-fit">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, type: "staff" })}
-                      className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${formData.type === "staff" ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300'}`}
-                    >
-                      Bloqueo a Persona
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, type: "branch" })}
-                      className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${formData.type === "branch" ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300'}`}
-                    >
-                      Cerrar Toda la Sucursal
-                    </button>
-                  </div>
-              
-                  <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{t('form.reasonLabel')}</label>
-                      <input 
-                        required
-                        type="text" 
-                        value={formData.reason}
-                        onChange={e => setFormData({...formData, reason: e.target.value})}
-                        className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all text-sm font-medium"
-                        placeholder={t('form.reasonPlaceholder')}
-                      />
-                  </div>
-
-                  {formData.type === "branch" ? (
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{t('form.branchSelect')}</label>
-                        <select 
-                            required
-                            value={formData.branchId}
-                            onChange={e => setFormData({ ...formData, branchId: e.target.value })}
-                            className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-rose-500 outline-none text-sm font-bold"
-                        >
-                            {branches.map(b => (
-                                <option key={b.id} value={b.id}>{b.name}</option>
-                            ))}
-                        </select>
+              <form onSubmit={handleSave} className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
+                
+                <div className="space-y-4">
+                    <div className="flex gap-4 p-1 bg-slate-100 dark:bg-white/5 rounded-xl w-fit">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, type: "staff" })}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${formData.type === "staff" ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300'}`}
+                      >
+                        Individual
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, type: "branch" })}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${formData.type === "branch" ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300'}`}
+                      >
+                        Sucursal
+                      </button>
                     </div>
+                
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.reasonLabel')}</label>
+                        <input 
+                          required
+                          type="text" 
+                          value={formData.reason}
+                          onChange={e => setFormData({...formData, reason: e.target.value})}
+                          className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all text-sm font-medium"
+                          placeholder={t('form.reasonPlaceholder')}
+                        />
+                    </div>
+
+                    {formData.type === "branch" ? (
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.branchSelect')}</label>
+                          <select 
+                              required
+                              value={formData.branchId}
+                              onChange={e => setFormData({ ...formData, branchId: e.target.value })}
+                              className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-rose-500 outline-none text-sm font-bold"
+                          >
+                              {branches.map(b => (
+                                  <option key={b.id} value={b.id}>{b.name}</option>
+                              ))}
+                          </select>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.staffSelect')}</label>
+                          <select 
+                              required
+                              value={formData.staffId}
+                              onChange={e => setFormData({ ...formData, staffId: e.target.value })}
+                              className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-rose-500 outline-none text-sm font-bold"
+                          >
+                              {staff.map(s => (
+                                  <option key={s.id} value={s.id}>{s.name}</option>
+                              ))}
+                          </select>
+                      </div>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 border-t border-slate-100 dark:border-white/5 pt-6">
+                   <div className="col-span-2 text-xs font-black tracking-widest text-rose-500 uppercase">Inicio del bloqueo</div>
+                   <div className="space-y-2">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.startDate')}</label>
+                        <input 
+                            required
+                            type="date"
+                            value={formData.startDate}
+                            onChange={e => setFormData({...formData, startDate: e.target.value})}
+                            className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold focus:ring-2 focus:ring-rose-500 outline-none"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.startTime')}</label>
+                        <input 
+                            required
+                            type="time"
+                            value={formData.startTime}
+                            onChange={e => setFormData({...formData, startTime: e.target.value})}
+                            className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold focus:ring-2 focus:ring-rose-500 outline-none"
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pb-4">
+                   <div className="col-span-2 text-xs font-black tracking-widest text-rose-500 uppercase">Fin del bloqueo</div>
+                   <div className="space-y-2">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.endDate')}</label>
+                        <input 
+                            required
+                            type="date"
+                            value={formData.endDate}
+                            onChange={e => setFormData({...formData, endDate: e.target.value})}
+                            className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold focus:ring-2 focus:ring-rose-500 outline-none"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.endTime')}</label>
+                        <input 
+                            required
+                            type="time"
+                            value={formData.endTime}
+                            onChange={e => setFormData({...formData, endTime: e.target.value})}
+                            className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold focus:ring-2 focus:ring-rose-500 outline-none"
+                        />
+                    </div>
+                </div>
+
+                <button 
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-bold transition-all shadow-xl shadow-rose-500/20 disabled:opacity-50 flex items-center justify-center text-sm mt-4"
+                >
+                  {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
                   ) : (
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{t('form.staffSelect')}</label>
-                        <select 
-                            required
-                            value={formData.staffId}
-                            onChange={e => setFormData({ ...formData, staffId: e.target.value })}
-                            className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-rose-500 outline-none text-sm font-bold"
-                        >
-                            {staff.map(s => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
-                            ))}
-                        </select>
-                    </div>
+                    editingId ? t('form.save') : t('form.create')
                   )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 border-t border-slate-100 dark:border-white/5 pt-6">
-                 <div className="col-span-2 text-xs font-black tracking-widest text-rose-500 uppercase">Inicio del bloqueo</div>
-                 <div className="space-y-2">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.startDate')}</label>
-                      <input 
-                          required
-                          type="date"
-                          value={formData.startDate}
-                          onChange={e => setFormData({...formData, startDate: e.target.value})}
-                          className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold focus:ring-2 focus:ring-rose-500 outline-none"
-                      />
-                  </div>
-                  <div className="space-y-2">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.startTime')}</label>
-                      <input 
-                          required
-                          type="time"
-                          value={formData.startTime}
-                          onChange={e => setFormData({...formData, startTime: e.target.value})}
-                          className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold focus:ring-2 focus:ring-rose-500 outline-none"
-                      />
-                  </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pb-4">
-                 <div className="col-span-2 text-xs font-black tracking-widest text-rose-500 uppercase">Fin del bloqueo</div>
-                 <div className="space-y-2">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.endDate')}</label>
-                      <input 
-                          required
-                          type="date"
-                          value={formData.endDate}
-                          onChange={e => setFormData({...formData, endDate: e.target.value})}
-                          className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold focus:ring-2 focus:ring-rose-500 outline-none"
-                      />
-                  </div>
-                  <div className="space-y-2">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.endTime')}</label>
-                      <input 
-                          required
-                          type="time"
-                          value={formData.endTime}
-                          onChange={e => setFormData({...formData, endTime: e.target.value})}
-                          className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold focus:ring-2 focus:ring-rose-500 outline-none"
-                      />
-                  </div>
-              </div>
-
-              <button 
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-bold transition-all shadow-xl shadow-rose-500/20 disabled:opacity-50 flex items-center justify-center text-sm uppercase tracking-widest mt-4"
-              >
-                {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
-                ) : (
-                  editingId ? 'Actualizar bloqueo' : t('form.create')
-                )}
-              </button>
-            </form>
+                </button>
+              </form>
+            </div>
           </div>
-        </div>
+        </Portal>
       )}
     </>
   );

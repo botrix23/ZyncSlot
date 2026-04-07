@@ -41,6 +41,7 @@ export const tenants = pgTable('tenants', {
     showSummaryOnLeft?: boolean;
   }>().default({}).notNull(),
   reviewsEnabled: boolean('reviews_enabled').default(false).notNull(),
+  vipThreshold: integer('vip_threshold').notNull().default(5),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });

@@ -20,6 +20,7 @@ import PhoneInput from "@/components/PhoneInput";
 import BusinessHoursPicker from "@/components/BusinessHoursPicker";
 
 import { useTranslations } from "next-intl";
+import { Portal } from "@/components/Portal";
 
 export default function BranchesClient({ 
   initialBranches,
@@ -255,109 +256,113 @@ export default function BranchesClient({
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 md:p-10 animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setIsModalOpen(false)} />
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 relative flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-zinc-900 sticky top-0 z-10">
-              <h3 className="text-xl font-bold">{editingBranch ? t('edit') : t('new')}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
-                <X className="w-6 h-6" />
-              </button>
+        <Portal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
+             {/* Backdrop con Blur Dinámico - Fixed para cubrir todo */}
+             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setIsModalOpen(false)} />
+            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 relative flex flex-col max-h-[90vh]">
+              <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5 sticky top-0 z-10">
+                <h3 className="text-xl font-black tracking-tight">{editingBranch ? t('edit') : t('new')}</h3>
+                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleSave} className="p-8 space-y-8 overflow-y-auto custom-scrollbar flex-1">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 ml-1">{t('nameLabel')}</label>
+                  <input 
+                    required
+                    type="text" 
+                    value={formData.name}
+                    onChange={e => setFormData({...formData, name: e.target.value})}
+                    className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-sm font-medium"
+                    placeholder="Nombre de la sucursal"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 ml-1">{t('addressLabel')}</label>
+                  <input 
+                    type="text" 
+                    value={formData.address}
+                    onChange={e => setFormData({...formData, address: e.target.value})}
+                    className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-sm font-medium"
+                    placeholder="Dirección completa"
+                  />
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('phoneLabel')}</label>
+                    <PhoneInput 
+                      value={formData.phone}
+                      onChange={val => setFormData({...formData, phone: val})}
+                      placeholder="Teléfono"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('hoursLabel')}</label>
+                    <BusinessHoursPicker 
+                      value={formData.businessHours}
+                      onChange={val => setFormData({...formData, businessHours: val})}
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl font-bold transition-all shadow-xl shadow-purple-500/20 disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+                >
+                  {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full" />
+                  ) : (
+                    <>
+                      <MapPin className="w-4 h-4" />
+                      {editingBranch ? t('save') : t('create')}
+                    </>
+                  )}
+                </button>
+              </form>
             </div>
-            
-            <form onSubmit={handleSave} className="p-8 space-y-8 overflow-y-auto custom-scrollbar flex-1">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300 tracking-widest">{t('nameLabel')}</label>
-                <input 
-                  required
-                  type="text" 
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-sm"
-                  placeholder="Ej: Sucursal Central"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300 tracking-widest">{t('addressLabel')}</label>
-                <input 
-                  type="text" 
-                  value={formData.address}
-                  onChange={e => setFormData({...formData, address: e.target.value})}
-                  className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-sm"
-                  placeholder="Dirección completa"
-                />
-              </div>
-
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-zinc-300 tracking-widest">{t('phoneLabel')}</label>
-                  <PhoneInput 
-                    value={formData.phone}
-                    onChange={val => setFormData({...formData, phone: val})}
-                    placeholder="Número de contacto"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-zinc-300 tracking-widest">{t('hoursLabel')}</label>
-                  <BusinessHoursPicker 
-                    value={formData.businessHours}
-                    onChange={val => setFormData({...formData, businessHours: val})}
-                  />
-                </div>
-              </div>
-
-              <button 
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl font-bold transition-all shadow-xl shadow-purple-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full" />
-                ) : (
-                  <>
-                    <MapPin className="w-4 h-4" />
-                    {editingBranch ? t('save') : t('create')}
-                  </>
-                )}
-              </button>
-            </form>
           </div>
-        </div>
+        </Portal>
       )}
 
 
       {/* Actions Dropdown */}
       {openMenu && menuPos && (
-        <div
-          ref={menuRef}
-          style={{ position: 'fixed', top: menuPos.top, left: menuPos.left, zIndex: 9999 }}
-          className="w-44 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
-        >
-
-          <button 
-            onClick={() => {
-              const b = initialBranches.find(b => b.id === openMenu);
-              if (b) handleOpenModal(b);
-              setOpenMenu(null);
-            }}
-            className="w-full text-left px-4 py-3 text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors flex items-center gap-2 font-bold"
+        <Portal>
+          <div
+            ref={menuRef}
+            style={{ position: 'fixed', top: menuPos.top, left: menuPos.left, zIndex: 9999 }}
+            className="w-44 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
           >
-            <Edit2 className="w-4 h-4" /> {t('edit')}
-          </button>
-          <div className="border-t border-slate-100 dark:border-white/5">
             <button 
               onClick={() => {
                 const b = initialBranches.find(b => b.id === openMenu);
-                if (b) handleDelete(b.id, b.name);
+                if (b) handleOpenModal(b);
                 setOpenMenu(null);
               }}
-              className="w-full text-left px-4 py-3 text-sm text-rose-500 hover:bg-rose-500/10 transition-colors flex items-center gap-2 font-bold"
+              className="w-full text-left px-4 py-3 text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors flex items-center gap-2 font-bold"
             >
-              <Trash2 className="w-4 h-4" /> {t('delete')}
+              <Edit2 className="w-4 h-4" /> {t('edit')}
             </button>
+            <div className="border-t border-slate-100 dark:border-white/5">
+              <button 
+                onClick={() => {
+                  const b = initialBranches.find(b => b.id === openMenu);
+                  if (b) handleDelete(b.id, b.name);
+                  setOpenMenu(null);
+                }}
+                className="w-full text-left px-4 py-3 text-sm text-rose-500 hover:bg-rose-500/10 transition-colors flex items-center gap-2 font-bold"
+              >
+                <Trash2 className="w-4 h-4" /> {t('delete')}
+              </button>
+            </div>
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );

@@ -37,7 +37,7 @@ export default function ReviewClient({
     if (hasQuestions) {
         for (const q of questions) {
             if (q.isRequired && (answers[q.id] === undefined || answers[q.id] === "")) {
-                setError(`Por favor responde: "${q.questionText}"`);
+                setError(t('requiredError', { question: q.questionText }));
                 return;
             }
         }
@@ -78,11 +78,11 @@ export default function ReviewClient({
         if (result.error === 'REVIEW_ALREADY_EXISTS') {
           setError(t('alreadyReviewed'));
         } else {
-          setError("Error al enviar la reseña. Inténtalo de nuevo.");
+          setError(t('submitError'));
         }
       }
     } catch (err) {
-      setError("Ocurrió un error inesperado.");
+      setError(t('genericError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -163,13 +163,13 @@ export default function ReviewClient({
                         onClick={() => handleAnswerChange(q.id, true)}
                         className={`py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all ${answers[q.id] === true ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-50 dark:bg-white/5 text-slate-400'}`}
                      >
-                        <ThumbsUp className="w-5 h-5" /> Sí
+                        <ThumbsUp className="w-5 h-5" /> {t('yes')}
                      </button>
                      <button 
                         onClick={() => handleAnswerChange(q.id, false)}
                         className={`py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all ${answers[q.id] === false ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 'bg-slate-50 dark:bg-white/5 text-slate-400'}`}
                      >
-                        <ThumbsDown className="w-5 h-5" /> No
+                        <ThumbsDown className="w-5 h-5" /> {t('no')}
                      </button>
                   </div>
                 )}
@@ -202,8 +202,8 @@ export default function ReviewClient({
                       ))}
                     </div>
                     <div className="flex justify-between px-1 text-[9px] font-black uppercase tracking-widest text-slate-400">
-                      <span>Nada probable</span>
-                      <span>Muy probable</span>
+                      <span>{t('npsLow')}</span>
+                      <span>{t('npsHigh')}</span>
                     </div>
                   </div>
                 )}

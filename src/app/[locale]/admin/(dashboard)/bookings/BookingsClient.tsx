@@ -45,6 +45,7 @@ import { es, enUS } from "date-fns/locale";
 import { Loader2 } from 'lucide-react';
 import PhoneInput from "@/components/PhoneInput";
 import { useTranslations, useLocale } from "next-intl";
+import { Portal } from "@/components/Portal";
 
 export default function BookingsClient({ 
   initialBookings,
@@ -269,7 +270,7 @@ export default function BookingsClient({
 
       {/* Filters & Search */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        <div className="lg:col-span-8 flex items-center gap-4 overflow-x-auto no-scrollbar pb-2">
+        <div className="lg:col-span-8 flex items-center gap-4 overflow-x-auto no-scrollbar py-4 -my-4 px-4 -mx-4">
             {['Todas', 'Pendientes', 'Confirmadas', 'Finalizadas', 'Canceladas'].map((tab) => (
                 <button 
                   key={tab} 
@@ -483,9 +484,9 @@ export default function BookingsClient({
                   {Array.from({ length: calendarHours }).map((_, i) => {
                     const hour = i + calendarStartHour;
                     return (
-                      <div key={hour} className="h-24 border-b border-slate-100 dark:border-white/5 p-4 text-center">
-                        <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 tracking-tighter uppercase">
-                          {format(parse(hour.toString(), "H", new Date()), "hh:mm a")}
+                      <div key={hour} className="h-24 border-b border-slate-100 dark:border-white/5 p-4 text-center flex items-start justify-center">
+                        <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 tracking-tighter whitespace-nowrap uppercase">
+                          {format(parse(hour.toString(), "H", new Date()), "h:mm a")}
                         </span>
                       </div>
                     );
@@ -521,20 +522,35 @@ export default function BookingsClient({
                                 : 'bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20'
                             }`}
                           >
-                            <div className="flex flex-col h-full">
-                              <h4 className="font-black text-xs text-slate-900 dark:text-white truncate">{booking.customerName}</h4>
-                              <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 mt-0.5 truncate flex items-center gap-1">
-                                <User className="w-3 h-3" />{booking.customerPhone}
-                              </p>
-                              {booking.branch?.name && (
-                                <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 truncate flex items-center gap-1 mt-0.5">
-                                  <MapPin className="w-3 h-3 shrink-0" />{booking.branch.name}
-                                </p>
-                              )}
-                              <div className="mt-auto flex items-center justify-between">
-                                <span className="text-[9px] font-black uppercase text-purple-600 dark:text-purple-400 tracking-wider">{booking.service?.name}</span>
-                                <span className="text-[9px] font-bold text-slate-400">{format(start, "hh:mm")} - {format(end, "hh:mm")}</span>
+                            <div className="flex flex-col h-full gap-0.5">
+                              {/* Fila 1: Cliente y Horario */}
+                              <div className="flex items-center justify-between gap-4 mb-0.5">
+                                <h4 className="font-extrabold text-[14px] text-slate-900 dark:text-white truncate flex-1 leading-tight" title={booking.customerName}>
+                                  {booking.customerName}
+                                </h4>
+                                <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                                  {format(start, "h:mm")} - {format(end, "h:mm a")}
+                                </span>
                               </div>
+
+                              {/* Fila 2: Staff - Servicio */}
+                              <div className="flex items-center gap-1.5 overflow-hidden">
+                                <User className="w-3 h-3 text-slate-400 shrink-0" />
+                                <p className="text-[11px] font-bold text-slate-600 dark:text-zinc-300 truncate">
+                                  {booking.staff?.name} <span className="mx-1 text-slate-300 dark:text-white/10">-</span> 
+                                  <span className="text-purple-600 dark:text-purple-400 font-black">{booking.service?.name}</span>
+                                </p>
+                              </div>
+
+                              {/* Fila 3: Sucursal */}
+                              {booking.branch?.name && (
+                                <div className="flex items-center gap-1.5 overflow-hidden">
+                                  <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                                  <p className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 truncate">
+                                    {booking.branch.name}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           </button>
                         );
@@ -560,7 +576,7 @@ export default function BookingsClient({
                             isSameDay(day, new Date()) ? 'border-b-2 border-purple-500' : ''
                           }`}
                         >
-                          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                          <p className="text-[9px] font-black tracking-widest text-slate-400">
                             {format(day, 'EEE', { locale: dateLocale })}
                           </p>
                           <p className={`text-sm font-black mt-0.5 ${
@@ -582,8 +598,8 @@ export default function BookingsClient({
                             return (
                               <>
                                 <div key={`h-${hour}`} className="row-span-1" style={{ gridColumn: 1, gridRow: i + 1, height: '96px', borderBottom: '1px solid', borderColor: 'rgba(148,163,184,0.1)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '8px', backgroundColor: 'rgba(248,250,252,0.3)' }}>
-                                  <span className="text-[9px] font-black text-slate-400 dark:text-zinc-500 tracking-tighter uppercase">
-                                    {format(parse(hour.toString(), "H", new Date()), "h a")}
+                                  <span className="text-[9px] font-black text-slate-400 dark:text-zinc-500 tracking-tighter whitespace-nowrap uppercase">
+                                    {format(parse(hour.toString(), "H", new Date()), "h:mm a")}
                                   </span>
                                 </div>
                                 {weekDays.map((day, di) => (
@@ -620,13 +636,20 @@ export default function BookingsClient({
                                     : 'bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20'
                                 }`}
                               >
-                                <p className="text-[9px] font-black text-slate-900 dark:text-white truncate leading-tight">{booking.customerName}</p>
-                                <p className="text-[8px] text-purple-500 font-bold truncate">{booking.service?.name}</p>
-                                {booking.branch?.name && (
-                                  <p className="text-[8px] text-slate-400 dark:text-zinc-500 truncate flex items-center gap-0.5">
-                                    <MapPin className="w-2.5 h-2.5 shrink-0" />{booking.branch.name}
+                                <div className="flex flex-col h-full gap-0.5">
+                                  <div className="flex items-center justify-between gap-1 overflow-hidden">
+                                    <p className="font-black text-[11px] text-slate-900 dark:text-white truncate flex-1 leading-tight">{booking.customerName}</p>
+                                    <span className="text-[8px] font-bold text-slate-400 whitespace-nowrap opacity-60">{format(start, "h:mm a")}</span>
+                                  </div>
+                                  <p className="text-[9px] text-slate-500 font-bold truncate">
+                                    {booking.staff?.name} - <span className="text-purple-500">{booking.service?.name}</span>
                                   </p>
-                                )}
+                                  {booking.branch?.name && (
+                                    <p className="text-[9px] text-slate-400 font-bold truncate flex items-center gap-0.5">
+                                      <MapPin className="w-2.5 h-2.5 shrink-0" /> {booking.branch.name}
+                                    </p>
+                                  )}
+                                </div>
                               </button>
                             );
                           });
@@ -643,292 +666,155 @@ export default function BookingsClient({
 
       {/* Edit Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5 shrink-0">
-              <h3 className="text-xl font-bold">{editingBooking ? t('form.titleEdit') : t('form.titleNew')}</h3>
-              <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleSaveEdit} className="p-6 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.customerName')}</label>
-                <input 
-                  required
-                  type="text" 
-                  value={formData.customerName}
-                  onChange={e => setFormData({...formData, customerName: e.target.value})}
-                  className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.customerEmail')}</label>
-                  <input 
-                    type="email" 
-                    value={formData.customerEmail}
-                    onChange={e => setFormData({...formData, customerEmail: e.target.value})}
-                    placeholder="Email"
-                    className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.status')}</label>
-                  <select 
-                    value={formData.status}
-                    onChange={e => setFormData({...formData, status: e.target.value})}
-                    className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm appearance-none"
-                  >
-                    <option value="PENDING">{t('status.PENDING')}</option>
-                    <option value="CONFIRMED">{t('status.CONFIRMED')}</option>
-                    <option value="FINALIZADA">{t('status.FINALIZADA')}</option>
-                    <option value="CANCELLED">{t('status.CANCELLED')}</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.customerPhone')}</label>
-                <PhoneInput 
-                  value={formData.customerPhone}
-                  onChange={val => setFormData({...formData, customerPhone: val})}
-                  placeholder="Teléfono del contacto"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.service')}</label>
-                  <select 
-                    value={formData.serviceId}
-                    onChange={e => setFormData({...formData, serviceId: e.target.value})}
-                    className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm appearance-none"
-                  >
-                    {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.staff')}</label>
-                  <select 
-                    value={formData.staffId}
-                    onChange={e => {
-                      const s = staff.find(st => st.id === e.target.value);
-                      setFormData({...formData, staffId: e.target.value, branchId: s?.branchId || formData.branchId})
-                    }}
-                    className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm appearance-none"
-                  >
-                    {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.duration')}</label>
-                <div className="relative">
-                  <Clock3 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input 
-                    required
-                    type="number" 
-                    min="1"
-                    value={durationInput}
-                    onChange={e => {
-                      const val = e.target.value;
-                      setDurationInput(val);
-                      const parsed = parseInt(val);
-                      if (!isNaN(parsed)) {
-                        setFormData({...formData, durationMinutes: parsed});
-                      }
-                    }}
-                    className="w-full p-4 pl-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.date')}</label>
-                  <input 
-                    required
-                    type="date" 
-                    value={formData.date}
-                    onChange={e => setFormData({...formData, date: e.target.value})}
-                    className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.time')}</label>
-                  <input 
-                    required
-                    type="time" 
-                    value={formData.time}
-                    onChange={e => setFormData({...formData, time: e.target.value})}
-                    className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <button 
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl font-bold transition-all shadow-xl shadow-purple-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {isLoading && <Loader2 className="w-5 h-5 animate-spin" />}
-                  {editingBooking ? t('form.save') : t('form.create')}
+        <Portal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
+             {/* Backdrop con Blur Dinámico - Fixed para cubrir todo */}
+             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setIsEditModalOpen(false)} />
+            <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5 shrink-0">
+                <h3 className="text-xl font-black tracking-tight">{editingBooking ? t('form.titleEdit') : t('form.titleNew')}</h3>
+                <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
+                  <X className="w-6 h-6" />
                 </button>
               </div>
-            </form>
+              
+              <form onSubmit={handleSaveEdit} className="p-7 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.customerName')}</label>
+                  <input 
+                    required
+                    type="text" 
+                    value={formData.customerName}
+                    onChange={e => setFormData({...formData, customerName: e.target.value})}
+                    className="w-full p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-medium text-slate-900 dark:text-white"
+                    placeholder="Nombre del cliente"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.customerEmail')}</label>
+                    <input 
+                      type="email" 
+                      value={formData.customerEmail}
+                      onChange={e => setFormData({...formData, customerEmail: e.target.value})}
+                      placeholder="Correo electrónico"
+                      className="w-full p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-medium text-slate-900 dark:text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.status')}</label>
+                    <select 
+                      value={formData.status}
+                      onChange={e => setFormData({...formData, status: e.target.value})}
+                      className="w-full p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-bold appearance-none cursor-pointer text-slate-900 dark:text-white"
+                    >
+                      <option value="PENDING">{t('status.PENDING')}</option>
+                      <option value="CONFIRMED">{t('status.CONFIRMED')}</option>
+                      <option value="FINALIZADA">{t('status.FINALIZADA')}</option>
+                      <option value="CANCELLED">{t('status.CANCELLED')}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.customerPhone')}</label>
+                  <PhoneInput 
+                    value={formData.customerPhone}
+                    onChange={val => setFormData({...formData, customerPhone: val})}
+                    placeholder="Teléfono"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.service')}</label>
+                    <select 
+                      value={formData.serviceId}
+                      onChange={e => setFormData({...formData, serviceId: e.target.value})}
+                      className="w-full p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-bold appearance-none cursor-pointer text-slate-900 dark:text-white"
+                    >
+                      {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.staff')}</label>
+                    <select 
+                      value={formData.staffId}
+                      onChange={e => {
+                        const s = staff.find(st => st.id === e.target.value);
+                        setFormData({...formData, staffId: e.target.value, branchId: s?.branchId || formData.branchId})
+                      }}
+                      className="w-full p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-bold appearance-none cursor-pointer text-slate-900 dark:text-white"
+                    >
+                      {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.duration')}</label>
+                  <div className="relative">
+                    <Clock3 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input 
+                      required
+                      type="number" 
+                      min="1"
+                      value={durationInput}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setDurationInput(val);
+                        const parsed = parseInt(val);
+                        if (!isNaN(parsed)) {
+                          setFormData({...formData, durationMinutes: parsed});
+                        }
+                      }}
+                      className="w-full p-3 pl-10 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-medium text-slate-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.date')}</label>
+                    <input 
+                      required
+                      type="date" 
+                      value={formData.date}
+                      onChange={e => setFormData({...formData, date: e.target.value})}
+                      className="w-full p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-bold cursor-pointer text-slate-900 dark:text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.time')}</label>
+                    <input 
+                      required
+                      type="time" 
+                      value={formData.time}
+                      onChange={e => setFormData({...formData, time: e.target.value})}
+                      className="w-full p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-bold cursor-pointer text-slate-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <button 
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl font-bold transition-all shadow-xl shadow-purple-500/20 disabled:opacity-50 flex items-center justify-center gap-2 text-base"
+                  >
+                    {isLoading && <Loader2 className="w-5 h-5 animate-spin" />}
+                    {editingBooking ? t('form.save') : t('form.create')}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
+        </Portal>
       )}
     </div>
 
-    {/* Edit Modal */}
-    {isEditModalOpen && (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
-          <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5 shrink-0">
-            <h3 className="text-xl font-bold">{editingBooking ? t('form.titleEdit') : t('form.titleNew')}</h3>
-            <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-          
-          <form onSubmit={handleSaveEdit} className="p-6 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.customerName')}</label>
-              <input 
-                required
-                type="text" 
-                value={formData.customerName}
-                onChange={e => setFormData({...formData, customerName: e.target.value})}
-                className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm"
-              />
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.customerEmail')}</label>
-                <input 
-                  type="email" 
-                  value={formData.customerEmail}
-                  onChange={e => setFormData({...formData, customerEmail: e.target.value})}
-                  placeholder="Email"
-                  className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.status')}</label>
-                <select 
-                  value={formData.status}
-                  onChange={e => setFormData({...formData, status: e.target.value})}
-                  className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm appearance-none"
-                >
-                  <option value="PENDING">{t('status.PENDING')}</option>
-                  <option value="CONFIRMED">{t('status.CONFIRMED')}</option>
-                  <option value="FINALIZADA">{t('status.FINALIZADA')}</option>
-                  <option value="CANCELLED">{t('status.CANCELLED')}</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.customerPhone')}</label>
-              <PhoneInput 
-                value={formData.customerPhone}
-                onChange={val => setFormData({...formData, customerPhone: val})}
-                placeholder="Teléfono del contacto"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.service')}</label>
-                <select 
-                  value={formData.serviceId}
-                  onChange={e => setFormData({...formData, serviceId: e.target.value})}
-                  className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm appearance-none"
-                >
-                  {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.staff')}</label>
-                <select 
-                  value={formData.staffId}
-                  onChange={e => {
-                    const s = staff.find(st => st.id === e.target.value);
-                    setFormData({...formData, staffId: e.target.value, branchId: s?.branchId || formData.branchId})
-                  }}
-                  className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm appearance-none"
-                >
-                  {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.duration')}</label>
-              <div className="relative">
-                <Clock3 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input 
-                  required
-                  type="number" 
-                  min="1"
-                  value={durationInput}
-                  onChange={e => {
-                    const val = e.target.value;
-                    setDurationInput(val);
-                    const parsed = parseInt(val);
-                    if (!isNaN(parsed)) {
-                      setFormData({...formData, durationMinutes: parsed});
-                    }
-                  }}
-                  className="w-full p-4 pl-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.date')}</label>
-                <input 
-                  required
-                  type="date" 
-                  value={formData.date}
-                  onChange={e => setFormData({...formData, date: e.target.value})}
-                  className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.time')}</label>
-                <input 
-                  required
-                  type="time" 
-                  value={formData.time}
-                  onChange={e => setFormData({...formData, time: e.target.value})}
-                  className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="pt-4">
-              <button 
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl font-bold transition-all shadow-xl shadow-purple-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {isLoading && <Loader2 className="w-5 h-5 animate-spin" />}
-                {editingBooking ? t('form.save') : t('form.create')}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )}
     </>
   );
 }

@@ -16,6 +16,7 @@ import {
   ChevronDown,
   GripVertical
 } from 'lucide-react';
+import { Portal } from "@/components/Portal";
 import { createServiceAction, updateServiceAction, deleteServiceAction, reorderServicesAction } from "@/app/actions/services";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -311,203 +312,207 @@ export default function ServicesClient({
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5 shrink-0">
-              <h3 className="text-xl font-bold">{editingService ? t('form.edit') : t('form.new')}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleSave} className="p-6 space-y-6 overflow-y-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Portal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
+             {/* Backdrop con Blur Dinámico - Fixed para cubrir todo */}
+             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setIsModalOpen(false)} />
+            <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5 shrink-0">
+                <h3 className="text-xl font-black tracking-tight">{editingService ? t('form.edit') : t('form.new')}</h3>
+                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleSave} className="p-8 space-y-8 overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.nameLabel')}</label>
+                      <input 
+                        required
+                        type="text" 
+                        value={formData.name}
+                        onChange={e => setFormData({...formData, name: e.target.value})}
+                        className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-medium"
+                        placeholder="Nombre del servicio"
+                      />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.durationLabel')}</label>
+                      <input 
+                        required
+                        type="number" 
+                        value={formData.durationMinutes}
+                        onChange={e => setFormData({...formData, durationMinutes: parseInt(e.target.value)})}
+                        className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-medium"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.priceLabel')}</label>
+                      <input 
+                        required
+                        type="text" 
+                        value={formData.price}
+                        onChange={e => setFormData({...formData, price: e.target.value})}
+                        className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-5 bg-purple-500/5 rounded-[24px] border border-purple-500/10">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{t('form.allowsHomeServiceLabel')}</p>
+                      <p className="text-[10px] text-slate-500 font-medium tracking-tight italic">{t('form.allowsHomeServiceHint')}</p>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => setFormData({...formData, allowsHomeService: !formData.allowsHomeService})}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${formData.allowsHomeService ? 'bg-purple-600' : 'bg-slate-300 dark:bg-white/10'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.allowsHomeService ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 p-5 bg-slate-50 dark:bg-white/5 rounded-[24px] border border-slate-200 dark:border-white/10">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{t('form.availabilityTypeLabel')}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setAvailabilityType("all")}
+                        className={`p-3 rounded-xl text-[10px] font-black transition-all border ${availabilityType === "all" ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/20' : 'bg-white dark:bg-zinc-800 text-slate-500 border-slate-200 dark:border-white/5'}`}
+                      >
+                        {t('form.allBranchesOption')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAvailabilityType("specific")}
+                        className={`p-3 rounded-xl text-[10px] font-black transition-all border ${availabilityType === "specific" ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/20' : 'bg-white dark:bg-zinc-800 text-slate-500 border-slate-200 dark:border-white/5'}`}
+                      >
+                        {t('form.specificBranchesOption')}
+                      </button>
+                    </div>
+
+                    {availabilityType === "specific" && (
+                      <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <p className="text-[9px] font-black text-slate-400 mb-3 ml-1">{t('form.exclusiveBranchesLabel')}</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {branches.map(branch => {
+                            const isSelected = formData.branchIds.includes(branch.id);
+                            return (
+                              <button
+                                key={branch.id}
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    branchIds: isSelected 
+                                      ? prev.branchIds.filter(id => id !== branch.id)
+                                      : [...prev.branchIds, branch.id]
+                                  }));
+                                }}
+                                className={`flex items-center gap-3 p-3 rounded-xl transition-all border ${isSelected ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-white/5 text-slate-500'}`}
+                              >
+                                <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${isSelected ? 'bg-emerald-500 border-emerald-500' : 'bg-transparent border-slate-300 dark:border-white/20'}`}>
+                                  {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                                </div>
+                                <span className="text-xs font-bold truncate">{branch.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.nameLabel')}</label>
-                  <input 
-                    required
-                    type="text" 
-                    value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm"
-                    placeholder="Ej: Corte básico"
+                  <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.descriptionLabel')}</label>
+                  <textarea 
+                    value={formData.description}
+                    onChange={e => setFormData({...formData, description: e.target.value})}
+                    className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-medium min-h-[100px] resize-none"
+                    placeholder="Descripción detallada del servicio..."
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.durationLabel')}</label>
-                    <input 
-                      required
-                      type="number" 
-                      value={formData.durationMinutes}
-                      onChange={e => setFormData({...formData, durationMinutes: parseInt(e.target.value)})}
-                      className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm"
-                    />
+                {/* Inclusiones / Exclusiones */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-emerald-600 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" /> {t('form.includesLabel')}
+                    </label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={newInclude}
+                        onChange={e => setNewInclude(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag('includes'))}
+                        className="flex-1 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-medium outline-none focus:border-emerald-500"
+                        placeholder="Pj: Exfoliación incluida..."
+                      />
+                      <button type="button" onClick={() => addTag('includes')} className="p-4 bg-emerald-500/10 text-emerald-500 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all">
+                        <Plus className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.includes.map((tag, i) => (
+                        <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-xl text-[10px] font-bold">
+                          {tag}
+                          <button type="button" onClick={() => removeTag('includes', i)} className="hover:text-rose-500 transition-colors"><X className="w-3.5 h-3.5" /></button>
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.priceLabel')}</label>
-                    <input 
-                      required
-                      type="text" 
-                      value={formData.price}
-                      onChange={e => setFormData({...formData, price: e.target.value})}
-                      className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm"
-                    />
+
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-rose-600 flex items-center gap-2">
+                      <XCircle className="w-4 h-4" /> {t('form.excludesLabel')}
+                    </label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={newExclude}
+                        onChange={e => setNewExclude(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag('excludes'))}
+                        className="flex-1 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-medium outline-none focus:border-rose-500"
+                        placeholder="Pj: No incluye propinas..."
+                      />
+                      <button type="button" onClick={() => addTag('excludes')} className="p-4 bg-rose-500/10 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all">
+                        <Plus className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.excludes.map((tag, i) => (
+                        <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 text-rose-500 rounded-xl text-[10px] font-bold">
+                          {tag}
+                          <button type="button" onClick={() => removeTag('excludes', i)} className="hover:text-rose-500 transition-colors"><X className="w-3.5 h-3.5" /></button>
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-5 bg-purple-500/5 rounded-3xl border border-purple-500/10">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{t('form.allowsHomeServiceLabel')}</p>
-                    <p className="text-[10px] text-slate-500 font-medium tracking-tight italic">{t('form.allowsHomeServiceHint')}</p>
-                  </div>
+                <div className="pt-4 border-t border-slate-100 dark:border-white/5">
                   <button 
-                    type="button"
-                    onClick={() => setFormData({...formData, allowsHomeService: !formData.allowsHomeService})}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${formData.allowsHomeService ? 'bg-purple-600' : 'bg-slate-300 dark:bg-white/10'}`}
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl font-bold transition-all shadow-xl shadow-purple-500/20 disabled:opacity-50 flex items-center justify-center text-sm"
                   >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.allowsHomeService ? 'translate-x-6' : 'translate-x-1'}`} />
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
+                    ) : (
+                      editingService ? t('form.save') : t('form.create')
+                    )}
                   </button>
                 </div>
-
-                <div className="space-y-4 p-5 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-200 dark:border-white/10">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{t('form.availabilityTypeLabel')}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setAvailabilityType("all")}
-                      className={`p-3 rounded-xl text-xs font-bold transition-all border ${availabilityType === "all" ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/20' : 'bg-white dark:bg-zinc-800 text-slate-500 border-slate-200 dark:border-white/5'}`}
-                    >
-                      {t('form.allBranchesOption')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAvailabilityType("specific")}
-                      className={`p-3 rounded-xl text-xs font-bold transition-all border ${availabilityType === "specific" ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/20' : 'bg-white dark:bg-zinc-800 text-slate-500 border-slate-200 dark:border-white/5'}`}
-                    >
-                      {t('form.specificBranchesOption')}
-                    </button>
-                  </div>
-
-                  {availabilityType === "specific" && (
-                    <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3 ml-1">{t('form.exclusiveBranchesLabel')}</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {branches.map(branch => {
-                          const isSelected = formData.branchIds.includes(branch.id);
-                          return (
-                            <button
-                              key={branch.id}
-                              type="button"
-                              onClick={() => {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  branchIds: isSelected 
-                                    ? prev.branchIds.filter(id => id !== branch.id)
-                                    : [...prev.branchIds, branch.id]
-                                }));
-                              }}
-                              className={`flex items-center gap-3 p-3 rounded-xl transition-all border ${isSelected ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-white/5 text-slate-500'}`}
-                            >
-                              <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${isSelected ? 'bg-emerald-500 border-emerald-500' : 'bg-transparent border-slate-300 dark:border-white/20'}`}>
-                                {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
-                              </div>
-                              <span className="text-xs font-bold truncate">{branch.name}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t('form.descriptionLabel')}</label>
-                <textarea 
-                  value={formData.description}
-                  onChange={e => setFormData({...formData, description: e.target.value})}
-                  className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm min-h-[80px] resize-none"
-                  placeholder={t('form.descriptionPlaceholder')}
-                />
-              </div>
-
-              {/* Inclusiones / Exclusiones */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <label className="text-sm font-bold text-emerald-500 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" /> {t('form.includesLabel')}
-                  </label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      value={newInclude}
-                      onChange={e => setNewInclude(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag('includes'))}
-                      className="flex-1 p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs outline-none focus:border-emerald-500/50"
-                      placeholder={t('form.newIncludePlaceholder')}
-                    />
-                    <button type="button" onClick={() => addTag('includes')} className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl hover:bg-emerald-500 hover:text-white transition-all">
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {formData.includes.map((tag, i) => (
-                      <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-lg text-[10px] font-bold">
-                        {tag}
-                        <button type="button" onClick={() => removeTag('includes', i)} className="hover:text-rose-500"><X className="w-3 h-3" /></button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-sm font-bold text-rose-500 flex items-center gap-2">
-                    <XCircle className="w-4 h-4" /> {t('form.excludesLabel')}
-                  </label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      value={newExclude}
-                      onChange={e => setNewExclude(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag('excludes'))}
-                      className="flex-1 p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs outline-none focus:border-rose-500/50"
-                      placeholder={t('form.newExcludePlaceholder')}
-                    />
-                    <button type="button" onClick={() => addTag('excludes')} className="p-3 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all">
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {formData.excludes.map((tag, i) => (
-                      <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 text-rose-500 rounded-lg text-[10px] font-bold">
-                        {tag}
-                        <button type="button" onClick={() => removeTag('excludes', i)} className="hover:text-rose-500"><X className="w-3 h-3" /></button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="shrink-0 pt-4">
-                <button 
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl font-bold transition-all shadow-xl shadow-purple-500/20 disabled:opacity-50 flex items-center justify-center"
-                >
-                  {isLoading ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
-                  ) : (
-                    editingService ? t('form.save') : t('form.create')
-                  )}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );

@@ -26,7 +26,7 @@ interface PhoneInputProps {
   className?: string;
 }
 
-export default function PhoneInput({ value, onChange, placeholder = "0000-0000", className = "" }: PhoneInputProps) {
+export default function PhoneInput({ value, onChange, placeholder = "Teléfono", className = "" }: PhoneInputProps) {
   const [showList, setShowList] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -67,7 +67,7 @@ export default function PhoneInput({ value, onChange, placeholder = "0000-0000",
         <button
           type="button"
           onClick={() => setShowList(!showList)}
-          className="h-[58px] flex items-center gap-2 px-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl hover:border-purple-500/50 transition-all min-w-[100px] justify-between"
+          className="h-[48px] flex items-center gap-2 px-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl hover:border-purple-500/50 transition-all min-w-[90px] justify-between"
         >
           <span className="text-xl">{currentCountry.flag}</span>
           <span className="text-sm font-bold text-slate-700 dark:text-zinc-300">{currentCountry.prefix}</span>
@@ -117,7 +117,7 @@ export default function PhoneInput({ value, onChange, placeholder = "0000-0000",
         value={numberPart}
         onChange={handleNumberChange}
         placeholder={placeholder}
-        className="flex-1 h-[58px] p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-sm text-slate-900 dark:text-white"
+        className="flex-1 h-[48px] p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-sm text-slate-900 dark:text-white"
       />
     </div>
   );
