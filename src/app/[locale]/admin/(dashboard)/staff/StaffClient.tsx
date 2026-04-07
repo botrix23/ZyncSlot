@@ -629,6 +629,58 @@ export default function StaffClient({
           </div>
         </Portal>
       )}
+      {/* Floating Action Menu for Staff */}
+      {openMenu && menuPos && (
+        <Portal>
+          <div 
+            ref={menuRef}
+            className="fixed z-[10000] w-48 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-2 animate-in fade-in zoom-in-95 duration-200"
+            style={{ 
+              top: menuPos.top, 
+              left: menuPos.left 
+            }}
+          >
+            <button 
+              onClick={() => {
+                const member = initialStaff.find(s => s.id === openMenu);
+                if (member) handleOpenModal(member);
+                setOpenMenu(null);
+                setMenuPos(null);
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl transition-all"
+            >
+              <Edit2 className="w-4 h-4 text-purple-500" />
+              {t('form.titleEdit')}
+            </button>
+            <button 
+              onClick={() => {
+                const member = initialStaff.find(s => s.id === openMenu);
+                if (member) {
+                  setSelectedStaffReviews(member);
+                  setIsReviewsModalOpen(true);
+                }
+                setOpenMenu(null);
+                setMenuPos(null);
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl transition-all"
+            >
+              <Star className="w-4 h-4 text-amber-500" />
+              Ver Reseñas
+            </button>
+            <div className="h-px bg-slate-100 dark:bg-white/5 my-1" />
+            <button 
+              onClick={() => {
+                const member = initialStaff.find(s => s.id === openMenu);
+                if (member) handleDelete(member.id, member.name);
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold text-rose-500 hover:bg-rose-500/5 rounded-xl transition-all"
+            >
+              <Trash2 className="w-4 h-4" />
+              Eliminar
+            </button>
+          </div>
+        </Portal>
+      )}
     </>
   );
 }

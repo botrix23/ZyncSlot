@@ -197,7 +197,7 @@ export default function BusinessHoursPicker({ value, onChange }: BusinessHoursPi
                       <button
                         type="button"
                         onClick={() => copyToAll(day.id)}
-                        className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-purple-500 hover:bg-purple-500/5 rounded-lg transition-all flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all hover:bg-purple-600 hover:text-white active:scale-95 shadow-sm border border-purple-100 dark:border-purple-500/20"
                         title="Copiar horario a todos los días"
                       >
                         <Copy className="w-3.5 h-3.5" />

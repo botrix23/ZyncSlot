@@ -17,7 +17,8 @@ import {
   Edit2,
   Copy,
   BarChart3,
-  Settings
+  Settings,
+  ExternalLink
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Portal } from "@/components/Portal";
@@ -200,13 +201,23 @@ export default function SurveyClient({
                  <div className="px-3 py-2 bg-white dark:bg-zinc-800 rounded-xl text-[10px] font-mono text-slate-500 truncate">
                     {origin}/{locale}/review/[ID_CITA]
                  </div>
-                 <button 
-                  onClick={handleCopyUrl}
-                  className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl transition-all text-purple-600"
-                  title="Copiar URL base"
-                 >
-                    <Copy className="w-4 h-4" />
-                 </button>
+                 <div className="flex items-center gap-1">
+                    <button 
+                      onClick={handleCopyUrl}
+                      className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl transition-all text-purple-600"
+                      title="Copiar URL base"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                    <a
+                      href={`/${locale}/review/test?tenantId=${tenantId}`}
+                      target="_blank"
+                      className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl transition-all text-purple-600"
+                      title="Vista Previa"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                 </div>
               </div>
             </div>
           </div>

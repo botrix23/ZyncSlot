@@ -87,7 +87,7 @@ async function main() {
     if (existingBranches.length === 0) {
       [branchMain] = await db.insert(branches).values({
         tenantId: tenant.id,
-        name: 'Surcursal Zona Rosa',
+        name: 'Sucursal Zona Rosa',
         businessHours: JSON.stringify({ open: '08:00', close: '18:00' }),
       }).returning();
 

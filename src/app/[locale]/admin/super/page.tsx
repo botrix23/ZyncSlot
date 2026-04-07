@@ -75,7 +75,15 @@ export default async function SuperAdminDashboard() {
                 return (
                   <tr key={tenant.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="px-6 py-4 font-semibold">{tenant.name}</td>
-                    <td className="px-6 py-4 text-zinc-400 font-mono text-xs">{tenant.slug}</td>
+                    <td className="px-6 py-4 text-zinc-400 font-mono text-xs">
+                      <a 
+                        href={`/es/${tenant.slug}`} 
+                        target="_blank" 
+                        className="hover:text-purple-400 transition-colors"
+                      >
+                        {tenant.slug}
+                      </a>
+                    </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${cfg.color}`}>
                         <cfg.icon className="w-3 h-3" />

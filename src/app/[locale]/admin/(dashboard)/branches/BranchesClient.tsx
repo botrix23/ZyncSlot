@@ -200,42 +200,64 @@ export default function BranchesClient({
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <Home className="w-4 h-4 text-slate-400 mt-1 shrink-0" />
-                <p className="text-sm text-slate-600 dark:text-zinc-400">
+                <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center shrink-0 border border-slate-100 dark:border-white/5">
+                  <Home className="w-4 h-4 text-slate-400" />
+                </div>
+                <p className="text-sm font-medium text-slate-600 dark:text-zinc-300 leading-tight pt-1">
                   {branch.address || "Sin dirección registrada"}
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <Phone className="w-4 h-4 text-slate-400 shrink-0" />
-                <p className="text-sm text-slate-600 dark:text-zinc-400">
+                <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center shrink-0 border border-slate-100 dark:border-white/5">
+                  <Phone className="w-4 h-4 text-slate-400" />
+                </div>
+                <p className="text-sm font-medium text-slate-600 dark:text-zinc-300">
                   {branch.phone || "Sin teléfono registrado"}
                 </p>
               </div>
               {branch.businessHours && (
                 <div className="flex items-start gap-3">
-                  <Clock className="w-4 h-4 text-slate-400 mt-1 shrink-0" />
-                  <div className="text-[11px] text-slate-500 dark:text-zinc-500 font-medium">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/5 dark:bg-purple-500/10 flex items-center justify-center shrink-0 border border-purple-500/10 dark:border-purple-500/20">
+                    <Clock className="w-4 h-4 text-purple-500" />
+                  </div>
+                  <div className="text-[11px] font-medium pt-0.5">
                     {(() => {
                       try {
                         const bh = JSON.parse(branch.businessHours);
                         const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                        const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
                         const todayIndex = (new Date().getDay() + 6) % 7;
                         const todayId = days[todayIndex];
-                        const todaySched = bh.regular[todayId];
                         
+                        const isNewFormat = !!bh.regular;
+                        const todaySched = isNewFormat ? bh.regular[todayId] : bh;
+                        const isOpen = isNewFormat ? todaySched?.isOpen : true;
+                        
+                        let displayTime = "";
+                        if (!isOpen) {
+                          displayTime = "Cerrado hoy";
+                        } else if (isNewFormat && todaySched?.slots) {
+                          displayTime = todaySched.slots.map((s: any) => `${s.open} - ${s.close}`).join(', ');
+                        } else if (todaySched?.open && todaySched?.close) {
+                          displayTime = `${todaySched.open} - ${todaySched.close}`;
+                        } else {
+                          displayTime = "Horario no disponible";
+                        }
+
                         return (
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-slate-700 dark:text-zinc-300">Hoy: {todaySched.isOpen ? todaySched.slots.map((s: any) => `${s.open}-${s.close}`).join(', ') : 'Cerrado'}</span>
-                            <span className="opacity-60">
-                              {days.filter(d => bh.regular[d].isOpen).length} días abiertos
-                            </span>
+                          <div className="flex flex-col">
+                            <span className="font-black text-slate-900 dark:text-white tracking-tight uppercase text-[9px] mb-0.5 opacity-50">Hoy</span>
+                            <span className="font-bold text-slate-700 dark:text-zinc-100">{displayTime}</span>
+                            {isNewFormat && (
+                              <span className="text-slate-400 dark:text-zinc-500 text-[10px] font-bold mt-0.5">
+                                {days.filter(d => bh.regular[d]?.isOpen).length} días de atención regular
+                              </span>
+                            )}
                           </div>
                         );
                       } catch {
-                        return <span>{branch.businessHours}</span>;
+                        return <span className="italic text-rose-500/70">Error en formato de horario</span>;
                       }
                     })()}
                   </div>

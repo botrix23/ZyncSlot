@@ -126,13 +126,16 @@ export default async function AdminDashboard({ params: { locale } }: { params: {
             </div>
           </div>
           <div className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 p-2 rounded-2xl border border-slate-200 dark:border-white/10 group-hover:border-purple-500/30 transition-colors">
-            <code id="portal-url" className="px-3 py-2 text-sm font-mono text-purple-600 dark:text-purple-400 select-all truncate max-w-[250px]">
-              {`/${tenantData?.slug || 'portal'}`}
-            </code>
-            <a 
-              href={`/${tenantData?.slug}`} 
+            <Link 
+              href={`/${locale}/${tenantData?.slug}`}
               target="_blank"
-
+              className="px-3 py-2 text-sm font-mono text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 rounded-xl transition-all truncate max-w-[250px]"
+            >
+              {`/${locale}/${tenantData?.slug || 'portal'}`}
+            </Link>
+            <a 
+              href={`/${locale}/${tenantData?.slug}`} 
+              target="_blank"
               className="p-2.5 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 rounded-xl hover:text-purple-600 transition-all border border-slate-200 dark:border-white/10"
               title="Abrir portal"
             >

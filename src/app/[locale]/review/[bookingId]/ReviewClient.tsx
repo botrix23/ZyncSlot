@@ -63,6 +63,13 @@ export default function ReviewClient({
         ? 0 // Action will calculate average from responses
         : (answers['default_rating'] || 0);
 
+      if (booking.id === 'test') {
+        // Mock success for preview
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setIsSuccess(true);
+        return;
+      }
+
       const result = await createReviewAction({
         tenantId: booking.tenantId,
         bookingId: booking.id,
