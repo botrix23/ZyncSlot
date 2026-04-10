@@ -21,6 +21,7 @@ interface BookingEmailProps {
   staffName?: string;
   tenantName: string;
   tenantLogo?: string;
+  customBody?: string | null;
 }
 
 export const BookingConfirmationEmail = ({
@@ -32,7 +33,19 @@ export const BookingConfirmationEmail = ({
   staffName,
   tenantName,
   tenantLogo,
+  customBody
 }: BookingEmailProps) => {
+  const getFormattedBody = () => {
+    if (!customBody) return null;
+    return customBody
+      .replace(/{cliente}/g, customerName)
+      .replace(/{servicio}/g, serviceName)
+      .replace(/{fecha}/g, date)
+      .replace(/{hora}/g, time)
+      .replace(/{negocio}/g, tenantName);
+  };
+
+  const formattedBody = getFormattedBody();
   return (
     <Html>
       <Head />
@@ -47,9 +60,11 @@ export const BookingConfirmationEmail = ({
               style={logo}
             />
           )}
-          <Heading style={h1}>¡Hola {customerName}!</Heading>
+          <Heading style={h1}>
+            {customBody ? 'Confirmación de tu reserva' : `¡Hola ${customerName}!`}
+          </Heading>
           <Text style={text}>
-            Tu cita en <strong>{tenantName}</strong> ha sido confirmada satisfactoriamente. Aquí tienes los detalles:
+            {formattedBody || `Tu cita en ${tenantName} ha sido confirmada satisfactoriamente. Aquí tienes los detalles:`}
           </Text>
           <Section style={section}>
             <Text style={detailText}>

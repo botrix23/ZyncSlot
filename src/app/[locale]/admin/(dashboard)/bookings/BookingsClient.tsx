@@ -130,6 +130,15 @@ export default function BookingsClient({
     durationMinutes: services[0]?.durationMinutes || 30
   });
 
+  const isPastBooking = (() => {
+    try {
+      const start = parse(`${formData.date} ${formData.time}`, "yyyy-MM-dd HH:mm", new Date());
+      return start < new Date();
+    } catch {
+      return false;
+    }
+  })();
+
   const [durationInput, setDurationInput] = useState(formData.durationMinutes.toString());
 
   const handleOpenCreate = () => {
@@ -523,7 +532,7 @@ export default function BookingsClient({
                             }`}
                           >
                             <div className="flex flex-col h-full gap-0.5">
-                              {/* Fila 1: Cliente y Horario */}
+                              {/* Fila Cliente y Horario */}
                               <div className="flex items-center justify-between gap-4 mb-0.5">
                                 <h4 className="font-extrabold text-[14px] text-slate-900 dark:text-white truncate flex-1 leading-tight" title={booking.customerName}>
                                   {booking.customerName}
@@ -533,7 +542,7 @@ export default function BookingsClient({
                                 </span>
                               </div>
 
-                              {/* Fila 2: Staff - Servicio */}
+                              {/* Fila Staff - Servicio */}
                               <div className="flex items-center gap-1.5 overflow-hidden">
                                 <User className="w-3 h-3 text-slate-400 shrink-0" />
                                 <p className="text-[11px] font-bold text-slate-600 dark:text-zinc-300 truncate">
@@ -542,7 +551,7 @@ export default function BookingsClient({
                                 </p>
                               </div>
 
-                              {/* Fila 3: Sucursal */}
+                              {/* Fila Sucursal */}
                               {booking.branch?.name && (
                                 <div className="flex items-center gap-1.5 overflow-hidden">
                                   <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
@@ -796,6 +805,16 @@ export default function BookingsClient({
                     />
                   </div>
                 </div>
+
+                {isPastBooking && (
+                  <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-amber-600 dark:text-amber-400 text-xs font-bold animate-in fade-in slide-in-from-top-2">
+                    <AlertCircle className="w-5 h-5 shrink-0" />
+                    <div>
+                      <p>Atención: Esta cita está siendo programada en el PASADO.</p>
+                      <p className="mt-1 font-medium opacity-80 underline">Se guardará de todas formas para tu gestión interna.</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="pt-4">
                   <button 

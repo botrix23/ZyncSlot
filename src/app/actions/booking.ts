@@ -340,24 +340,31 @@ export async function createBookingAction(data: {
       const staffMember = await db.query.staff.findFirst({ where: eq(staff.id, data.staffId) });
 
       if (tenant && service && branch) {
-        await resend.emails.send({
-          from: 'ZincSlot <noreply@resend.dev>', // Usar dominio de resend para pruebas, luego cambiar por dominio verificado
-          to: data.customerEmail,
-          subject: `Cita Confirmada - ${tenant.name}`,
-          react: BookingConfirmationEmail({
-            customerName: data.customerName,
-            serviceName: service.name,
-            date: format(data.startTime, "EEEE, d 'de' MMMM", { locale: es }),
-            time: format(data.startTime, "hh:mm a"),
-            branchName: branch.name,
-            staffName: staffMember?.name,
-            tenantName: tenant.name,
-            tenantLogo: tenant.logoUrl || undefined
-          }),
-        });
+        console.log(`[Email] Intentando enviar a ${data.customerEmail} para tenant ${tenant.name}`);
+        try {
+          const result = await resend.emails.send({
+            from: 'onboarding@resend.dev', // Cambiado temporalmente para asegurar entrega en cuentas no verificadas
+            to: data.customerEmail,
+            subject: `Cita Confirmada - ${tenant.name}`,
+            react: BookingConfirmationEmail({
+              customerName: data.customerName,
+              serviceName: service.name,
+              date: format(data.startTime, "EEEE, d 'de' MMMM", { locale: es }),
+              time: format(data.startTime, "hh:mm a"),
+              branchName: branch.name,
+              staffName: staffMember?.name,
+              tenantName: tenant.name,
+              tenantLogo: tenant.logoUrl || undefined,
+              customBody: tenant.emailBodyTemplate
+            }),
+          });
+          console.log(`[Email] Respuesta de Resend:`, result);
+        } catch (innerError: any) {
+          console.error("[Email] Error en la llamada a Resend:", innerError?.message || innerError);
+        }
       }
-    } catch (emailError) {
-      console.error("Failed to send confirmation email:", emailError);
+    } catch (emailError: any) {
+      console.error("[Email] Error crítico al enviar:", emailError?.message || emailError);
       // No fallamos la acción si el email falla, pero lo logueamos
     }
 
@@ -476,7 +483,7 @@ export async function createBookingSessionAction(data: {
 
       if (tenant && service && branch) {
         await resend.emails.send({
-          from: 'ZincSlot <noreply@resend.dev>',
+          from: 'onboarding@resend.dev',
           to: data.customerEmail,
           subject: `${data.bookings.length > 1 ? 'Sesión de Reservas Confirmada' : 'Cita Confirmada'} - ${tenant.name}`,
           react: BookingConfirmationEmail({
@@ -485,10 +492,11 @@ export async function createBookingSessionAction(data: {
             date: format(firstBooking.startTime, "EEEE, d 'de' MMMM", { locale: es }),
             time: format(firstBooking.startTime, "hh:mm a"),
             branchName: branch.name,
-            staffName: staffMember?.name,
-            tenantName: tenant.name,
-            tenantLogo: tenant.logoUrl || undefined
-          }),
+staffName: staffMember?.name,
+tenantName: tenant.name,
+tenantLogo: tenant.logoUrl || undefined,
+customBody: tenant.emailBodyTemplate
+}),
         });
       }
     } catch (emailError) {

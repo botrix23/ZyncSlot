@@ -42,8 +42,9 @@ function validatePasswordComplexity(password: string) {
  * Login: valida credenciales y establece cookie de sesión.
  */
 export async function loginAction(formData: FormData, locale: string) {
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
+const email = formData.get("email") as string;
+const password = formData.get("password") as string;
+const rememberMe = formData.get("rememberMe") === 'true';
 
   // 1. Buscar usuario en la base de datos (con join al tenant para ver status)
   const user = await db.query.users.findFirst({
@@ -74,17 +75,17 @@ export async function loginAction(formData: FormData, locale: string) {
   const isMatch = await bcrypt.compare(password, user.password);
   
   if (isMatch) {
-    cookies().set("zync_session", JSON.stringify({ 
-      email: user.email, 
-      role: user.role,
-      userId: user.id,
-      tenantId: user.tenantId 
-    }), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24,
-      path: "/",
-    });
+cookies().set("zync_session", JSON.stringify({ 
+email: user.email, 
+role: user.role,
+userId: user.id,
+tenantId: user.tenantId 
+}), {
+httpOnly: true,
+secure: process.env.NODE_ENV === "production",
+maxAge: rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24, // 30 días o 1 día
+path: "/",
+});
     await logAuditEvent({ action: 'LOGIN_SUCCESS', userId: user.id, tenantId: user.tenantId, details: { email: user.email } });
     return { success: true, role: user.role };
   }

@@ -40,6 +40,9 @@ export const tenants = pgTable('tenants', {
     step4Title?: string;
     showSummaryOnLeft?: boolean;
   }>().default({}).notNull(),
+  heroTitle: text('hero_title'),
+  heroSubtitle: text('hero_subtitle'),
+  emailBodyTemplate: text('email_body_template'),
   reviewsEnabled: boolean('reviews_enabled').default(false).notNull(),
   vipThreshold: integer('vip_threshold').notNull().default(5),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),

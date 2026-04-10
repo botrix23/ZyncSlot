@@ -50,6 +50,8 @@ export default async function Home({ params }: { params: { locale: string, slug:
           homeServiceLeadDays={tenant.homeServiceLeadDays}
           coverageZones={coverageZones}
           tenantPlan={tenant.plan}
+          heroTitle={tenant.heroTitle}
+          heroSubtitle={tenant.heroSubtitle}
         />
       ) : (
         <div className="min-h-screen bg-black text-white flex items-center justify-center">

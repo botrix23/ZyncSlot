@@ -15,31 +15,35 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import PhoneInput from "@/components/PhoneInput";
+import { supabase } from "@/lib/supabase";
 
 export default function AppearanceClient({
   tenant,
   initialZones
 }: {
-  tenant: {
-    id: string;
-    name: string;
-    slug: string;
-    logoUrl?: string | null;
-    coverUrl?: string | null;
-    primaryColor: string;
-    theme: string;
-    instagramUrl?: string | null;
-    facebookUrl?: string | null;
-    tiktokUrl?: string | null;
-    whatsappNumber?: string | null;
-    homeServiceTerms?: string | null;
-    homeServiceTermsEnabled?: boolean;
-    waMessageTemplate?: string | null;
-    allowsHomeService?: boolean;
-    homeServiceLeadDays: number;
-    vipThreshold: number;
-  },
-  initialZones: any[];
+tenant: {
+id: string;
+name: string;
+slug: string;
+logoUrl?: string | null;
+coverUrl?: string | null;
+primaryColor: string;
+theme: string;
+instagramUrl?: string | null;
+facebookUrl?: string | null;
+tiktokUrl?: string | null;
+whatsappNumber?: string | null;
+homeServiceTerms?: string | null;
+homeServiceTermsEnabled?: boolean;
+waMessageTemplate?: string | null;
+allowsHomeService?: boolean;
+homeServiceLeadDays: number;
+vipThreshold: number;
+heroTitle?: string | null;
+heroSubtitle?: string | null;
+emailBodyTemplate?: string | null;
+},
+initialZones: any[];
 }) {
   const t = useTranslations('Dashboard');
   const tPortal = useTranslations('Dashboard.portal');
@@ -57,10 +61,13 @@ export default function AppearanceClient({
   const [primaryColor, setPrimaryColor] = useState(tenant.primaryColor || "#9333ea");
   const [theme, setTheme] = useState(tenant.theme || "light");
   const [coverUrl, setCoverUrl] = useState(tenant.coverUrl || "");
-  const [logoUrl, setLogoUrl] = useState(tenant.logoUrl || "");
-  const [instagramUrl, setInstagramUrl] = useState(tenant.instagramUrl || "");
-  const [facebookUrl, setFacebookUrl] = useState(tenant.facebookUrl || "");
-  const [tiktokUrl, setTiktokUrl] = useState(tenant.tiktokUrl || "");
+const [logoUrl, setLogoUrl] = useState(tenant.logoUrl || "");
+const [instagramUrl, setInstagramUrl] = useState(tenant.instagramUrl || "");
+const [facebookUrl, setFacebookUrl] = useState(tenant.facebookUrl || "");
+const [tiktokUrl, setTiktokUrl] = useState(tenant.tiktokUrl || "");
+const [heroTitle, setHeroTitle] = useState(tenant.heroTitle || "");
+const [heroSubtitle, setHeroSubtitle] = useState(tenant.heroSubtitle || "");
+const [emailBodyTemplate, setEmailBodyTemplate] = useState(tenant.emailBodyTemplate || "");
   
   // Operación y Reglas (Lógico)
   const [whatsappNumber, setWhatsappNumber] = useState(tenant.whatsappNumber || "");
@@ -111,10 +118,13 @@ export default function AppearanceClient({
       homeServiceTerms,
       homeServiceTermsEnabled,
       waMessageTemplate,
-      allowsHomeService,
-      homeServiceLeadDays,
-      vipThreshold
-    });
+allowsHomeService,
+homeServiceLeadDays,
+vipThreshold,
+heroTitle,
+heroSubtitle,
+emailBodyTemplate
+});
 
     if (result.success) {
       setMessage({ type: 'success', text: "Portal actualizado correctamente" });
@@ -125,44 +135,70 @@ export default function AppearanceClient({
     setIsLoading(false);
   };
 
-  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+const file = e.target.files?.[0];
+if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      setMessage({ type: 'error', text: "El archivo de portada debe ser imagen" });
-      return;
-    }
+if (!file.type.startsWith('image/')) {
+setMessage({ type: 'error', text: "El archivo de portada debe ser imagen" });
+return;
+}
 
-    setIsUploadingCover(true);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      setCoverUrl(base64);
-      setMessage({ type: 'success', text: "Portada cargada. Recuerda Guardar." });
-      setIsUploadingCover(false);
-    };
-    reader.onerror = () => setIsUploadingCover(false);
-    reader.readAsDataURL(file);
-  };
+setIsUploadingCover(true);
+try {
+const fileExt = file.name.split('.').pop();
+const fileName = `${tenant.id}/cover-${Math.random()}.${fileExt}`;
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+const { data, error } = await supabase.storage
+.from('tenant-assets')
+.upload(fileName, file);
 
-    if (!file.type.startsWith('image/')) {
-      setMessage({ type: 'error', text: "El archivo del logo debe ser imagen" });
-      return;
-    }
+if (error) throw error;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      setLogoUrl(base64);
-      setMessage({ type: 'success', text: "Logo cargado. Recuerda Guardar." });
-    };
-    reader.readAsDataURL(file);
-  };
+const { data: { publicUrl } } = supabase.storage
+.from('tenant-assets')
+.getPublicUrl(fileName);
+
+setCoverUrl(publicUrl);
+setMessage({ type: 'success', text: "Portada subida a la nube. Recuerda Guardar." });
+} catch (err: any) {
+console.error("Upload error:", err);
+setMessage({ type: 'error', text: "Error al subir a Supabase: " + err.message });
+} finally {
+setIsUploadingCover(false);
+}
+};
+
+const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+const file = e.target.files?.[0];
+if (!file) return;
+
+if (!file.type.startsWith('image/')) {
+setMessage({ type: 'error', text: "El archivo del logo debe ser imagen" });
+return;
+}
+
+try {
+const fileExt = file.name.split('.').pop();
+const fileName = `${tenant.id}/logo-${Math.random()}.${fileExt}`;
+
+const { data, error } = await supabase.storage
+.from('tenant-assets')
+.upload(fileName, file);
+
+if (error) throw error;
+
+const { data: { publicUrl } } = supabase.storage
+.from('tenant-assets')
+.getPublicUrl(fileName);
+
+setLogoUrl(publicUrl);
+setMessage({ type: 'success', text: "Logo subido a la nube. Recuerda Guardar." });
+} catch (err: any) {
+console.error("Logo upload error:", err);
+setMessage({ type: 'error', text: "Error al subir logo: " + err.message });
+}
+};
 
   const handleAddZone = async () => {
     if (!newZone.name) return;
@@ -223,7 +259,7 @@ export default function AppearanceClient({
           </div>
         )}
 
-        {/* CONTENIDO TAB 1: Diseño y Marca */}
+        {/* CONTENIDO TAB Diseño y Marca */}
         {activeTab === 'design' && (
           <div className="space-y-6 animate-in slide-in-from-left-4 duration-300">
             {/* ENLACE PÚBLICO */}
@@ -277,7 +313,30 @@ export default function AppearanceClient({
                     placeholder="Nombre del negocio"
                     className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white"
                   />
-                </div>
+</div>
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div>
+<label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Título Hero del portal</label>
+<input 
+type="text" 
+value={heroTitle}
+onChange={e => setHeroTitle(e.target.value)}
+placeholder="Ej: La mejor experiencia de Spa"
+className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white"
+/>
+</div>
+<div>
+<label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Subtítulo Hero</label>
+<input 
+type="text" 
+value={heroSubtitle}
+onChange={e => setHeroSubtitle(e.target.value)}
+placeholder="Ej: Reserva tu cita en segundos"
+className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white"
+/>
+</div>
+</div>
 
                 <div>
                    <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Logo del negocio</label>
@@ -412,7 +471,7 @@ export default function AppearanceClient({
           </div>
         )}
 
-        {/* CONTENIDO TAB 2: Operación y Reglas */}
+        {/* CONTENIDO TAB Operación y Reglas */}
         {activeTab === 'rules' && (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
             {/* Servicio a domicilio */}
@@ -587,7 +646,36 @@ export default function AppearanceClient({
                    </div>
                  </div>
               </div>
-            </div>
+</div>
+
+{/* Email de Confirmación */}
+<div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-6">
+<div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-white/5">
+<div className="p-2 bg-blue-500/10 rounded-lg">
+<Mail className="w-5 h-5 text-blue-600" />
+</div>
+<h2 className="text-xl font-bold">Notificaciones por Email</h2>
+</div>
+<div className="space-y-4">
+<div className="space-y-2">
+<label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">Cuerpo del correo de confirmación</label>
+<textarea 
+value={emailBodyTemplate} 
+onChange={e => setEmailBodyTemplate(e.target.value)} 
+placeholder="Ej: ¡Hola {cliente}! Tu cita para {servicio} ha sido confirmada..." 
+className="w-full min-h-[150px] p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all resize-none text-sm" 
+/>
+</div>
+<div className="bg-blue-500/5 p-4 rounded-2xl border border-blue-500/10">
+<p className="text-[10px] font-bold text-blue-600 mb-2 uppercase tracking-widest">Variables disponibles</p>
+<div className="flex flex-wrap gap-2">
+{['{cliente}', '{servicio}', '{fecha}', '{hora}', '{negocio}'].map(v => (
+<code key={v} className="text-[10px] bg-white dark:bg-white/5 text-blue-500 px-2 py-1 rounded border border-blue-500/20">{v}</code>
+))}
+</div>
+</div>
+</div>
+</div>
 
             {/* Configuración de Fidelización */}
             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-6">

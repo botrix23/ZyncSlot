@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword]   = useState('');
   const [showPass, setShowPass]   = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError]         = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -23,6 +24,7 @@ export default function LoginPage() {
     const formData = new FormData();
     formData.append('email', email);
     formData.append('password', password);
+    formData.append('rememberMe', rememberMe.toString());
 
     const locale = window.location.pathname.split('/')[1] || 'es';
     const result = await loginAction(formData, locale);
@@ -102,7 +104,18 @@ export default function LoginPage() {
                   {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              <div className="flex justify-end pr-1">
+              <div className="flex items-center justify-between px-1">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input 
+                    type="checkbox" 
+                    checked={rememberMe}
+                    onChange={e => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 bg-slate-100 dark:bg-white/5 border-transparent"
+                  />
+                  <span className="text-xs font-bold text-slate-500 dark:text-zinc-500 group-hover:text-slate-700 dark:group-hover:text-zinc-300 transition-colors">
+                    Recordarme
+                  </span>
+                </label>
                 <a href={`/${locale}/admin/forgot-password`} className="text-xs font-bold text-purple-600 hover:text-purple-500 transition-colors">
                   {t('forgotPassword')}
                 </a>

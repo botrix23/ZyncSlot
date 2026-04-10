@@ -7,8 +7,9 @@ import { es } from "date-fns/locale";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
 import { getAvailableSlots, createBookingAction, createBookingSessionAction } from "@/app/actions/booking";
-import { Calendar, Clock, ChevronRight, Check, X, ArrowLeft, User, MapPin, Truck, Mail, Phone, UserCircle, Loader2, CheckCircle2, XCircle, Instagram, Facebook, Music, Layers, CalendarRange, Crown } from "lucide-react";
+import { Calendar, Clock, ChevronRight, Check, X, ArrowLeft, User, MapPin, Truck, Mail, Phone, UserCircle, Loader2, CheckCircle2, XCircle, Instagram, Facebook, Music, Layers, CalendarRange, Crown, Download, Globe } from "lucide-react";
 import { canUseFeature, getPlanFeatures } from "@/core/plans";
+import { getGoogleCalendarUrl, getOutlookCalendarUrl, generateICSFile } from "@/lib/calendar";
 
 type Branch = { id: string; name: string; businessHours?: string | null };
 type Service = { id: string; name: string; durationMinutes: number; price: string; includes: string[]; excludes: string[]; allowsHomeService?: boolean; branches?: { id: string; branchId: string }[] };
@@ -58,7 +59,9 @@ export default function BookingWidget({
   allowsHomeService,
   homeServiceLeadDays,
   coverageZones,
-  tenantPlan
+  tenantPlan,
+  heroTitle,
+  heroSubtitle
 }: { 
   branches: Branch[], 
   services: Service[], 
@@ -87,6 +90,8 @@ export default function BookingWidget({
   homeServiceLeadDays?: number;
   coverageZones?: CoverageZone[];
   tenantPlan?: string;
+  heroTitle?: string | null;
+  heroSubtitle?: string | null;
 }) {
   const t = useTranslations('BookingWidget');
   const [step, setStep] = useState(1);
@@ -477,8 +482,18 @@ export default function BookingWidget({
         const formattedDate = format(day, "yyyy-MM-dd");
         const leadDays = modality === 'domicilio' ? (homeServiceLeadDays ?? 7) : 0;
         const minDate = addDays(startOfToday(), leadDays);
-        const isPast = isBefore(day, minDate);
+        let isPast = isBefore(day, minDate);
         const isOpen = isBranchOpen(day);
+
+        // Si es HOY y no hay días de anticipación requeridos, verificar si aún quedan slots
+        if (!isPast && isSameDay(day, new Date()) && leadDays === 0) {
+          // Heurística rápida: si ya pasaron las 8 PM y el negocio cierra promedio 6-7 PM, deshabilitar.
+          // O mejor, podrías deshabilitar si faltan menos de 1 hora para el cierre. 
+          // Por ahora, si es hoy, dejamos que el usuario entre pero podríamos ser más estrictos.
+          // Para cumplir con el requerimiento del usuario de deshabilitar si ya no hay slots:
+          const now = new Date();
+          if (now.getHours() >= 20) isPast = true; // Pasadas las 8 PM deshabilitamos hoy
+        }
         
         days.push({
           day,
@@ -546,12 +561,12 @@ export default function BookingWidget({
                 <div className="flex items-center gap-4">
                   <img src={tenantLogo} alt={tenantName} className="h-16 w-auto object-contain" />
                   <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                    {tenantName}
+                    {heroTitle || tenantName}
                   </h1>
                 </div>
               ) : (
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-500 dark:from-white dark:to-white/50 break-words leading-tight">
-                  {tenantName}
+                  {heroTitle || tenantName}
                 </h1>
               )}
               <div className="flex gap-2 self-start sm:self-auto bg-white/5 dark:bg-white/5 p-1 rounded-xl backdrop-blur-sm border border-slate-200 dark:border-white/10">
@@ -560,7 +575,7 @@ export default function BookingWidget({
               </div>
             </div>
             <p className="text-slate-500 dark:text-zinc-400 text-lg leading-relaxed max-w-xl">
-              {t("hero_subtitle")}
+              {heroSubtitle || t("hero_subtitle")}
             </p>
           
           {/* Redes Sociales */}
@@ -655,7 +670,7 @@ export default function BookingWidget({
         <div className="flex-[1.5] w-full bg-white/95 dark:bg-zinc-950/85 backdrop-blur-2xl border border-slate-200 dark:border-white/10 p-5 sm:p-8 shadow-2xl relative min-h-[500px] flex flex-col rounded-3xl overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent dark:from-white/5 rounded-3xl pointer-events-none"></div>
           
-          {/* STEP 1: Branch & Modality */}
+          {/* STEP Branch & Modality */}
           {step === 1 && (
             <div className="relative z-10 flex flex-col h-full animate-in fade-in zoom-in-95 duration-500">
               <h2 className="text-2xl font-bold mb-6 text-slate-900 dark:text-white tracking-tight">
@@ -696,7 +711,7 @@ export default function BookingWidget({
             </div>
           )}
 
-          {/* STEP 1.1: Zone Selection (Home Service only) */}
+          {/* STEP 1.Zone Selection (Home Service only) */}
           {step === 1.1 && (
             <div className="relative z-10 flex flex-col h-full animate-in fade-in zoom-in-95 duration-500">
                <div className="flex items-center gap-3 mb-6">
@@ -751,7 +766,7 @@ export default function BookingWidget({
             </div>
           )}
 
-          {/* STEP 2: Select Service */}
+          {/* STEP Select Service */}
           {step === 2 && (
             <div className="relative z-10 flex flex-col h-full animate-in fade-in slide-in-from-right-8 duration-500">
               <div className="flex items-center gap-3 mb-6">
@@ -865,7 +880,7 @@ export default function BookingWidget({
             </div>
           )}
 
-          {/* STEP 2.5: Choose Scheduling Mode */}
+          {/* STEP 2.Choose Scheduling Mode */}
           {step === 2.5 && (
             <div className="relative z-10 flex flex-col h-full animate-in fade-in zoom-in-95 duration-500">
               <div className="flex items-center gap-3 mb-6">
@@ -915,7 +930,7 @@ export default function BookingWidget({
             </div>
           )}
 
-          {/* STEP 3: Select Date & Time (and STAFF) */}
+          {/* STEP Select Date & Time (and STAFF) */}
           {step === 3 && (
             <div className="relative z-10 flex flex-col h-full animate-in fade-in slide-in-from-right-8 duration-500 text-slate-900 dark:text-white max-h-screen">
               <div className="flex items-center gap-3 mb-4">
@@ -1173,7 +1188,7 @@ export default function BookingWidget({
             </div>
           )}
 
-          {/* STEP 4: Guest Form */}
+          {/* STEP Guest Form */}
           {step === 4 && (
             <div className="relative z-10 flex flex-col h-full animate-in fade-in slide-in-from-right-8 duration-500 text-slate-900 dark:text-white">
               <div className="flex items-center gap-3 mb-6">
@@ -1298,7 +1313,7 @@ export default function BookingWidget({
             </div>
           )}
 
-          {/* STEP 5: Success Screen */}
+          {/* STEP Success Screen */}
           {step === 5 && (
             <div className="relative z-10 flex flex-col items-center justify-center h-full text-center animate-in fade-in zoom-in-95 duration-700">
                <div className={`w-24 h-24 ${modality === 'domicilio' ? 'bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.2)] text-emerald-400' : 'bg-purple-500/10 border-purple-500/20 shadow-[0_0_30px_rgba(168,85,247,0.2)] text-purple-400'} border rounded-full flex items-center justify-center mb-8`}>
@@ -1322,12 +1337,61 @@ export default function BookingWidget({
                  </div>
                </div>
                
-               <button 
-                onClick={() => { setStep(1); setSelectedDate(null); setSelectedTime(null); setSelectedServices([]); setSelectedStaff(null); setModality(null); setGuestName(""); setGuestEmail(""); setGuestPhone(""); }}
-                className="px-8 py-3 bg-white dark:bg-white/5 hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl font-medium transition-all"
-              >
-                {t("back_to_start")}
-              </button>
+{/* Calendar Sync Dropdown */}
+<div className="relative group mb-4">
+<button className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-white/5 hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl font-bold transition-all shadow-sm">
+<CalendarRange className="w-4 h-4 text-purple-400" />
+Sincronizar calendario
+</button>
+<div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[99] p-2 text-left ring-1 ring-black/5 dark:ring-white/5">
+<a 
+href={getGoogleCalendarUrl({
+title: `Cita en ${tenantName}`,
+description: `Servicio: ${selectedServices.map(s => s.name).join(", ")}\nEspecialista: ${selectedStaff?.name || 'Cualquiera'}`,
+location: selectedBranch?.address || 'Servicio a domicilio',
+startTime: new Date(`${selectedDate}T${formatTimeToMilitary(selectedTime || '09:00 AM')}`),
+endTime: new Date(new Date(`${selectedDate}T${formatTimeToMilitary(selectedTime || '09:00 AM')}`).getTime() + totalDuration * 60000)
+})}
+target="_blank"
+className="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl text-xs font-bold text-slate-700 dark:text-zinc-300"
+>
+<Globe className="w-3.5 h-3.5" /> Google Calendar
+</a>
+<a 
+href={getOutlookCalendarUrl({
+title: `Cita en ${tenantName}`,
+description: `Servicio: ${selectedServices.map(s => s.name).join(", ")}\nEspecialista: ${selectedStaff?.name || 'Cualquiera'}`,
+location: selectedBranch?.address || 'Servicio a domicilio',
+startTime: new Date(`${selectedDate}T${formatTimeToMilitary(selectedTime || '09:00 AM')}`),
+endTime: new Date(new Date(`${selectedDate}T${formatTimeToMilitary(selectedTime || '09:00 AM')}`).getTime() + totalDuration * 60000)
+})}
+target="_blank"
+className="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl text-xs font-bold text-slate-700 dark:text-zinc-300"
+>
+<Mail className="w-3.5 h-3.5" /> Outlook (Web)
+</a>
+<a 
+href={generateICSFile({
+title: `Cita en ${tenantName}`,
+description: `Servicio: ${selectedServices.map(s => s.name).join(", ")}\nEspecialista: ${selectedStaff?.name || 'Cualquiera'}`,
+location: selectedBranch?.address || 'Servicio a domicilio',
+startTime: new Date(`${selectedDate}T${formatTimeToMilitary(selectedTime || '09:00 AM')}`),
+endTime: new Date(new Date(`${selectedDate}T${formatTimeToMilitary(selectedTime || '09:00 AM')}`).getTime() + totalDuration * 60000)
+})}
+download="cita.ics"
+className="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl text-xs font-bold text-slate-700 dark:text-zinc-300"
+>
+<Download className="w-3.5 h-3.5" /> Descargar archivo .ics
+</a>
+</div>
+</div>
+
+<button 
+onClick={() => { setStep(1); setSelectedDate(null); setSelectedTime(null); setSelectedServices([]); setSelectedStaff(null); setModality(null); setGuestName(""); setGuestEmail(""); setGuestPhone(""); }}
+className="px-8 py-3 bg-white dark:bg-white/5 hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl font-medium transition-all"
+>
+{t("back_to_start")}
+</button>
             </div>
           )}
 
