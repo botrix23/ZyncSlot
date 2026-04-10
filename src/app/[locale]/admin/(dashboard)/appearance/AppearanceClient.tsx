@@ -84,12 +84,12 @@ const [emailBodyTemplate, setEmailBodyTemplate] = useState(tenant.emailBodyTempl
   const [newZone, setNewZone] = useState({ name: '', fee: '0', description: '' });
 
   const PRESET_COLORS = [
-    { name: 'Púrpura', value: '#9333ea' },
-    { name: 'Azul', value: '#2563eb' },
-    { name: 'Esmeralda', value: '#10b981' },
-    { name: 'Rosa', value: '#e11d48' },
-    { name: 'Ámbar', value: '#d97706' },
-    { name: 'Pizarra', value: '#475569' },
+    { name: tPortal('colors.purple'), value: '#9333ea' },
+    { name: tPortal('colors.blue'), value: '#2563eb' },
+    { name: tPortal('colors.emerald'), value: '#10b981' },
+    { name: tPortal('colors.rose'), value: '#e11d48' },
+    { name: tPortal('colors.amber'), value: '#d97706' },
+    { name: tPortal('colors.slate'), value: '#475569' },
   ];
 
   const [isLoading, setIsLoading] = useState(false);
@@ -127,10 +127,10 @@ emailBodyTemplate
 });
 
     if (result.success) {
-      setMessage({ type: 'success', text: "Portal actualizado correctamente" });
+      setMessage({ type: 'success', text: tPortal('successSave') });
       router.refresh();
     } else {
-      setMessage({ type: 'error', text: "Error al guardar la configuración" });
+      setMessage({ type: 'error', text: tPortal('errorSave') });
     }
     setIsLoading(false);
   };
@@ -140,7 +140,7 @@ const file = e.target.files?.[0];
 if (!file) return;
 
 if (!file.type.startsWith('image/')) {
-setMessage({ type: 'error', text: "El archivo de portada debe ser imagen" });
+setMessage({ type: 'error', text: tPortal('errorLogo') });
 return;
 }
 
@@ -160,10 +160,10 @@ const { data: { publicUrl } } = supabase.storage
 .getPublicUrl(fileName);
 
 setCoverUrl(publicUrl);
-setMessage({ type: 'success', text: "Portada subida a la nube. Recuerda Guardar." });
+setMessage({ type: 'success', text: tPortal('logoLoaded') });
 } catch (err: any) {
 console.error("Upload error:", err);
-setMessage({ type: 'error', text: "Error al subir a Supabase: " + err.message });
+setMessage({ type: 'error', text: tPortal('errorUpload') });
 } finally {
 setIsUploadingCover(false);
 }
@@ -174,7 +174,7 @@ const file = e.target.files?.[0];
 if (!file) return;
 
 if (!file.type.startsWith('image/')) {
-setMessage({ type: 'error', text: "El archivo del logo debe ser imagen" });
+setMessage({ type: 'error', text: tPortal('errorLogo') });
 return;
 }
 
@@ -193,10 +193,10 @@ const { data: { publicUrl } } = supabase.storage
 .getPublicUrl(fileName);
 
 setLogoUrl(publicUrl);
-setMessage({ type: 'success', text: "Logo subido a la nube. Recuerda Guardar." });
+setMessage({ type: 'success', text: tPortal('logoLoaded') });
 } catch (err: any) {
 console.error("Logo upload error:", err);
-setMessage({ type: 'error', text: "Error al subir logo: " + err.message });
+setMessage({ type: 'error', text: tPortal('errorUpload') });
 }
 };
 
@@ -210,16 +210,16 @@ setMessage({ type: 'error', text: "Error al subir logo: " + err.message });
       setZones([...zones, (res as any).zone]);
       setNewZone({ name: '', fee: '0', description: '' });
       setIsAddingZone(false);
-      setMessage({ type: 'success', text: "Zona añadida" });
+      setMessage({ type: 'success', text: tPortal('form.addZone') });
     }
   };
 
   const handleDeleteZone = async (id: string) => {
-    if (!confirm("¿Eliminar esta zona?")) return;
+    if (!confirm(tPortal('form.deleteZoneConfirm'))) return;
     const res = await deleteCoverageZoneAction(id);
     if (res.success) {
       setZones(zones.filter(z => z.id !== id));
-      setMessage({ type: 'success', text: "Zona eliminada" });
+      setMessage({ type: 'success', text: tPortal('successSave') });
     }
   };
 
@@ -230,7 +230,7 @@ setMessage({ type: 'error', text: "Error al subir logo: " + err.message });
       <div className="flex-1 overflow-y-auto no-scrollbar pb-12 flex flex-col gap-6 min-w-[320px]">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{tPortal('title')}</h1>
-          <p className="text-slate-500 dark:text-zinc-400 mt-1">Configura la identidad y reglas de tu sitio público de reservas.</p>
+          <p className="text-slate-500 dark:text-zinc-400 mt-1">{tPortal('subtitle')}</p>
         </div>
 
         {/* COMPONENTE DE TABS */}
@@ -239,13 +239,13 @@ setMessage({ type: 'error', text: "Error al subir logo: " + err.message });
              onClick={() => setActiveTab('design')} 
              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'design' ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-zinc-300'}`}
            >
-             <Palette className="w-4 h-4" /> Diseño y marca
+              <Palette className="w-4 h-4" /> {tPortal('tabs.design')}
            </button>
            <button 
              onClick={() => setActiveTab('rules')} 
              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'rules' ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-zinc-300'}`}
            >
-             <Settings className="w-4 h-4" /> Operación y reglas
+              <Settings className="w-4 h-4" /> {tPortal('tabs.rules')}
            </button>
         </div>
 
@@ -270,8 +270,8 @@ setMessage({ type: 'error', text: "Error al subir logo: " + err.message });
               <div className="relative z-10 flex flex-col gap-4">
                 <div className="space-y-1">
                   <h3 className="text-md font-bold tracking-tight flex items-center gap-2">
-                    Enlace de tu portal
-                    <span className="px-2 py-0.5 bg-emerald-500 rounded-full text-[8px] font-black tracking-widest">Online</span>
+                    {tPortal('link.title')}
+                    <span className="px-2 py-0.5 bg-emerald-500 rounded-full text-[10px] font-black tracking-widest">{tPortal('link.status')}</span>
                   </h3>
                 </div>
                 
@@ -283,10 +283,10 @@ setMessage({ type: 'error', text: "Error al subir logo: " + err.message });
                     onClick={() => {
                       const url = `${window.location.protocol}//${window.location.host}/${tenant.slug}`;
                       navigator.clipboard.writeText(url);
-                      setMessage({ text: "¡Copiado!", type: 'success' });
+                      setMessage({ text: tPortal('link.copied'), type: 'success' });
                       setTimeout(() => setMessage(null), 2000);
                     }}
-                    className="px-3 py-1.5 bg-white text-purple-600 rounded-lg hover:bg-purple-50 transition-all active:scale-95 font-bold text-[10px]"
+                    className="px-3 py-1.5 bg-white text-purple-600 rounded-lg hover:bg-purple-50 transition-all active:scale-95 font-bold text-xs"
                   >
                     Copiar
                   </button>
@@ -300,46 +300,46 @@ setMessage({ type: 'error', text: "Error al subir logo: " + err.message });
                 <div className="p-2 bg-purple-500/10 rounded-lg">
                   <Building2 className="w-5 h-5 text-purple-500" />
                 </div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Identidad y redes</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">{tPortal('sections.identity')}</h2>
               </div>
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Nombre comercial</label>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.businessName')}</label>
                   <input 
                     type="text" 
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    placeholder="Nombre del negocio"
+                    placeholder={tPortal('form.businessPlaceholder')}
                     className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white"
                   />
 </div>
 
 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 <div>
-<label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Título Hero del portal</label>
+                <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.heroTitle')}</label>
 <input 
 type="text" 
 value={heroTitle}
 onChange={e => setHeroTitle(e.target.value)}
-placeholder="Ej: La mejor experiencia de Spa"
+placeholder={tPortal('form.heroTitlePlaceholder')}
 className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white"
 />
 </div>
 <div>
-<label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Subtítulo Hero</label>
+                <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.heroSubtitle')}</label>
 <input 
 type="text" 
 value={heroSubtitle}
 onChange={e => setHeroSubtitle(e.target.value)}
-placeholder="Ej: Reserva tu cita en segundos"
+placeholder={tPortal('form.heroSubtitlePlaceholder')}
 className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white"
 />
 </div>
 </div>
 
                 <div>
-                   <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Logo del negocio</label>
+                   <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.logoLabel')}</label>
                    <div className="flex items-center gap-4">
                      {logoUrl ? (
                         <div className="relative group w-20 h-20 rounded-xl border border-slate-200 dark:border-white/10 bg-white flex items-center justify-center overflow-hidden shrink-0">
@@ -353,18 +353,18 @@ className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:b
                      ) : (
                         <button onClick={() => logoInputRef.current?.click()} className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 flex flex-col items-center justify-center text-slate-400 hover:text-purple-500 transition-all shrink-0">
                            <ImageIcon className="w-6 h-6 mb-1 opacity-50" />
-                           <span className="text-[9px] font-bold">Subir</span>
+                           <span className="text-[11px] font-bold">{tPortal('form.upload')}</span>
                         </button>
                      )}
                      <div className="flex-1">
-                        <input type="text" value={logoUrl.startsWith('data:') ? 'Imagen cargada localmente' : logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="URL del logo" readOnly={logoUrl.startsWith('data:')} className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white" />
+                        <input type="text" value={logoUrl.startsWith('data:') ? 'Imagen cargada localmente' : logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder={tPortal('form.logoPlaceholder')} readOnly={logoUrl.startsWith('data:')} className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white" />
                      </div>
                      <input type="file" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" accept="image/*" />
                    </div>
                 </div>
 
                 <div className="space-y-3 pt-2">
-                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Redes sociales</label>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('sections.identity')}</label>
                   <div className="relative">
                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                         <Instagram className="w-4 h-4" />
@@ -393,14 +393,14 @@ className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:b
                 <div className="p-2 bg-purple-500/10 rounded-lg">
                   <Monitor className="w-5 h-5 text-purple-600" />
                 </div>
-                <h2 className="text-lg font-bold text-slate-800 dark:text-white">Tema del portal</h2>
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white">{tPortal('sections.theme')}</h2>
               </div>
               <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-black/20 p-2 rounded-2xl border border-slate-200 dark:border-white/5">
                 <button type="button" onClick={() => setTheme('light')} className={`py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${theme === 'light' ? 'bg-white dark:bg-zinc-800 text-purple-600 shadow-md transform scale-[1.02]' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'}`}>
-                  <Sun className="w-5 h-5"/> Claro
+                  <Sun className="w-5 h-5" /> {tPortal('theme.light')}
                 </button>
                 <button type="button" onClick={() => setTheme('dark')} className={`py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${theme === 'dark' ? 'bg-zinc-800 text-purple-400 shadow-md transform scale-[1.02] border border-white/10' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'}`}>
-                  <Moon className="w-5 h-5"/> Oscuro
+                  <Moon className="w-5 h-5" /> {tPortal('theme.dark')}
                 </button>
               </div>
             </div>
@@ -411,7 +411,7 @@ className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:b
                 <div className="p-2 bg-purple-500/10 rounded-lg">
                   <ImageIcon className="w-5 h-5 text-purple-600" />
                 </div>
-                <h2 className="text-lg font-bold text-slate-800 dark:text-white">Imagen de portada</h2>
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white">{tPortal('sections.cover')}</h2>
               </div>
 
               <div 
@@ -423,27 +423,27 @@ className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:b
                 {isUploadingCover ? (
                    <div className="flex flex-col items-center gap-3">
                      <div className="w-8 h-8 rounded-full border-4 border-purple-200 border-t-purple-600 animate-spin"></div>
-                     <p className="font-bold text-purple-600 text-sm">Subiendo...</p>
+                     <p className="font-bold text-purple-600 text-sm">{tPortal('cover.uploading')}</p>
                    </div>
                 ) : coverUrl ? (
                    <>
                      <img src={coverUrl} alt="Cover Preview" className="absolute inset-0 w-full h-full object-cover group-hover:blur-sm transition-all" />
                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
                        <Upload className="w-8 h-8 text-white mb-2" />
-                       <span className="text-white font-bold">Reemplazar portada</span>
+                       <span className="text-white font-bold">{tPortal('cover.replace')}</span>
                      </div>
                    </>
                 ) : (
                    <div className="flex flex-col items-center gap-2 text-slate-500 group-hover:text-purple-600 transition-colors">
                      <Upload className="w-10 h-10 mb-2" />
-                     <span className="font-bold">Sube una imagen de portada</span>
-                     <span className="text-xs opacity-70">Recomendado: 1200x500px, máx 2MB</span>
+                     <span className="font-bold">{tPortal('cover.hint')}</span>
+                     <span className="text-xs opacity-70">{tPortal('cover.specs')}</span>
                    </div>
                 )}
               </div>
               {coverUrl && (
                 <div className="flex justify-end">
-                  <button onClick={() => setCoverUrl('')} className="text-sm font-bold text-rose-500 hover:underline">Eliminar portada actual</button>
+                  <button onClick={() => setCoverUrl('')} className="text-sm font-bold text-rose-500 hover:underline">{tPortal('cover.delete')}</button>
                 </div>
               )}
             </div>
@@ -452,7 +452,7 @@ className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:b
             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-6">
               <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-white/10">
                 <div className="p-2 bg-purple-500/10 rounded-lg"><Palette className="w-5 h-5 text-purple-600" /></div>
-                <h2 className="text-lg font-bold text-slate-800 dark:text-white">Color primario</h2>
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white">{tPortal('sections.color')}</h2>
               </div>
               <div className="flex flex-wrap gap-4 mb-4">
                 {PRESET_COLORS.map(c => (
@@ -489,11 +489,11 @@ className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:b
               </div>
 
               <div className="space-y-2">
-                 <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">Ofrecer servicio a domicilio</label>
+                 <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">{tPortal('form.allowsHomeService')}</label>
                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 h-[64px]">
                     <div className="pr-4">
-                       <p className="text-sm font-medium text-slate-900 dark:text-white">Permitir a los clientes elegir la modalidad "A domicilio"</p>
-                       <p className="text-xs text-slate-500 italic">Si se desactiva, el portal solo mostrará agendamiento en sucursal.</p>
+                       <p className="text-sm font-medium text-slate-900 dark:text-white">{tPortal('form.allowsHomeServiceLabel')}</p>
+                       <p className="text-xs text-slate-500 italic">{tPortal('form.allowsHomeServiceHint')}</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                        <input type="checkbox" checked={allowsHomeService} onChange={e => setAllowsHomeService(e.target.checked)} className="sr-only peer" />
@@ -528,7 +528,7 @@ className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:b
                    <div className="pt-4 border-t border-slate-100 dark:border-white/10 space-y-6">
                       {/* Anticipación */}
                       <div className="space-y-3">
-                         <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">Anticipación requerida (Días)</label>
+                         <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">{tPortal('form.leadDays')}</label>
                          <div className="flex items-center gap-4">
                             <input 
                               type="number" 
@@ -538,20 +538,20 @@ className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:b
                               onChange={e => setHomeServiceLeadDays(parseInt(e.target.value))}
                               className="w-24 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-black text-center"
                             />
-                            <p className="text-xs text-slate-500 italic flex-1">Tiempo mínimo requerido para organizar la logística del traslado.</p>
+                            <p className="text-xs text-slate-500 italic flex-1">{tPortal('form.leadDaysHint')}</p>
                          </div>
                       </div>
 
                       {/* Zonas */}
                       <div className="space-y-4">
                          <div className="flex items-center justify-between">
-                            <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">Zonas de cobertura y tarifas</label>
+                            <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">{tPortal('form.zoneTitle')}</label>
                             <button 
                               type="button"
                               onClick={() => setIsAddingZone(true)}
-                              className="px-4 py-2 bg-purple-500/10 text-purple-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-500/20 transition-all active:scale-95"
+                              className="px-4 py-2 bg-purple-500/10 text-purple-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-purple-500/20 transition-all active:scale-95"
                             >
-                              Añadir zona
+                              {tPortal('form.addZone')}
                             </button>
                          </div>
 
@@ -559,21 +559,21 @@ className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:b
                            <div className="p-5 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 border border-purple-500/20 rounded-3xl space-y-4 animate-in zoom-in-95 duration-200 shadow-sm">
                               <div className="grid grid-cols-2 gap-4">
                                  <div className="col-span-2 sm:col-span-1">
-                                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Nombre zona</label>
+                                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1 block">{tPortal('form.newZoneName')}</label>
                                    <input 
-                                     placeholder="Nombre de la zona" 
+                                     placeholder={tPortal('form.newZoneName')} 
                                      value={newZone.name}
                                      onChange={e => setNewZone({...newZone, name: e.target.value})}
                                      className="w-full p-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold" 
                                    />
                                  </div>
                                  <div className="col-span-2 sm:col-span-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Tarifa extra</label>
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1 block">{tPortal('form.newZoneFee')}</label>
                                     <div className="relative">
                                       <span className="absolute left-3 top-3.5 text-slate-400 text-sm font-bold">$</span>
                                       <input 
                                         type="number"
-                                        placeholder="Monto extra" 
+                                        placeholder={tPortal('form.newZoneFee')} 
                                         value={newZone.fee}
                                         onChange={e => setNewZone({...newZone, fee: e.target.value})}
                                         className="w-full p-3 pl-8 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-black" 
@@ -582,8 +582,8 @@ className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:b
                                  </div>
                               </div>
                               <div className="flex justify-end gap-3 pt-2">
-                                 <button type="button" onClick={() => setIsAddingZone(false)} className="text-xs font-bold text-slate-500">Cancelar</button>
-                                 <button type="button" onClick={handleAddZone} className="px-6 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-black shadow-lg shadow-purple-500/20 transition-all">Crear</button>
+                                 <button type="button" onClick={() => setIsAddingZone(false)} className="text-xs font-bold text-slate-500">{tPortal('form.cancel')}</button>
+                                 <button type="button" onClick={handleAddZone} className="px-6 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-black shadow-lg shadow-purple-500/20 transition-all">{tPortal('form.create')}</button>
                               </div>
                            </div>
                          )}
@@ -597,7 +597,7 @@ className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:b
                                     </div>
                                     <div>
                                        <p className="text-sm font-black text-slate-900 dark:text-white">{zone.name}</p>
-                                       <p className="text-[10px] text-emerald-600 font-bold tracking-tight">+${zone.fee} Tarifa traslado</p>
+                                       <p className="text-[11px] text-emerald-600 font-bold tracking-tight">+${zone.fee} {tPortal('form.feeLabel')}</p>
                                     </div>
                                  </div>
                                  <button 
@@ -630,14 +630,14 @@ className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:b
                    <textarea value={waMessageTemplate} onChange={e => setWaMessageTemplate(e.target.value)} placeholder="Ejemplo: ¡Hola! Confirmo mi cita para {servicio} el {fecha} a las {hora}. Mi nombre es {cliente} y mi número es {telefono}." className="w-full min-h-[150px] p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all resize-none text-sm font-mono" />
                  </div>
                  <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10 space-y-4">
-                   <div className="flex items-center gap-2 text-[10px] font-bold text-purple-500 tracking-widest"><Info className="w-3 h-3" /> {tPortal('form.variablesGuide')}</div>
+                   <div className="flex items-center gap-2 text-xs font-bold text-purple-500 tracking-widest"><Info className="w-3 h-3" /> {tPortal('form.variablesGuide')}</div>
                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                      {['{servicio}', '{fecha}', '{hora}', '{cliente}', '{telefono}'].map(v => (
-                       <code key={v} className="text-[10px] bg-purple-500/10 text-purple-400 p-1 rounded text-center">{v}</code>
+                       <code key={v} className="text-[11px] bg-purple-500/10 text-purple-400 p-1 rounded text-center">{v}</code>
                      ))}
                    </div>
                    <div className="pt-2 border-t border-slate-200 dark:border-white/5">
-                     <p className="text-[10px] font-bold text-zinc-400 mb-2">{tPortal('form.quickEmojis')}</p>
+                     <p className="text-xs font-bold text-zinc-400 mb-2">{tPortal('form.quickEmojis')}</p>
                      <div className="flex flex-wrap gap-2">
                        {['📍', '📅', '⏰', '👤', '📞', '✨', '✂️', '💅', '✅'].map(emoji => (
                          <button key={emoji} type="button" onClick={() => setWaMessageTemplate(prev => prev + emoji)} className="p-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg hover:border-purple-500 transition-all">{emoji}</button>
@@ -654,23 +654,23 @@ className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:b
 <div className="p-2 bg-blue-500/10 rounded-lg">
 <Mail className="w-5 h-5 text-blue-600" />
 </div>
-<h2 className="text-xl font-bold">Notificaciones por Email</h2>
+<h2 className="text-xl font-bold">{tPortal('sections.email')}</h2>
 </div>
 <div className="space-y-4">
 <div className="space-y-2">
-<label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">Cuerpo del correo de confirmación</label>
+<label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">{tPortal('form.emailTitle')}</label>
 <textarea 
 value={emailBodyTemplate} 
 onChange={e => setEmailBodyTemplate(e.target.value)} 
-placeholder="Ej: ¡Hola {cliente}! Tu cita para {servicio} ha sido confirmada..." 
+placeholder={tPortal('form.emailPlaceholder')} 
 className="w-full min-h-[150px] p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all resize-none text-sm" 
 />
 </div>
 <div className="bg-blue-500/5 p-4 rounded-2xl border border-blue-500/10">
-<p className="text-[10px] font-bold text-blue-600 mb-2 uppercase tracking-widest">Variables disponibles</p>
+<p className="text-xs font-bold text-blue-600 mb-2 uppercase tracking-widest">{tPortal('form.emailVariables')}</p>
 <div className="flex flex-wrap gap-2">
 {['{cliente}', '{servicio}', '{fecha}', '{hora}', '{negocio}'].map(v => (
-<code key={v} className="text-[10px] bg-white dark:bg-white/5 text-blue-500 px-2 py-1 rounded border border-blue-500/20">{v}</code>
+<code key={v} className="text-[11px] bg-white dark:bg-white/5 text-blue-500 px-2 py-1 rounded border border-blue-500/20">{v}</code>
 ))}
 </div>
 </div>
@@ -683,11 +683,11 @@ className="w-full min-h-[150px] p-4 bg-slate-50 dark:bg-white/5 border border-sl
                 <div className="p-2 bg-purple-500/10 rounded-lg">
                   <MonitorCheck className="w-5 h-5 text-purple-600" />
                 </div>
-                <h2 className="text-xl font-bold">Fidelización y compensaciones</h2>
+                <h2 className="text-xl font-bold">{tPortal('sections.fidelization')}</h2>
               </div>
               <div className="space-y-4">
                  <div className="space-y-3">
-                   <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">Umbral de cliente frecuente (VIP)</label>
+                   <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">{tPortal('form.vipThreshold')}</label>
                    <div className="flex items-center gap-4">
                       <input 
                         type="number" 
@@ -698,8 +698,8 @@ className="w-full min-h-[150px] p-4 bg-slate-50 dark:bg-white/5 border border-sl
                         className="w-24 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-black text-center"
                       />
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-900 dark:text-white">Número de citas requeridas</p>
-                        <p className="text-xs text-slate-500 italic">Los clientes que alcancen este número de citas recibirán un estatus especial en su historial.</p>
+                        <p className="text-sm font-medium text-slate-900 dark:text-white">{tPortal('form.vipThresholdLabel')}</p>
+                        <p className="text-xs text-slate-500 italic">{tPortal('form.vipThresholdHint')}</p>
                       </div>
                    </div>
                  </div>
@@ -715,7 +715,7 @@ className="w-full min-h-[150px] p-4 bg-slate-50 dark:bg-white/5 border border-sl
             className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-all shadow-xl shadow-purple-500/20 disabled:opacity-50"
           >
             {isLoading ? <div className="w-5 h-5 border-2 border-current border-t-transparent animate-spin rounded-full" /> : <Save className="w-5 h-5" />}
-            Guardar cambios
+            {tPortal('form.save')}
           </button>
         </div>
       </div>
@@ -748,21 +748,21 @@ className="w-full min-h-[150px] p-4 bg-slate-50 dark:bg-white/5 border border-sl
                         <span className="text-white font-black text-2xl">{name.charAt(0) || 'Z'}</span>
                       </div>
                     )}
-                    <h2 className="text-xl font-black tracking-tight text-white drop-shadow-md px-1 leading-tight line-clamp-2">{name || 'Mi negocio'}</h2>
+                    <h2 className="text-xl font-black tracking-tight text-white drop-shadow-md px-1 leading-tight line-clamp-2">{name || tPortal('mockup.defaultBusiness')}</h2>
                   </div>
                </div>
 
                {/* MOCKUP BODY */}
                <div className={`p-4 xl:p-5 space-y-4 flex-1 relative -mt-6 rounded-t-3xl pt-8 flex flex-col min-h-[60%] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] ${theme === 'dark' ? 'bg-[#09090b]' : 'bg-white'}`}>
                  <div>
-                   <h3 className={`text-sm font-bold tracking-tight mb-4 ${theme === 'dark' ? 'text-zinc-200' : 'text-slate-800'}`}>Selecciona un servicio</h3>
+                   <h3 className={`text-sm font-bold tracking-tight mb-4 ${theme === 'dark' ? 'text-zinc-200' : 'text-slate-800'}`}>{tPortal('mockup.selectService')}</h3>
                    
                    <div className="space-y-3">
                      {/* Dummy Service 1 */}
                      <div className={`w-full p-4 border rounded-xl flex items-center justify-between transition-all ${theme === 'dark' ? 'bg-[#18181b] border-white/10' : 'bg-white border-slate-200'}`} style={{ borderColor: `${primaryColor}80`, backgroundColor: `${primaryColor}10` }}>
                        <div>
-                         <h4 className={`font-bold text-sm ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Corte de Cabello</h4>
-                         <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-zinc-400' : 'text-slate-500'}`}>45 min</p>
+                         <h4 className={`font-bold text-sm ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tPortal('mockup.service1')}</h4>
+                         <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-zinc-400' : 'text-slate-500'}`}>{tPortal('mockup.service1Desc')}</p>
                        </div>
                        <div className="font-bold text-sm" style={{ color: primaryColor }}>$25.00</div>
                      </div>
@@ -770,8 +770,8 @@ className="w-full min-h-[150px] p-4 bg-slate-50 dark:bg-white/5 border border-sl
                      {/* Dummy Service 2 */}
                      <div className={`w-full p-4 border rounded-xl flex items-center justify-between transition-all ${theme === 'dark' ? 'bg-[#18181b] border-white/10' : 'bg-slate-50 border-slate-200'}`}>
                        <div>
-                         <h4 className={`font-bold text-sm ${theme === 'dark' ? 'text-zinc-300' : 'text-slate-700'}`}>Arreglo de Barba</h4>
-                         <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-slate-400'}`}>20 min</p>
+                         <h4 className={`font-bold text-sm ${theme === 'dark' ? 'text-zinc-300' : 'text-slate-700'}`}>{tPortal('mockup.service2')}</h4>
+                         <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-slate-400'}`}>{tPortal('mockup.service2Desc')}</p>
                        </div>
                        <div className={`font-bold text-sm ${theme === 'dark' ? 'text-zinc-300' : 'text-slate-700'}`}>$15.00</div>
                      </div>
@@ -779,7 +779,7 @@ className="w-full min-h-[150px] p-4 bg-slate-50 dark:bg-white/5 border border-sl
                  </div>
 
                  <button className="w-full py-4 text-white rounded-xl font-bold shadow-lg flex items-center justify-center mt-auto mb-2 opacity-90 hover:opacity-100 transition-opacity" style={{ backgroundColor: primaryColor }}>
-                   Agendar Cita
+                   {tPortal('mockup.schedule')}
                  </button>
                </div>
              </div>

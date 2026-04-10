@@ -141,27 +141,27 @@ export default function AbsencesClient({
                 <table className="w-full text-left border-collapse">
                    <thead>
                       <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-                         <th className="p-6 text-[10px] font-black text-slate-400">Motivo</th>
-                         <th className="p-6 text-[10px] font-black text-slate-400">Afectado</th>
-                         <th className="p-6 text-[10px] font-black text-slate-400">Inicio</th>
-                         <th className="p-6 text-[10px] font-black text-slate-400">Fin</th>
-                         <th className="p-6 text-[10px] font-black text-slate-400 text-right">Acciones</th>
+                         <th className="p-6 text-xs font-black text-slate-400">{t('table.reason')}</th>
+                         <th className="p-6 text-xs font-black text-slate-400">{t('table.affected')}</th>
+                         <th className="p-6 text-xs font-black text-slate-400">{t('table.start')}</th>
+                         <th className="p-6 text-xs font-black text-slate-400">{t('table.end')}</th>
+                         <th className="p-6 text-xs font-black text-slate-400 text-right">{useTranslations('Dashboard.services.table')('actions')}</th>
                       </tr>
                    </thead>
                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                       {initialBlocks.map((block) => {
                          const branch = branches.find(b => b.id === block.branchId);
                          const staffMember = staff.find(s => s.id === block.staffId);
-                         const afecctedText = staffMember ? staffMember.name : (branch ? `Toda la sucursal: ${branch.name}` : 'Global');
+                         const afecctedText = staffMember ? staffMember.name : (branch ? t('types.branchAffected', { name: branch.name }) : t('types.global'));
                          
                          return (
-                            <tr key={block.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                            <tr key={block.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => handleEdit(block)}>
                                <td className="p-6">
                                   <div className="flex items-center gap-3">
                                      <div className="w-10 h-10 bg-rose-50 dark:bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-500">
                                         <CalendarOff className="w-5 h-5" />
                                      </div>
-                                     <span className="font-bold text-slate-900 dark:text-white">{block.reason || "Ausencia"}</span>
+                                     <span className="font-bold text-slate-900 dark:text-white">{block.reason || t('types.defaultReason')}</span>
                                   </div>
                                </td>
                                <td className="p-6">
@@ -236,19 +236,19 @@ export default function AbsencesClient({
                         onClick={() => setFormData({ ...formData, type: "staff" })}
                         className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${formData.type === "staff" ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300'}`}
                       >
-                        Individual
+                        {t('filter.individual')}
                       </button>
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, type: "branch" })}
                         className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${formData.type === "branch" ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300'}`}
                       >
-                        Sucursal
+                        {t('filter.branch')}
                       </button>
                     </div>
                 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.reasonLabel')}</label>
+                        <label className="text-xs font-black text-slate-500 ml-1">{t('form.reasonLabel')}</label>
                         <input 
                           required
                           type="text" 
@@ -261,7 +261,7 @@ export default function AbsencesClient({
 
                     {formData.type === "branch" ? (
                       <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.branchSelect')}</label>
+                          <label className="text-xs font-black text-slate-500 ml-1">{t('form.branchSelect')}</label>
                           <select 
                               required
                               value={formData.branchId}
@@ -275,7 +275,7 @@ export default function AbsencesClient({
                       </div>
                     ) : (
                       <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.staffSelect')}</label>
+                          <label className="text-xs font-black text-slate-500 ml-1">{t('form.staffSelect')}</label>
                           <select 
                               required
                               value={formData.staffId}
@@ -291,9 +291,9 @@ export default function AbsencesClient({
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 border-t border-slate-100 dark:border-white/5 pt-6">
-                   <div className="col-span-2 text-xs font-black tracking-widest text-rose-500 uppercase">Inicio del bloqueo</div>
+                   <div className="col-span-2 text-xs font-black tracking-widest text-rose-500 uppercase">{t('sections.startBlock')}</div>
                    <div className="space-y-2">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.startDate')}</label>
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">{t('form.startDate')}</label>
                         <input 
                             required
                             type="date"
@@ -303,7 +303,7 @@ export default function AbsencesClient({
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.startTime')}</label>
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">{t('form.startTime')}</label>
                         <input 
                             required
                             type="time"
@@ -315,9 +315,9 @@ export default function AbsencesClient({
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 pb-4">
-                   <div className="col-span-2 text-xs font-black tracking-widest text-rose-500 uppercase">Fin del bloqueo</div>
+                   <div className="col-span-2 text-xs font-black tracking-widest text-rose-500 uppercase">{t('sections.endBlock')}</div>
                    <div className="space-y-2">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.endDate')}</label>
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">{t('form.endDate')}</label>
                         <input 
                             required
                             type="date"
@@ -327,7 +327,7 @@ export default function AbsencesClient({
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('form.endTime')}</label>
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">{t('form.endTime')}</label>
                         <input 
                             required
                             type="time"

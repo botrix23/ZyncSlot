@@ -87,7 +87,7 @@ export default function SurveyClient({
         setIsEnabled(!isEnabled);
       }
     } catch (error) {
-      alert("Error al actualizar configuración");
+      alert(t('errors.update'));
     } finally {
       setIsUpdatingSettings(false);
     }
@@ -122,7 +122,7 @@ export default function SurveyClient({
         router.refresh();
       }
     } catch (error) {
-      alert("Error al guardar la pregunta");
+      alert(t('errors.save'));
     } finally {
       setIsSavingQuestion(false);
     }
@@ -137,7 +137,7 @@ export default function SurveyClient({
         router.refresh();
       }
     } catch (error) {
-      alert("Error al eliminar");
+      alert(t('errors.delete'));
     }
   };
 
@@ -157,7 +157,7 @@ export default function SurveyClient({
     if (slug) {
       const baseUrl = `${origin}/${locale}/review/`;
       navigator.clipboard.writeText(baseUrl);
-      alert("Enlace base copiado. Recuerda que el sistema envía enlaces únicos por cada cita automáticamente.");
+      alert(t('link.copyDone'));
     }
   };
 
@@ -178,13 +178,13 @@ export default function SurveyClient({
           onClick={() => setActiveTab('questions')}
           className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black transition-all ${activeTab === 'questions' ? 'bg-white dark:bg-zinc-900 text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300'}`}
         >
-          <Settings className="w-4 h-4" /> Configuración
+          <Settings className="w-4 h-4" /> {t('tabs.questions')}
         </button>
         <button
           onClick={() => setActiveTab('results')}
           className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black transition-all ${activeTab === 'results' ? 'bg-white dark:bg-zinc-900 text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300'}`}
         >
-          <BarChart3 className="w-4 h-4" /> Resultados
+          <BarChart3 className="w-4 h-4" /> {t('tabs.results')}
         </button>
       </div>
 
@@ -194,18 +194,18 @@ export default function SurveyClient({
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] p-8 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-1">
-                <h3 className="text-lg font-black text-slate-900 dark:text-white">Enlace de satisfacción</h3>
-                <p className="text-sm text-slate-400 font-medium italic">El sistema envía este enlace automáticamente después de cada cita finalizada.</p>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">{t('link.title')}</h3>
+                <p className="text-sm text-slate-400 font-medium italic">{t('link.description')}</p>
               </div>
               <div className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 p-2 pr-4 rounded-2xl border border-slate-100 dark:border-white/5 overflow-hidden max-w-md">
-                 <div className="px-3 py-2 bg-white dark:bg-zinc-800 rounded-xl text-[10px] font-mono text-slate-500 truncate">
+                 <div className="px-3 py-2 bg-white dark:bg-zinc-800 rounded-xl text-xs font-mono text-slate-500 truncate">
                     {origin}/{locale}/review/[ID_CITA]
                  </div>
                  <div className="flex items-center gap-1">
                     <button 
                       onClick={handleCopyUrl}
                       className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl transition-all text-purple-600"
-                      title="Copiar URL base"
+                      title={t('link.placeholder')}
                     >
                       <Copy className="w-4 h-4" />
                     </button>
@@ -213,7 +213,7 @@ export default function SurveyClient({
                       href={`/${locale}/review/test?tenantId=${tenantId}`}
                       target="_blank"
                       className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl transition-all text-purple-600"
-                      title="Vista Previa"
+                      title={t('link.preview')}
                     >
                       <ExternalLink className="w-4 h-4" />
                     </a>
@@ -249,7 +249,7 @@ export default function SurveyClient({
                 </h4>
                 <button
                   onClick={() => handleOpenModal()}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-[10px] font-black tracking-widest shadow-xl shadow-purple-500/20 transition-all active:scale-95"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-black tracking-widest shadow-xl shadow-purple-500/20 transition-all active:scale-95"
                 >
                   <Plus className="w-4 h-4" />
                   {t('addQuestion')}
@@ -303,7 +303,7 @@ export default function SurveyClient({
 
                       <div className="flex-1 space-y-1">
                         <p className="text-sm font-black text-slate-800 dark:text-white leading-tight">{q.questionText}</p>
-                        <div className="flex items-center gap-3 text-[9px] font-black tracking-widest text-slate-400">
+                        <div className="flex items-center gap-3 text-[11px] font-black tracking-widest text-slate-400">
                           <span className="flex items-center gap-1.5">
                             {q.questionType === 'STARS' && <Star className="w-3 h-3 text-yellow-500" />}
                             {q.questionType === 'YES_NO' && <CheckCircle2 className="w-3 h-3 text-sky-500" />}
@@ -350,25 +350,25 @@ export default function SurveyClient({
            {/* Summary Stats */}
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] p-6 shadow-sm">
-                 <p className="text-[10px] font-black tracking-widest text-slate-400">Total Respuestas</p>
+                 <p className="text-xs font-black tracking-widest text-slate-400">{t('stats.totalResponses')}</p>
                  <div className="flex items-end gap-2 mt-1">
                     <h4 className="text-4xl font-black text-slate-900 dark:text-white">{initialReviews.length}</h4>
-                    <p className="text-xs font-bold text-slate-400 mb-1.5">encuestas completadas</p>
+                    <p className="text-xs font-bold text-slate-400 mb-1.5">{t('stats.completed')}</p>
                  </div>
               </div>
 
               <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] p-6 shadow-sm">
-                 <p className="text-[10px] font-black tracking-widest text-slate-400">NPS Global</p>
+                 <p className="text-xs font-black tracking-widest text-slate-400">{t('stats.globalNPS')}</p>
                  <div className="flex items-end gap-2 mt-1">
                     <h4 className={`text-4xl font-black ${npsScore === null ? 'text-slate-300' : npsScore > 50 ? 'text-emerald-500' : npsScore > 0 ? 'text-amber-500' : 'text-rose-500'}`}>
                       {npsScore !== null ? npsScore : '--'}
                     </h4>
-                    <p className="text-xs font-bold text-slate-400 mb-1.5">{npsScore !== null ? 'puntos netos' : 'sin datos NPS'}</p>
+                    <p className="text-xs font-bold text-slate-400 mb-1.5">{npsScore !== null ? t('stats.netPoints') : t('stats.noNPS')}</p>
                  </div>
               </div>
 
               <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] p-6 shadow-sm">
-                 <p className="text-[10px] font-black tracking-widest text-slate-400">Rating Promedio Staff</p>
+                 <p className="text-xs font-black tracking-widest text-slate-400">{t('stats.avgStaffRating')}</p>
                  <div className="flex items-center gap-2 mt-1">
                     <h4 className="text-4xl font-black text-slate-900 dark:text-white">
                       {initialReviews.length > 0 
@@ -384,17 +384,17 @@ export default function SurveyClient({
            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] p-8 shadow-sm overflow-hidden">
               <h3 className="text-xl font-black tracking-tight mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
                 <MessageSquare className="w-5 h-5 text-purple-600" />
-                Audit de Respuestas
+                {t('audit.title')}
               </h3>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-50 dark:border-white/5">
-                      <th className="pb-4 text-[10px] font-black tracking-widest text-slate-400 px-2 text-center">Calif.</th>
-                      <th className="pb-4 text-[10px] font-black tracking-widest text-slate-400 px-4">Staff / Servicio</th>
-                      <th className="pb-4 text-[10px] font-black tracking-widest text-slate-400 px-4">Comentario</th>
-                      <th className="pb-4 text-[10px] font-black tracking-widest text-slate-400 px-4">Fecha</th>
+                      <th className="pb-4 text-xs font-black tracking-widest text-slate-400 px-2 text-center">{t('audit.table.rating')}</th>
+                      <th className="pb-4 text-xs font-black tracking-widest text-slate-400 px-4">{t('audit.table.staffService')}</th>
+                      <th className="pb-4 text-xs font-black tracking-widest text-slate-400 px-4">{t('audit.table.comment')}</th>
+                      <th className="pb-4 text-xs font-black tracking-widest text-slate-400 px-4">{t('audit.table.date')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50 dark:divide-white/5">
@@ -402,7 +402,7 @@ export default function SurveyClient({
                       <tr>
                         <td colSpan={4} className="py-20 text-center space-y-4">
                            <Info className="w-12 h-12 text-slate-100 dark:text-zinc-800 mx-auto" />
-                           <p className="text-sm font-bold text-slate-400 italic">No se han recibido encuestas aún.</p>
+                           <p className="text-sm font-bold text-slate-400 italic">{t('audit.noReviews')}</p>
                         </td>
                       </tr>
                     ) : (
@@ -417,7 +417,7 @@ export default function SurveyClient({
                           <td className="py-5 px-4 max-w-[200px]">
                              <div className="space-y-0.5">
                                <p className="text-sm font-black text-slate-900 dark:text-white truncate">{r.booking?.staff?.name || 'Staff'}</p>
-                               <p className="text-[10px] font-bold text-slate-400 truncate">{r.booking?.service?.name || 'Servicio'}</p>
+                               <p className="text-[11px] font-bold text-slate-400 truncate">{r.booking?.service?.name || 'Servicio'}</p>
                              </div>
                           </td>
                           <td className="py-5 px-4 min-w-[300px]">
@@ -428,15 +428,15 @@ export default function SurveyClient({
                                <div className="flex flex-wrap gap-2">
                                  {r.responses?.filter((resp: any) => resp.questionType === 'TEXT' && resp.answer).slice(0, 2).map((resp: any, i: number) => (
                                    <div key={i} className="px-2 py-1 bg-purple-500/5 rounded-lg border border-purple-500/10">
-                                      <p className="text-[8px] font-black text-slate-400 tracking-tighter">{resp.questionText}</p>
-                                      <p className="text-[10px] text-purple-600 font-bold truncate max-w-[150px]">{resp.answer}</p>
+                                      <p className="text-[10px] font-black text-slate-400 tracking-tighter">{resp.questionText}</p>
+                                      <p className="text-[11px] text-purple-600 font-bold truncate max-w-[150px]">{resp.answer}</p>
                                    </div>
                                  ))}
                                </div>
                              </div>
                           </td>
                           <td className="py-5 px-4">
-                             <span className="text-[10px] font-bold text-slate-400">{new Date(r.createdAt).toLocaleDateString()}</span>
+                             <span className="text-[11px] font-bold text-slate-400">{new Date(r.createdAt).toLocaleDateString()}</span>
                           </td>
                         </tr>
                       ))
@@ -461,7 +461,7 @@ export default function SurveyClient({
                     <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                       {editingQuestion?.id ? t('edit') : t('addQuestion')}
                     </h3>
-                    <p className="text-[10px] font-black tracking-widest text-slate-400 mt-1">Configuración de Pregunta</p>
+                    <p className="text-xs font-black tracking-widest text-slate-400 mt-1">{t('modal.config')}</p>
                   </div>
                   <button 
                     onClick={() => setIsModalOpen(false)}
@@ -473,7 +473,7 @@ export default function SurveyClient({
 
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black tracking-widest text-slate-400 ml-1">
+                    <label className="text-xs font-black tracking-widest text-slate-400 ml-1">
                       {t('questionText')}
                     </label>
                     <input
@@ -481,14 +481,14 @@ export default function SurveyClient({
                       type="text"
                       value={editingQuestion?.questionText}
                       onChange={(e) => setEditingQuestion({...editingQuestion, questionText: e.target.value})}
-                      placeholder="Escribe aquí la pregunta..."
+                      placeholder={t('modal.placeholder')}
                       className="w-full p-5 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-white/10 rounded-[24px] focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all text-sm font-medium dark:text-white"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black tracking-widest text-slate-400 ml-1">
+                      <label className="text-xs font-black tracking-widest text-slate-400 ml-1">
                         {t('questionType')}
                       </label>
                       <select
@@ -504,7 +504,7 @@ export default function SurveyClient({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black tracking-widest text-slate-400 ml-1">
+                      <label className="text-xs font-black tracking-widest text-slate-400 ml-1">
                         {t('category')}
                       </label>
                       <select
@@ -527,7 +527,7 @@ export default function SurveyClient({
                         <div className={`w-12 h-7 rounded-full transition-all relative ${editingQuestion?.isRequired ? 'bg-purple-600' : 'bg-slate-200 dark:bg-zinc-800'}`}>
                             <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${editingQuestion?.isRequired ? 'left-6' : 'left-1'}`} />
                         </div>
-                        <span className="text-[10px] font-black tracking-widest text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                        <span className="text-xs font-black tracking-widest text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                             {t('isRequired')}
                         </span>
                       </button>
@@ -541,7 +541,7 @@ export default function SurveyClient({
                         <div className={`w-12 h-7 rounded-full transition-all relative ${editingQuestion?.isActive ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-zinc-800'}`}>
                             <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${editingQuestion?.isActive ? 'left-6' : 'left-1'}`} />
                         </div>
-                        <span className="text-[10px] font-black tracking-widest text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                        <span className="text-xs font-black tracking-widest text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                             {t('isActive')}
                         </span>
                       </button>
@@ -555,7 +555,7 @@ export default function SurveyClient({
                     disabled={isSavingQuestion || !editingQuestion?.questionText}
                     className="w-full py-5 bg-purple-600 hover:bg-purple-500 text-white rounded-[24px] font-black tracking-widest uppercase text-xs shadow-2xl shadow-purple-500/30 transition-all active:scale-95 disabled:bg-slate-100 dark:disabled:bg-white/5 disabled:text-slate-400"
                   >
-                    {isSavingQuestion ? "Guardando..." : t('save')}
+                    {isSavingQuestion ? t('saving') : t('save')}
                   </button>
                 </div>
               </div>

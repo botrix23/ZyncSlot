@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { staff, staffAssignments } from "@/db/schema";
+import { staff, staffAssignments, branches } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -12,6 +12,9 @@ export async function createStaffAction(data: {
   email?: string;
   phone?: string;
   allowsHomeService?: boolean;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  inheritBranchHours?: boolean;
   assignments?: Array<{
     branchId: string;
     startDate?: Date;
@@ -29,12 +32,38 @@ export async function createStaffAction(data: {
       name: data.name,
       email: data.email,
       phone: data.phone,
+      emergencyContactName: data.emergencyContactName,
+      emergencyContactPhone: data.emergencyContactPhone,
       allowsHomeService: data.allowsHomeService ?? true,
     }).returning();
 
-    if (data.assignments && data.assignments.length > 0) {
+    // Lógica de Horarios: Si hereda de sucursal, ignorar assignments manuales para la base
+    let finalAssignments = data.assignments;
+
+    if (data.inheritBranchHours) {
+      const [branchData] = await db.select().from(branches).where(eq(branches.id, data.branchId));
+      if (branchData && branchData.businessHours) {
+        const hours = JSON.parse(branchData.businessHours); // { open: "08:00", close: "18:00" }
+        
+        // Crear/Sobrescribir asignación permanente con las horas de la sucursal
+        const permAssignment = {
+          branchId: data.branchId,
+          startTime: hours.open || "09:00",
+          endTime: hours.close || "18:00",
+          daysOfWeek: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+          isPermanent: true
+        };
+
+        if (finalAssignments) {
+          finalAssignments = [permAssignment, ...finalAssignments.filter(a => !a.isPermanent)];
+        } else {
+          finalAssignments = [permAssignment];
+        }
+      }
+    }
+    if (finalAssignments && finalAssignments.length > 0) {
       await db.insert(staffAssignments).values(
-        data.assignments.map(a => ({
+        finalAssignments.map(a => ({
           tenantId: data.tenantId,
           staffId: newStaff.id,
           branchId: a.branchId,
@@ -46,7 +75,7 @@ export async function createStaffAction(data: {
           isPermanent: a.isPermanent ?? false,
         }))
       );
-    } else {
+    } else if (!data.inheritBranchHours) {
       // Crear asignación por defecto basada en branchId primario
       await db.insert(staffAssignments).values({
         tenantId: data.tenantId,
@@ -75,6 +104,9 @@ export async function updateStaffAction(data: {
   email?: string;
   phone?: string;
   allowsHomeService?: boolean;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  inheritBranchHours?: boolean;
   assignments?: Array<{
     branchId: string;
     startDate?: Date;
@@ -94,18 +126,42 @@ export async function updateStaffAction(data: {
           name: data.name,
           email: data.email,
           phone: data.phone,
+          emergencyContactName: data.emergencyContactName,
+          emergencyContactPhone: data.emergencyContactPhone,
           allowsHomeService: data.allowsHomeService,
           updatedAt: new Date(),
         })
         .where(and(eq(staff.id, data.id), eq(staff.tenantId, data.tenantId)));
 
       // 2. Si vienen asignaciones, reemplazar las anteriores
-      if (data.assignments) {
+      let finalAssignments = data.assignments;
+
+      if (data.inheritBranchHours && data.branchId) {
+        const [branchData] = await db.select().from(branches).where(eq(branches.id, data.branchId));
+        if (branchData && branchData.businessHours) {
+          const hours = JSON.parse(branchData.businessHours);
+          const permAssignment = {
+            branchId: data.branchId,
+            startTime: hours.open || "09:00",
+            endTime: hours.close || "18:00",
+            daysOfWeek: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+            isPermanent: true
+          };
+
+          if (finalAssignments) {
+            finalAssignments = [permAssignment, ...finalAssignments.filter(a => !a.isPermanent)];
+          } else {
+            finalAssignments = [permAssignment];
+          }
+        }
+      }
+
+      if (finalAssignments) {
         await tx.delete(staffAssignments).where(eq(staffAssignments.staffId, data.id));
         
-        if (data.assignments.length > 0) {
+        if (finalAssignments.length > 0) {
           await tx.insert(staffAssignments).values(
-            data.assignments.map(a => ({
+            finalAssignments.map(a => ({
               tenantId: data.tenantId,
               staffId: data.id,
               branchId: a.branchId,

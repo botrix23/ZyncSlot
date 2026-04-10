@@ -61,11 +61,11 @@ export function AdminSidebar({ user, locale, tenantName }: { user: SessionUser |
           <div className="flex items-start gap-2 mb-2">
             <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
             <div className="min-w-0">
-              <p className="text-xs font-black text-amber-500">{t('supportMode')}</p>
-              <p className="text-xs text-amber-400/80 truncate font-medium">
-                {t('viewing')}: <strong className="text-amber-300">{user.impersonatedTenantName}</strong>
+              <p className="text-[13px] font-black text-amber-500 uppercase tracking-wide">{t('supportMode')}</p>
+              <p className="text-xs text-amber-400/90 truncate font-medium mt-0.5">
+                {t('viewing')}: <strong className="text-amber-300 font-bold">{user.impersonatedTenantName}</strong>
               </p>
-              <p className="text-xs text-amber-400/60 truncate">{t('as')}: {user.email}</p>
+              <p className="text-xs text-amber-400/70 truncate mt-0.5">{t('as')}: {user.email}</p>
             </div>
           </div>
           <button
@@ -111,7 +111,7 @@ export function AdminSidebar({ user, locale, tenantName }: { user: SessionUser |
         {/* Company Name Badge */}
         {tenantName && (
           <div className="px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 mb-1">{t('business') || 'Empresa'}</p>
+            <p className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 mb-1 uppercase tracking-wider">{t('business') || 'Empresa'}</p>
             <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{tenantName}</p>
           </div>
         )}

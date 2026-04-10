@@ -45,13 +45,13 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
             </p>
             <div className="flex items-center justify-end gap-1 mt-1">
                 {user?.role === 'SUPER_ADMIN' ? (
-                    <span className="text-[9px] font-black bg-purple-600 text-white px-1.5 py-0.5 rounded flex items-center gap-1 tracking-tighter shadow-lg shadow-purple-500/20">
-                        <ShieldCheck className="w-2.5 h-2.5" />
+                    <span className="text-[11px] font-bold bg-purple-600 text-white px-2 py-0.5 rounded flex items-center gap-1 tracking-tighter shadow-lg shadow-purple-500/20 uppercase font-bold">
+                        <ShieldCheck className="w-3 h-3" />
                         {t('superAdmin')}
                     </span>
                 ) : (
-                    <span className="text-[9px] font-bold bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 px-1.5 py-0.5 rounded flex items-center gap-1 tracking-tighter">
-                        <UserCircle className="w-2.5 h-2.5" />
+                    <span className="text-[11px] font-bold bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 px-2 py-0.5 rounded flex items-center gap-1 tracking-tighter uppercase whitespace-nowrap font-bold">
+                        <UserCircle className="w-3 h-3" />
                         {t('admin')}
                     </span>
                 )}

@@ -7,6 +7,7 @@ export default defineConfig({
   schema: './src/db/schema.ts',
   out: './drizzle/migrations',
   dialect: 'postgresql',
+  schemaFilter: ["public"],
   dbCredentials: {
     url: process.env.DATABASE_URL || 'postgresql://zyncslot_user:zyncslot_password@localhost:5432/zyncslot_db',
   },

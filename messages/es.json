@@ -238,11 +238,13 @@
       "confirmCancel": "¿Estás seguro de cancelar esta cita?",
       "errorSave": "Error al guardar la cita",
       "errorDelete": "Error al eliminar la cita",
+      "day": "Día",
+      "week": "Semana",
       "copySurveyLink": "Copiar enlace de encuesta",
       "surveyLinkCopied": "¡Enlace copiado!"
     },
     "staff": {
-      "title": "Staff / equipo",
+      "title": "Personal",
       "subtitle": "Gestiona a los profesionales que atienden en tu negocio.",
       "new": "Añadir miembro",
       "searchPlaceholder": "Buscar por nombre...",
@@ -250,6 +252,9 @@
       "role": "Profesional",
       "noEmail": "Sin email",
       "noPhone": "Sin teléfono",
+      "noBranch": "Sin sucursal",
+      "nextRotationScheduled": "Próxima rotación programada",
+      "invalidEmail": "Por favor ingresa un correo electrónico válido (ejemplo@dominio.com)",
       "form": {
         "titleNew": "Añadir miembro",
         "titleEdit": "Editar miembro",
@@ -270,7 +275,25 @@
         "to": "Fecha de fin (opcional)",
         "daysOfWeek": "Días de la semana",
         "allowsHomeServiceLabel": "¿Puede realizar servicios a domicilio?",
-        "allowsHomeServiceHint": "Si se activa, este especialista aparecerá como opción para citas fuera de sucursal."
+        "allowsHomeServiceHint": "Si se activa, este especialista aparecerá como opción para citas fuera de sucursal.",
+        "emergencyContactLabel": "Contacto de emergencia (Nombre)",
+        "emergencyContactPlaceholder": "Nombre de contacto",
+        "emergencyPhoneLabel": "Teléfono de emergencia",
+        "emergencyPhonePlaceholder": "Teléfono de emergencia",
+        "inheritBranchHoursLabel": "Heredar horario",
+        "inheritBranchHoursHint": "Toma el horario de la sucursal",
+        "homeServiceOk": "SERVICIO A DOMICILIO OK",
+        "temporaryAssignment": "Asignación temporal",
+        "noTemporaryAssignments": "No hay asignaciones temporales",
+        "permanentBase": "Sucursal Base Permanente",
+        "baseSchedule": "Horario Base",
+        "destinationBranch": "Sucursal Destino",
+        "specialSchedule": "Horario Especial",
+        "applicableDays": "Días Aplicables",
+        "reviewsHistory": "Historial de Reseñas",
+        "noReviews": "Aún no hay reseñas para este miembro.",
+        "noComment": "Sin comentario opcional.",
+        "deleteProfile": "Eliminar perfil profesional"
       },
       "confirmDelete": "¿Estás seguro de eliminar a \"{name}\"?",
       "errorSave": "Error al guardar el miembro del equipo",
@@ -283,6 +306,27 @@
       "searchPlaceholder": "Buscar personal...",
       "noBlocks": "No hay ausencias futuras registradas.",
       "allStaff": "Aplica a toda la sucursal",
+      "table": {
+        "reason": "Motivo",
+        "affected": "Afectado",
+        "start": "Inicio",
+        "end": "Fin"
+      },
+      "filter": {
+        "individual": "Individual",
+        "branch": "Sucursal"
+      },
+      "types": {
+        "individual": "Individual",
+        "branch": "Sucursal",
+        "branchAffected": "Toda la sucursal: {name}",
+        "global": "Global",
+        "defaultReason": "Ausencia"
+      },
+      "sections": {
+        "startBlock": "Inicio del bloqueo",
+        "endBlock": "Fin del bloqueo"
+      },
       "form": {
         "titleNew": "Registrar nueva ausencia",
         "titleEdit": "Editar ausencia",
@@ -303,24 +347,47 @@
       "errorDelete": "Error al eliminar la ausencia"
     },
     "clients": {
-      "title": "Clientes",
-      "subtitle": "Historial y métricas de tus clientes más frecuentes.",
-      "searchPlaceholder": "Buscar cliente...",
-      "noClients": "No hay clientes registrados aún.",
+      "title": "Directorio de clientes",
+      "subtitle": "Gestiona y fideliza a tus clientes frecuentes.",
+      "searchPlaceholder": "Buscar por nombre, correo o teléfono...",
+      "noClients": "Aún no tienes clientes registrados",
+      "noClientsDescription": "Las citas agendadas aparecerán automáticamente aquí.",
+      "frequent": "Frecuente",
+      "vipDesc": "VIP",
+      "noEmail": "Sin correo registrado",
+      "noPhone": "Sin teléfono registrado",
+      "loyaltyPotential": "Potencial de lealtad",
+      "adjustThreshold": "Ajustar umbral",
+      "vipSuccess": "¡Excelente! Este cliente es VIP por haber superado las {threshold} citas. Considera ofrecerle un beneficio especial.",
+      "vipMissing": "Este cliente lleva {count} citas. Le faltan {missing} para alcanzar el estatus VIP configurado.",
+      "closeProfile": "Cerrar perfil",
       "table": {
         "client": "Cliente",
         "contact": "Contacto",
-        "services": "Servicios consumidos",
-        "totalAppointments": "Total Citas",
-        "totalSpent": "Total Gastado ({currency})",
-        "lastVisit": "Última Cita"
+        "mainService": "Servicio principal",
+        "frequency": "Frecuencia",
+        "totalSpent": "Total gastado",
+        "action": "Acción",
+        "frequencyCount": "{count} citas"
+      },
+      "stats": {
+        "invested": "Invertido",
+        "appointments": "Citas",
+        "favorite": "Favorito"
+      },
+      "history": {
+        "title": "Últimas visitas",
+        "date": "Fecha",
+        "service": "Servicio",
+        "staffBranch": "Personal / Sucursal",
+        "amount": "Monto"
       }
     },
     "sidebar": {
       "dashboard": "Dashboard",
       "bookings": "Citas",
       "services": "Servicios",
-      "staff": "Staff / equipo",
+      "staff": "Personal",
       "absences": "Ausencias",
       "clients": "Clientes",
       "branches": "Sucursales",
@@ -340,34 +407,102 @@
       "subtitle": "Configura la identidad y reglas de tu sitio público de reservas.",
       "successSave": "Configuración guardada correctamente.",
       "errorSave": "Error al guardar la configuración.",
+      "errorUpload": "Error al subir imagen.",
       "errorLogo": "Por favor selecciona una imagen.",
       "logoLoaded": "Logo cargado. No olvides guardar los cambios.",
       "livePreview": "Vista previa",
       "viewLive": "Ver portal en vivo",
+      "tabs": {
+        "design": "Diseño y marca",
+        "rules": "Operación y reglas"
+      },
+      "link": {
+        "title": "Enlace de tu portal",
+        "status": "Online",
+        "copy": "Copiar",
+        "copied": "¡Copiado!"
+      },
       "sections": {
         "identity": "Identidad y redes",
         "homeService": "Servicio a domicilio",
-        "whatsapp": "Mensajería WhatsApp"
+        "whatsapp": "Mensajería WhatsApp",
+        "theme": "Tema del portal",
+        "cover": "Imagen de portada",
+        "color": "Color primario",
+        "email": "Notificaciones por Email",
+        "fidelization": "Fidelización y compensaciones"
       },
       "form": {
-        "businessName": "Nombre del negocio",
-        "logoUrl": "URL del logo",
+        "businessName": "Nombre comercial",
+        "businessPlaceholder": "Nombre del negocio",
+        "heroTitle": "Título Hero del portal",
+        "heroTitlePlaceholder": "Ej: La mejor experiencia de Spa",
+        "heroSubtitle": "Subtítulo Hero",
+        "heroSubtitlePlaceholder": "Ej: Reserva tu cita en segundos",
         "logoLabel": "Logo del negocio",
-        "clean": "Limpiar",
-        "changeImage": "Cambiar imagen",
-        "uploadLogo": "Click para subir logo",
-        "uploadHint": "Recomendado: 512x512px (PNG/JPG)",
-        "phone": "Teléfono",
+        "logoPlaceholder": "URL del logo",
+        "upload": "Subir",
+        "instagram": "Instagram URL",
+        "facebook": "Facebook URL",
+        "tiktok": "TikTok URL",
+        "phone": "Teléfono del negocio",
+        "allowsHomeService": "Ofrecer servicio a domicilio",
+        "allowsHomeServiceLabel": "Permitir a los clientes elegir la modalidad \"A domicilio\"",
+        "allowsHomeServiceHint": "Si se desactiva, el portal solo mostrará agendamiento en sucursal.",
         "terms": "Términos y condiciones",
         "termsRequired": "Obligatorio al reservar a domicilio",
         "termsContent": "Contenido de términos",
-        "termsHint": "Estos términos se mostrarán al cliente cuando elija servicio a domicilio.",
         "termsPlaceholder": "Contenido de los términos y condiciones...",
-        "waTemplate": "Template del mensaje (domicilio)",
-        "waTemplatePlaceholder": "Plantilla del mensaje (ej: ¡Hola! Confirmo mi cita para {servicio}...)",
+        "leadDays": "Anticipación requerida (Días)",
+        "leadDaysHint": "Tiempo mínimo requerido para organizar la logística del traslado.",
+        "zoneTitle": "Zonas de cobertura y tarifas",
+        "addZone": "Añadir zona",
+        "newZoneName": "Nombre de la zona",
+        "newZoneFee": "Tarifa extra",
+        "deleteZoneConfirm": "¿Eliminar esta zona?",
+        "feeLabel": "Tarifa traslado",
+        "cancel": "Cancelar",
+        "create": "Crear",
+        "waTemplate": "Template del mensaje (WhatsApp)",
+        "waTemplatePlaceholder": "Ej: ¡Hola! Confirmo mi cita para {servicio}...",
         "variablesGuide": "Guía de variables",
         "quickEmojis": "Emojis rápidos:",
-        "save": "Guardar cambios"
+        "emailTitle": "Cuerpo del correo de confirmación",
+        "emailPlaceholder": "Ej: ¡Hola {cliente}! Tu cita para {servicio} ha sido confirmada...",
+        "emailVariables": "Variables disponibles",
+        "vipThreshold": "Umbral de cliente frecuente (VIP)",
+        "vipThresholdLabel": "Número de citas requeridas",
+        "vipThresholdHint": "Los clientes que alcancen este número de citas recibirán un estatus especial en su historial.",
+        "save": "Guardar cambios",
+        "saving": "Guardando..."
+      },
+      "colors": {
+        "purple": "Púrpura",
+        "blue": "Azul",
+        "emerald": "Esmeralda",
+        "rose": "Rosa",
+        "amber": "Ámbar",
+        "slate": "Pizarra"
+      },
+      "theme": {
+        "light": "Claro",
+        "dark": "Oscuro"
+      },
+      "cover": {
+        "uploading": "Subiendo...",
+        "replace": "Reemplazar portada",
+        "hint": "Sube una imagen de portada",
+        "specs": "Recomendado: 1200x500px, máx 2MB",
+        "delete": "Eliminar portada actual"
+      },
+      "mockup": {
+        "selectService": "Selecciona un servicio",
+        "schedule": "Agendar Cita",
+        "service1": "Corte de Cabello",
+        "service1Desc": "45 min",
+        "service2": "Arreglo de Barba",
+        "service2Desc": "20 min",
+        "defaultBusiness": "Mi negocio"
       }
     },
     "header": {
@@ -391,6 +526,11 @@
         "viewAll": "Ver todas",
         "noBookings": "No hay citas recientes.",
         "statusConfirmed": "Confirmada"
+      },
+      "portalLink": {
+        "title": "Tu enlace de reservas",
+        "subtitle": "Comparte este link con tus clientes para recibir citas directamente.",
+        "open": "Abrir portal"
       },
       "quickSettings": {
         "title": "Configuración rápida",
@@ -436,6 +576,7 @@
     "isRequired": "Obligatoria",
     "isActive": "Activa",
     "save": "Guardar pregunta",
+    "saving": "Guardando...",
     "delete": "Eliminar",
     "edit": "Editar",
     "confirmDelete": "¿Estás seguro de eliminar esta pregunta?",
@@ -450,11 +591,45 @@
       "TEXT": "Campo de texto",
       "NPS": "NPS (Escala 0-10)"
     },
-    "dropzone": "Arrastra para reordenar",
+    "tabs": {
+      "questions": "Configuración",
+      "results": "Resultados"
+    },
+    "link": {
+      "title": "Enlace de satisfacción",
+      "description": "El sistema envía este enlace automáticamente después de cada cita finalizada.",
+      "placeholder": "Copiar URL base",
+      "preview": "Vista Previa",
+      "copyDone": "Enlace base copiado. Recuerda que el sistema envía enlaces únicos por cada cita automáticamente."
+    },
+    "errors": {
+      "update": "Error al actualizar configuración",
+      "save": "Error al guardar la pregunta",
+      "delete": "Error al eliminar"
+    },
+    "stats": {
+      "totalResponses": "Total Respuestas",
+      "completed": "encuestas completadas",
+      "globalNPS": "NPS Global",
+      "netPoints": "puntos netos",
+      "noNPS": "sin datos NPS",
+      "avgStaffRating": "Rating Promedio Staff"
+    },
+    "audit": {
+      "title": "Audit de Respuestas",
+      "noReviews": "No se han recibido encuestas aún.",
+      "table": {
+        "rating": "Calif.",
+        "staffService": "Staff / Servicio",
+        "comment": "Comentario",
+        "date": "Fecha"
+      }
+    },
+    "modal": {
+      "config": "Configuración de Pregunta",
+      "placeholder": "Escribe aquí la pregunta..."
+    },
     "upgradeRequired": "Funcionalidad Premium",
-    "upgradeDesc": "Para personalizar tu sistema de encuestas con preguntas específicas necesitas una suscripción PRO o ENTERPRISE.",
-    "successSave": "Pregunta guardada correctamente.",
-    "successDelete": "Pregunta eliminada.",
-    "successSettings": "Configuración actualizada."
+    "upgradeDesc": "Para personalizar tu sistema de encuestas con preguntas específicas necesitas una suscripción PRO o ENTERPRISE."
   }
 }

@@ -179,12 +179,13 @@ export default function BranchesClient({
         {filteredBranches.map((branch) => (
           <div 
             key={branch.id} 
-            className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all group relative overflow-hidden"
+            onClick={() => handleOpenModal(branch)}
+            className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all group relative overflow-hidden cursor-pointer active:scale-[0.98]"
           >
-            <div className="absolute top-0 right-0 p-4">
+            <div className="absolute top-0 right-0 p-4 z-10">
               <button 
                 onClick={(e) => handleOpenMenu(e, branch.id)}
-                className={`p-2 rounded-xl transition-all ${openMenu === branch.id ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}
+                className={`p-2 rounded-xl transition-all ${openMenu === branch.id ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white'}`}
               >
                 <MoreVertical className="w-5 h-5" />
               </button>
@@ -247,10 +248,10 @@ export default function BranchesClient({
 
                         return (
                           <div className="flex flex-col">
-                            <span className="font-black text-slate-900 dark:text-white tracking-tight uppercase text-[9px] mb-0.5 opacity-50">Hoy</span>
+                            <span className="font-bold text-slate-900 dark:text-white tracking-widest uppercase text-[11px] mb-1 opacity-60">Hoy</span>
                             <span className="font-bold text-slate-700 dark:text-zinc-100">{displayTime}</span>
                             {isNewFormat && (
-                              <span className="text-slate-400 dark:text-zinc-500 text-[10px] font-bold mt-0.5">
+                              <span className="text-slate-400 dark:text-zinc-500 text-[11px] font-bold mt-0.5">
                                 {days.filter(d => bh.regular[d]?.isOpen).length} días de atención regular
                               </span>
                             )}
@@ -292,7 +293,7 @@ export default function BranchesClient({
               
               <form onSubmit={handleSave} className="p-8 space-y-8 overflow-y-auto custom-scrollbar flex-1">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 ml-1">{t('nameLabel')}</label>
+                  <label className="text-xs font-bold text-slate-500 ml-1">{t('nameLabel')}</label>
                   <input 
                     required
                     type="text" 
@@ -304,7 +305,7 @@ export default function BranchesClient({
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 ml-1">{t('addressLabel')}</label>
+                  <label className="text-xs font-bold text-slate-500 ml-1">{t('addressLabel')}</label>
                   <input 
                     type="text" 
                     value={formData.address}
@@ -316,7 +317,7 @@ export default function BranchesClient({
 
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('phoneLabel')}</label>
+                    <label className="text-xs font-bold text-slate-500 ml-1">{t('phoneLabel')}</label>
                     <PhoneInput 
                       value={formData.phone}
                       onChange={val => setFormData({...formData, phone: val})}
@@ -324,7 +325,7 @@ export default function BranchesClient({
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('hoursLabel')}</label>
+                    <label className="text-xs font-bold text-slate-500 ml-1">{t('hoursLabel')}</label>
                     <BusinessHoursPicker 
                       value={formData.businessHours}
                       onChange={val => setFormData({...formData, businessHours: val})}
@@ -362,27 +363,16 @@ export default function BranchesClient({
             className="w-44 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
           >
             <button 
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 const b = initialBranches.find(b => b.id === openMenu);
-                if (b) handleOpenModal(b);
+                if (b) handleDelete(b.id, b.name);
                 setOpenMenu(null);
               }}
-              className="w-full text-left px-4 py-3 text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors flex items-center gap-2 font-bold"
+              className="w-full text-left px-4 py-3 text-sm text-rose-500 hover:bg-rose-500/10 transition-colors flex items-center gap-2 font-bold"
             >
-              <Edit2 className="w-4 h-4" /> {t('edit')}
+              <Trash2 className="w-4 h-4" /> {t('delete')}
             </button>
-            <div className="border-t border-slate-100 dark:border-white/5">
-              <button 
-                onClick={() => {
-                  const b = initialBranches.find(b => b.id === openMenu);
-                  if (b) handleDelete(b.id, b.name);
-                  setOpenMenu(null);
-                }}
-                className="w-full text-left px-4 py-3 text-sm text-rose-500 hover:bg-rose-500/10 transition-colors flex items-center gap-2 font-bold"
-              >
-                <Trash2 className="w-4 h-4" /> {t('delete')}
-              </button>
-            </div>
           </div>
         </Portal>
       )}

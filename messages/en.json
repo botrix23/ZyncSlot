@@ -238,7 +238,9 @@
       "errorSave": "Error saving appointment",
       "errorDelete": "Error deleting appointment",
       "copySurveyLink": "Copy survey link",
-      "surveyLinkCopied": "Link copied!"
+      "surveyLinkCopied": "Link copied!",
+      "day": "Day",
+      "week": "Week"
     },
     "staff": {
       "title": "Staff / team",
@@ -249,6 +251,9 @@
       "role": "Professional",
       "noEmail": "No email",
       "noPhone": "No phone",
+      "noBranch": "No branch",
+      "nextRotationScheduled": "Next rotation scheduled",
+      "invalidEmail": "Please enter a valid email address (example@domain.com)",
       "form": {
         "titleNew": "Add member",
         "titleEdit": "Edit member",
@@ -269,7 +274,19 @@
         "to": "End date (optional)",
         "daysOfWeek": "Days of the week",
         "allowsHomeServiceLabel": "Can perform home services?",
-        "allowsHomeServiceHint": "If activated, this specialist will appear as an option for appointments outside the branch."
+        "allowsHomeServiceHint": "If activated, this specialist will appear as an option for appointments outside the branch.",
+        "homeServiceOk": "HOME SERVICE OK",
+        "temporaryAssignment": "Temporary Assignment",
+        "noTemporaryAssignments": "No temporary assignments",
+        "permanentBase": "Permanent Base Branch",
+        "baseSchedule": "Base Schedule",
+        "destinationBranch": "Destination Branch",
+        "specialSchedule": "Special Schedule",
+        "applicableDays": "Applicable Days",
+        "reviewsHistory": "Reviews History",
+        "noReviews": "No reviews for this member yet.",
+        "noComment": "No optional comment.",
+        "deleteProfile": "Delete professional profile"
       },
       "confirmDelete": "Are you sure you want to delete \"{name}\"?",
       "errorSave": "Error saving team member",
@@ -282,6 +299,27 @@
       "searchPlaceholder": "Search staff...",
       "noBlocks": "No upcoming absences registered.",
       "allStaff": "Applies to entire branch",
+      "table": {
+        "reason": "Reason",
+        "affected": "Affected",
+        "start": "Start",
+        "end": "End"
+      },
+      "filter": {
+        "individual": "Individual",
+        "branch": "Branch"
+      },
+      "types": {
+        "individual": "Individual",
+        "branch": "Branch",
+        "branchAffected": "Entire branch: {name}",
+        "global": "Global",
+        "defaultReason": "Absence"
+      },
+      "sections": {
+        "startBlock": "Block start",
+        "endBlock": "Block end"
+      },
       "form": {
         "titleNew": "Register new absence",
         "titleEdit": "Edit absence",
@@ -302,17 +340,40 @@
       "errorDelete": "Error deleting absence"
     },
     "clients": {
-      "title": "Clients",
-      "subtitle": "History and metrics of your most frequent customers.",
-      "searchPlaceholder": "Search client...",
-      "noClients": "No clients registered yet.",
+      "title": "Client Directory",
+      "subtitle": "Manage and build loyalty with your frequent customers.",
+      "searchPlaceholder": "Search by name, email or phone...",
+      "noClients": "No clients registered yet",
+      "noClientsDescription": "Scheduled appointments will automatically appear here.",
+      "frequent": "Frequent",
+      "vipDesc": "VIP",
+      "noEmail": "No email registered",
+      "noPhone": "No phone registered",
+      "loyaltyPotential": "Loyalty Potential",
+      "adjustThreshold": "Adjust Threshold",
+      "vipSuccess": "Excellent! This client is VIP for exceeding {threshold} appointments. Consider offering them a special benefit.",
+      "vipMissing": "This client has {count} appointments. They need {missing} more to reach the configured VIP status.",
+      "closeProfile": "Close profile",
       "table": {
         "client": "Client",
         "contact": "Contact",
-        "services": "Services consumed",
-        "totalAppointments": "Total Bookings",
-        "totalSpent": "Total Spent ({currency})",
-        "lastVisit": "Last Visit"
+        "mainService": "Main Service",
+        "frequency": "Frequency",
+        "totalSpent": "Total Spent",
+        "action": "Action",
+        "frequencyCount": "{count} appointments"
+      },
+      "stats": {
+        "invested": "Invested",
+        "appointments": "Appointments",
+        "favorite": "Favorite"
+      },
+      "history": {
+        "title": "Last visits",
+        "date": "Date",
+        "service": "Service",
+        "staffBranch": "Staff / Branch",
+        "amount": "Amount"
       }
     },
     "sidebar": {
@@ -335,38 +396,106 @@
       "surveys": "Surveys"
     },
     "portal": {
-      "title": "My Web Portal",
-      "subtitle": "Configure the Identity and Rules of your public booking site.",
+      "title": "My web portal",
+      "subtitle": "Configure the identity and rules of your public booking site.",
       "successSave": "Settings saved successfully.",
       "errorSave": "Error saving settings.",
+      "errorUpload": "Error uploading image.",
       "errorLogo": "Please select an image.",
-      "logoLoaded": "Logo loaded. Don't forget to save changes.",
-      "livePreview": "Live Preview",
-      "viewLive": "View Portal",
+      "logoLoaded": "Logo uploaded. Don't forget to save changes.",
+      "livePreview": "Preview",
+      "viewLive": "View portal live",
+      "tabs": {
+        "design": "Design & Brand",
+        "rules": "Operation & Rules"
+      },
+      "link": {
+        "title": "Portal link",
+        "status": "Online",
+        "copy": "Copy",
+        "copied": "Copied!"
+      },
       "sections": {
         "identity": "Identity & Social",
         "homeService": "Home Service",
-        "whatsapp": "WhatsApp Messaging"
+        "whatsapp": "WhatsApp Messaging",
+        "theme": "Portal Theme",
+        "cover": "Cover Image",
+        "color": "Primary Color",
+        "email": "Email Notifications",
+        "fidelization": "Loyalty & Rewards"
       },
       "form": {
-        "businessName": "Business Name",
-        "logoUrl": "Logo URL",
+        "businessName": "Commercial Name",
+        "businessPlaceholder": "Business name",
+        "heroTitle": "Portal Hero Title",
+        "heroTitlePlaceholder": "e.g. The best Spa experience",
+        "heroSubtitle": "Hero Subtitle",
+        "heroSubtitlePlaceholder": "e.g. Book your appointment in seconds",
         "logoLabel": "Business Logo",
-        "clean": "Clean",
-        "changeImage": "Change Image",
-        "uploadLogo": "Click to upload logo",
-        "uploadHint": "Recommended: 512x512px (PNG/JPG)",
-        "phone": "Phone",
+        "logoPlaceholder": "Logo URL",
+        "upload": "Upload",
+        "instagram": "Instagram URL",
+        "facebook": "Facebook URL",
+        "tiktok": "TikTok URL",
+        "phone": "Business phone",
+        "allowsHomeService": "Offer home service",
+        "allowsHomeServiceLabel": "Allow customers to choose \"Home Service\" mode",
+        "allowsHomeServiceHint": "If disabled, the portal will only show in-branch scheduling.",
         "terms": "Terms and Conditions",
-        "termsRequired": "Required when booking at home",
-        "termsContent": "Terms Content",
-        "termsHint": "These terms will be shown to the customer when they choose home service.",
+        "termsRequired": "Required when booking home service",
+        "termsContent": "Terms content",
         "termsPlaceholder": "Content of terms and conditions...",
-        "waTemplate": "Message Template (Home)",
-        "waTemplatePlaceholder": "Message template (e.g. Hi! I confirm my appointment for {service}...)",
+        "leadDays": "Lead Days Required",
+        "leadDaysHint": "Minimum time required to organize transport logistics.",
+        "zoneTitle": "Coverage Zones & Fees",
+        "addZone": "Add zone",
+        "newZoneName": "Zone name",
+        "newZoneFee": "Extra fee",
+        "deleteZoneConfirm": "Delete this zone?",
+        "feeLabel": "Transport fee",
+        "cancel": "Cancel",
+        "create": "Create",
+        "waTemplate": "Message Template (WhatsApp)",
+        "waTemplatePlaceholder": "e.g. Hi! I confirm my appointment for {service}...",
         "variablesGuide": "Variables guide",
         "quickEmojis": "Quick emojis:",
-        "save": "Save changes"
+        "emailTitle": "Confirmation email body",
+        "emailPlaceholder": "e.g. Hi {cliente}! Your appointment for {service} has been confirmed...",
+        "emailVariables": "Available variables",
+        "vipThreshold": "Frequent customer threshold (VIP)",
+        "vipThresholdLabel": "Number of required appointments",
+        "vipThresholdHint": "Customers who reach this number of appointments will receive a special status in their history.",
+        "save": "Save changes",
+        "saving": "Saving..."
+      },
+      "colors": {
+        "purple": "Purple",
+        "blue": "Blue",
+        "emerald": "Emerald",
+        "rose": "Rose",
+        "amber": "Amber",
+        "slate": "Slate"
+      },
+      "theme": {
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "cover": {
+        "uploading": "Uploading...",
+        "replace": "Replace cover",
+        "hint": "Upload a cover image",
+        "specs": "Recommended: 1200x500px, max 2MB",
+        "delete": "Remove current cover"
+      },
+      "mockup": {
+        "selectService": "Select a service",
+        "schedule": "Schedule Appointment",
+        "service1": "Haircut",
+        "service1Desc": "45 min",
+        "service2": "Beard Trim",
+        "service2Desc": "20 min",
+        "defaultBusiness": "My business"
       }
     },
     "header": {
@@ -390,6 +519,11 @@
         "viewAll": "View all",
         "noBookings": "No recent appointments.",
         "statusConfirmed": "Confirmed"
+      },
+      "portalLink": {
+        "title": "Your booking link",
+        "subtitle": "Share this link with your customers to receive appointments directly.",
+        "open": "Open portal"
       },
       "quickSettings": {
         "title": "Quick settings",
@@ -435,13 +569,14 @@
     "isRequired": "Required",
     "isActive": "Active",
     "save": "Save question",
+    "saving": "Saving...",
     "delete": "Delete",
     "edit": "Edit",
     "confirmDelete": "Are you sure you want to delete this question?",
     "category": "Category",
     "categories": {
-      "STAFF": "Staff / Team",
-      "BUSINESS": "Business / Company"
+      "STAFF": "Staff",
+      "BUSINESS": "Business"
     },
     "types": {
       "STARS": "Stars (1-5)",
@@ -449,11 +584,45 @@
       "TEXT": "Text field",
       "NPS": "NPS (Scale 0-10)"
     },
-    "dropzone": "Drag to reorder",
+    "tabs": {
+      "questions": "Configuration",
+      "results": "Results"
+    },
+    "link": {
+      "title": "Satisfaction Link",
+      "description": "The system sends this link automatically after each finished appointment.",
+      "placeholder": "Copy base URL",
+      "preview": "Preview",
+      "copyDone": "Base link copied. Remember the system sends unique links per appointment automatically."
+    },
+    "errors": {
+      "update": "Error updating settings",
+      "save": "Error saving question",
+      "delete": "Error deleting"
+    },
+    "stats": {
+      "totalResponses": "Total Responses",
+      "completed": "completed surveys",
+      "globalNPS": "Global NPS",
+      "netPoints": "net points",
+      "noNPS": "no NPS data",
+      "avgStaffRating": "Avg. Staff Rating"
+    },
+    "audit": {
+      "title": "Response Audit",
+      "noReviews": "No surveys received yet.",
+      "table": {
+        "rating": "Rating",
+        "staffService": "Staff / Service",
+        "comment": "Comment",
+        "date": "Date"
+      }
+    },
+    "modal": {
+      "config": "Question Configuration",
+      "placeholder": "Write your question here..."
+    },
     "upgradeRequired": "Premium Feature",
-    "upgradeDesc": "To customize your survey system with specific questions, you need a PRO or ENTERPRISE subscription.",
-    "successSave": "Question saved successfully.",
-    "successDelete": "Question deleted.",
-    "successSettings": "Settings updated."
+    "upgradeDesc": "To customize your survey system with specific questions you need a PRO or ENTERPRISE subscription."
   }
 }

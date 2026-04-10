@@ -68,6 +68,8 @@ export const staff = pgTable('staff', {
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }),
   phone: varchar('phone', { length: 30 }),
+  emergencyContactName: varchar('emergency_contact_name', { length: 255 }),
+  emergencyContactPhone: varchar('emergency_contact_phone', { length: 30 }),
   allowsHomeService: boolean('allows_home_service').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),

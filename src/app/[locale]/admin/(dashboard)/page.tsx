@@ -121,8 +121,8 @@ export default async function AdminDashboard({ params: { locale } }: { params: {
               <Share2 className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">Tu Enlace de Reservas</h3>
-              <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">Comparte este link con tus clientes para recibir citas directamente.</p>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{t('portalLink.title')}</h3>
+              <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">{t('portalLink.subtitle')}</p>
             </div>
           </div>
           <div className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 p-2 rounded-2xl border border-slate-200 dark:border-white/10 group-hover:border-purple-500/30 transition-colors">
@@ -137,7 +137,7 @@ export default async function AdminDashboard({ params: { locale } }: { params: {
               href={`/${locale}/${tenantData?.slug}`} 
               target="_blank"
               className="p-2.5 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 rounded-xl hover:text-purple-600 transition-all border border-slate-200 dark:border-white/10"
-              title="Abrir portal"
+              title={t('portalLink.open')}
             >
               <ExternalLink className="w-4 h-4" />
             </a>
@@ -191,8 +191,8 @@ export default async function AdminDashboard({ params: { locale } }: { params: {
                 <div className="flex items-center gap-8">
                   <div className="text-right">
                     <p className="text-sm font-bold text-slate-900 dark:text-white">{booking.time}</p>
-                    <p className={`text-[10px] font-bold uppercase mt-1 ${
-                      booking.status === 'Confirmada' ? 'text-emerald-500' : 
+                    <p className={`text-[11px] font-bold uppercase mt-1 ${
+                      booking.status === t('recentBookings.statusConfirmed') ? 'text-emerald-500' : 
                       booking.status === 'En Proceso' ? 'text-blue-500' : 'text-orange-500'
                     }`}>
                       {booking.status}

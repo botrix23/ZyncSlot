@@ -323,7 +323,7 @@ export default function BookingsClient({
                           <div>
                               <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight">{booking.customerName}</h3>
                               <div className="flex flex-col gap-0.5 mt-1">
-                                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full inline-block w-fit ${
+                                  <span className={`text-[11px] font-black px-2 py-0.5 rounded-full inline-block w-fit ${
                                       booking.status === 'CONFIRMED' ? 'bg-emerald-500/10 text-emerald-500' :
                                       booking.status === 'PENDING' ? 'bg-orange-500/10 text-orange-500' :
                                       booking.status === 'FINALIZADA' ? 'bg-purple-500/10 text-purple-500' :
@@ -332,7 +332,7 @@ export default function BookingsClient({
                                       {t(`status.${booking.status}`)}
                                   </span>
                                   {booking.customerPhone && (
-                                    <span className="text-[10px] text-slate-400 font-bold">{booking.customerPhone}</span>
+                                    <span className="text-xs text-slate-400 font-bold">{booking.customerPhone}</span>
                                   )}
                               </div>
                           </div>
@@ -340,14 +340,14 @@ export default function BookingsClient({
 
                       <div className="flex flex-wrap gap-8 flex-1">
                           <div className="space-y-1 min-w-[140px]">
-                              <p className="text-[10px] font-bold text-slate-400 tracking-widest">{t('table.service')}</p>
+                              <p className="text-xs font-bold text-slate-400 tracking-widest">{t('table.service')}</p>
                               <div className="flex items-center gap-2">
                                   < Sparkles className="w-4 h-4 text-purple-500" />
                                   <span className="text-sm font-bold text-slate-700 dark:text-zinc-300">{booking.service?.name}</span>
                               </div>
                           </div>
                           <div className="space-y-1 min-w-[140px]">
-                              <p className="text-[10px] font-bold text-slate-400 tracking-widest">{t('table.dateTime')}</p>
+                              <p className="text-xs font-bold text-slate-400 tracking-widest">{t('table.dateTime')}</p>
                               <div className="flex items-center gap-2">
                                   <Clock className="w-4 h-4 text-slate-400" />
                                   <span className="text-sm font-bold text-slate-700 dark:text-zinc-300">
@@ -356,7 +356,7 @@ export default function BookingsClient({
                               </div>
                           </div>
                           <div className="space-y-1 min-w-[140px]">
-                              <p className="text-[10px] font-bold text-slate-400 tracking-widest">{t('table.branch')}</p>
+                              <p className="text-xs font-bold text-slate-400 tracking-widest">{t('table.branch')}</p>
                               <div className="flex items-center gap-2">
                                   <MapPin className="w-4 h-4 text-slate-400" />
                                   <span className="text-sm font-bold text-slate-700 dark:text-zinc-300">
@@ -365,9 +365,9 @@ export default function BookingsClient({
                               </div>
                           </div>
                           <div className="space-y-1 min-w-[140px]">
-                              <p className="text-[10px] font-bold text-slate-400 tracking-widest">{t('table.staff')}</p>
+                              <p className="text-xs font-bold text-slate-400 tracking-widest">{t('table.staff')}</p>
                               <div className="flex items-center gap-2">
-                                  <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center text-[10px] text-purple-600 font-bold border border-purple-500/20">
+                                  <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center text-xs text-purple-600 font-bold border border-purple-500/20">
                                       {booking.staff?.name.charAt(0)}
                                   </div>
                                   <span className="text-sm font-bold text-slate-700 dark:text-zinc-300">{booking.staff?.name}</span>
@@ -494,7 +494,7 @@ export default function BookingsClient({
                     const hour = i + calendarStartHour;
                     return (
                       <div key={hour} className="h-24 border-b border-slate-100 dark:border-white/5 p-4 text-center flex items-start justify-center">
-                        <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 tracking-tighter whitespace-nowrap uppercase">
+                        <span className="text-[11px] font-black text-slate-400 dark:text-zinc-500 tracking-tighter whitespace-nowrap uppercase">
                           {format(parse(hour.toString(), "H", new Date()), "h:mm a")}
                         </span>
                       </div>
@@ -537,7 +537,7 @@ export default function BookingsClient({
                                 <h4 className="font-extrabold text-[14px] text-slate-900 dark:text-white truncate flex-1 leading-tight" title={booking.customerName}>
                                   {booking.customerName}
                                 </h4>
-                                <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                                <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                                   {format(start, "h:mm")} - {format(end, "h:mm a")}
                                 </span>
                               </div>
@@ -545,7 +545,7 @@ export default function BookingsClient({
                               {/* Fila Staff - Servicio */}
                               <div className="flex items-center gap-1.5 overflow-hidden">
                                 <User className="w-3 h-3 text-slate-400 shrink-0" />
-                                <p className="text-[11px] font-bold text-slate-600 dark:text-zinc-300 truncate">
+                                <p className="text-xs font-bold text-slate-600 dark:text-zinc-300 truncate">
                                   {booking.staff?.name} <span className="mx-1 text-slate-300 dark:text-white/10">-</span> 
                                   <span className="text-purple-600 dark:text-purple-400 font-black">{booking.service?.name}</span>
                                 </p>
@@ -555,7 +555,7 @@ export default function BookingsClient({
                               {booking.branch?.name && (
                                 <div className="flex items-center gap-1.5 overflow-hidden">
                                   <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                                  <p className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 truncate">
+                                  <p className="text-xs font-bold text-slate-400 dark:text-zinc-500 truncate">
                                     {booking.branch.name}
                                   </p>
                                 </div>
@@ -585,7 +585,7 @@ export default function BookingsClient({
                             isSameDay(day, new Date()) ? 'border-b-2 border-purple-500' : ''
                           }`}
                         >
-                          <p className="text-[9px] font-black tracking-widest text-slate-400">
+                          <p className="text-[11px] font-black tracking-widest text-slate-400">
                             {format(day, 'EEE', { locale: dateLocale })}
                           </p>
                           <p className={`text-sm font-black mt-0.5 ${
@@ -607,7 +607,7 @@ export default function BookingsClient({
                             return (
                               <>
                                 <div key={`h-${hour}`} className="row-span-1" style={{ gridColumn: 1, gridRow: i + 1, height: '96px', borderBottom: '1px solid', borderColor: 'rgba(148,163,184,0.1)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '8px', backgroundColor: 'rgba(248,250,252,0.3)' }}>
-                                  <span className="text-[9px] font-black text-slate-400 dark:text-zinc-500 tracking-tighter whitespace-nowrap uppercase">
+                                  <span className="text-xs font-black text-slate-400 dark:text-zinc-500 tracking-tighter whitespace-nowrap uppercase">
                                     {format(parse(hour.toString(), "H", new Date()), "h:mm a")}
                                   </span>
                                 </div>
@@ -647,14 +647,14 @@ export default function BookingsClient({
                               >
                                 <div className="flex flex-col h-full gap-0.5">
                                   <div className="flex items-center justify-between gap-1 overflow-hidden">
-                                    <p className="font-black text-[11px] text-slate-900 dark:text-white truncate flex-1 leading-tight">{booking.customerName}</p>
-                                    <span className="text-[8px] font-bold text-slate-400 whitespace-nowrap opacity-60">{format(start, "h:mm a")}</span>
+                                    <p className="font-black text-xs text-slate-900 dark:text-white truncate flex-1 leading-tight">{booking.customerName}</p>
+                                    <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap opacity-60">{format(start, "h:mm a")}</span>
                                   </div>
-                                  <p className="text-[9px] text-slate-500 font-bold truncate">
+                                  <p className="text-[11px] text-slate-500 font-bold truncate">
                                     {booking.staff?.name} - <span className="text-purple-500">{booking.service?.name}</span>
                                   </p>
                                   {booking.branch?.name && (
-                                    <p className="text-[9px] text-slate-400 font-bold truncate flex items-center gap-0.5">
+                                    <p className="text-[11px] text-slate-400 font-bold truncate flex items-center gap-0.5">
                                       <MapPin className="w-2.5 h-2.5 shrink-0" /> {booking.branch.name}
                                     </p>
                                   )}
@@ -689,30 +689,30 @@ export default function BookingsClient({
               
               <form onSubmit={handleSaveEdit} className="p-7 space-y-6 overflow-y-auto custom-scrollbar flex-1">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.customerName')}</label>
+                  <label className="text-xs font-black text-slate-500 ml-1">{t('form.customerName')}</label>
                   <input 
                     required
                     type="text" 
                     value={formData.customerName}
                     onChange={e => setFormData({...formData, customerName: e.target.value})}
                     className="w-full p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-medium text-slate-900 dark:text-white"
-                    placeholder="Nombre del cliente"
+                    placeholder={t('form.customerName')}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.customerEmail')}</label>
+                    <label className="text-xs font-black text-slate-500 ml-1">{t('form.customerEmail')}</label>
                     <input 
                       type="email" 
                       value={formData.customerEmail}
                       onChange={e => setFormData({...formData, customerEmail: e.target.value})}
-                      placeholder="Correo electrónico"
+                      placeholder={t('form.customerEmail')}
                       className="w-full p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm font-medium text-slate-900 dark:text-white"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.status')}</label>
+                    <label className="text-xs font-black text-slate-500 ml-1">{t('form.status')}</label>
                     <select 
                       value={formData.status}
                       onChange={e => setFormData({...formData, status: e.target.value})}
@@ -727,17 +727,17 @@ export default function BookingsClient({
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.customerPhone')}</label>
+                  <label className="text-xs font-black text-slate-500 ml-1">{t('form.customerPhone')}</label>
                   <PhoneInput 
                     value={formData.customerPhone}
                     onChange={val => setFormData({...formData, customerPhone: val})}
-                    placeholder="Teléfono"
+                    placeholder={t('form.customerPhone')}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.service')}</label>
+                    <label className="text-xs font-black text-slate-500 ml-1">{t('form.service')}</label>
                     <select 
                       value={formData.serviceId}
                       onChange={e => setFormData({...formData, serviceId: e.target.value})}
@@ -747,7 +747,7 @@ export default function BookingsClient({
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.staff')}</label>
+                    <label className="text-xs font-black text-slate-500 ml-1">{t('form.staff')}</label>
                     <select 
                       value={formData.staffId}
                       onChange={e => {
@@ -762,7 +762,7 @@ export default function BookingsClient({
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.duration')}</label>
+                  <label className="text-xs font-black text-slate-500 ml-1">{t('form.duration')}</label>
                   <div className="relative">
                     <Clock3 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input 
@@ -785,7 +785,7 @@ export default function BookingsClient({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.date')}</label>
+                    <label className="text-xs font-black text-slate-500 ml-1">{t('form.date')}</label>
                     <input 
                       required
                       type="date" 
@@ -795,7 +795,7 @@ export default function BookingsClient({
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.time')}</label>
+                    <label className="text-xs font-black text-slate-500 ml-1">{t('form.time')}</label>
                     <input 
                       required
                       type="time" 

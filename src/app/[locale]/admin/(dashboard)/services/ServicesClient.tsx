@@ -14,7 +14,8 @@ import {
   XCircle,
   ChevronUp,
   ChevronDown,
-  GripVertical
+  GripVertical,
+  Info
 } from 'lucide-react';
 import { Portal } from "@/components/Portal";
 import { createServiceAction, updateServiceAction, deleteServiceAction, reorderServicesAction } from "@/app/actions/services";
@@ -169,7 +170,6 @@ export default function ServicesClient({
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title')}</h1>
@@ -184,7 +184,6 @@ export default function ServicesClient({
         </button>
       </div>
 
-      {/* Filters & Search */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -198,7 +197,6 @@ export default function ServicesClient({
         </div>
       </div>
 
-      {/* Services Table */}
       <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden shadow-sm">
         <table className="w-full text-left">
           <thead className="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
@@ -207,23 +205,33 @@ export default function ServicesClient({
               <th className="px-6 py-5 text-xs font-bold text-slate-500 tracking-widest">{t('table.service')}</th>
               <th className="px-6 py-5 text-xs font-bold text-slate-500 tracking-widest">{t('table.inclusions')}</th>
               <th className="px-6 py-5 text-xs font-bold text-slate-500 tracking-widest w-32">{t('table.price')}</th>
-              <th className="px-6 py-5 text-xs font-bold text-slate-500 tracking-widest w-32">{t('table.actions')}</th>
+              <th className="px-6 py-5 text-xs font-bold text-slate-500 tracking-widest w-24 text-center">{t('table.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-slate-600 dark:text-zinc-300">
             {filteredServices.map((service, idx) => (
-              <tr key={service.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
-                <td className="px-6 py-6">
+              <tr 
+                key={service.id} 
+                onClick={() => handleOpenModal(service)}
+                className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group cursor-pointer"
+              >
+                <td className="px-6 py-6" onClick={(e) => e.stopPropagation()}>
                   <div className="flex flex-col items-center gap-1">
                     <button 
-                      onClick={() => handleReorder(service.id, 'up')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReorder(service.id, 'up');
+                      }}
                       disabled={idx === 0}
                       className="p-1 hover:text-purple-500 disabled:opacity-30 transition-colors"
                     >
                       <ChevronUp className="w-4 h-4" />
                     </button>
                     <button 
-                      onClick={() => handleReorder(service.id, 'down')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReorder(service.id, 'down');
+                      }}
                       disabled={idx === filteredServices.length - 1}
                       className="p-1 hover:text-purple-500 disabled:opacity-30 transition-colors"
                     >
@@ -238,21 +246,21 @@ export default function ServicesClient({
                     </div>
                     <div>
                       <span className="font-bold text-slate-900 dark:text-white block tracking-tight">{service.name}</span>
-                      <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                        <Clock className="w-3 h-3 text-slate-400" /> {service.durationMinutes} min
+                      <span className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-1">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" /> {service.durationMinutes} min
                       </span>
                       <div className="flex flex-wrap items-center gap-1.5 mt-2">
                         {service.allowsHomeService && (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[8px] font-black rounded-md uppercase tracking-wider border border-purple-500/20">
-                            <Sparkles className="w-2.5 h-2.5" /> {t('form.badgeHomeService')}
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[11px] font-bold rounded-md uppercase tracking-wider border border-purple-500/20">
+                            <Sparkles className="w-3 h-3" /> {t('form.badgeHomeService')}
                           </span>
                         )}
                         {(service.branches || []).length === 0 ? (
-                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[8px] font-black rounded-md uppercase tracking-widest border border-blue-500/10">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-bold rounded-md uppercase tracking-widest border border-blue-500/10">
                               {t('form.badgeGlobal')}
                            </span>
                         ) : (
-                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[8px] font-black rounded-md uppercase tracking-widest border border-amber-500/10">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-bold rounded-md uppercase tracking-widest border border-amber-500/10">
                               {t('form.badgeExclusive')}
                            </span>
                         )}
@@ -265,7 +273,7 @@ export default function ServicesClient({
                     {service.includes && service.includes.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {service.includes.map((inc: string, i: number) => (
-                          <span key={i} className="text-[10px] font-bold bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span key={i} className="text-xs font-bold bg-emerald-500/10 text-emerald-500 px-2.5 py-1 rounded-full flex items-center gap-1.5">
                             <CheckCircle2 className="w-2.5 h-2.5" /> {inc}
                           </span>
                         ))}
@@ -274,7 +282,7 @@ export default function ServicesClient({
                     {service.excludes && service.excludes.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {service.excludes.map((exc: string, i: number) => (
-                          <span key={i} className="text-[10px] font-bold bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span key={i} className="text-xs font-bold bg-rose-500/10 text-rose-500 px-2.5 py-1 rounded-full flex items-center gap-1.5">
                             <XCircle className="w-2.5 h-2.5" /> {exc}
                           </span>
                         ))}
@@ -288,19 +296,17 @@ export default function ServicesClient({
                     <span>{service.price}</span>
                   </div>
                 </td>
-                <td className="px-6 py-6">
-                  <div className="flex items-center gap-2">
+                <td className="px-6 py-6" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-center">
                     <button 
-                      onClick={() => handleOpenModal(service)}
-                      className="p-2 text-slate-400 hover:text-purple-600 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(service.id);
+                      }}
+                      className="p-3 text-slate-400 hover:text-rose-600 hover:bg-rose-500/5 rounded-xl transition-all"
+                      title={t('confirmDelete')}
                     >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(service.id)}
-                      className="p-2 text-slate-400 hover:text-rose-600 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
                 </td>
@@ -310,11 +316,9 @@ export default function ServicesClient({
         </table>
       </div>
 
-      {/* Modal */}
       {isModalOpen && (
         <Portal>
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
-             {/* Backdrop con Blur Dinámico - Fixed para cubrir todo */}
              <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setIsModalOpen(false)} />
             <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
               <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5 shrink-0">
@@ -327,7 +331,7 @@ export default function ServicesClient({
               <form onSubmit={handleSave} className="p-8 space-y-8 overflow-y-auto custom-scrollbar">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.nameLabel')}</label>
+                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1">{t('form.nameLabel')}</label>
                       <input 
                         required
                         type="text" 
@@ -340,7 +344,7 @@ export default function ServicesClient({
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.durationLabel')}</label>
+                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1">{t('form.durationLabel')}</label>
                       <input 
                         required
                         type="number" 
@@ -350,7 +354,7 @@ export default function ServicesClient({
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.priceLabel')}</label>
+                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1">{t('form.priceLabel')}</label>
                       <input 
                         required
                         type="text" 
@@ -361,15 +365,21 @@ export default function ServicesClient({
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 p-5 bg-purple-500/5 rounded-[24px] border border-purple-500/10">
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{t('form.allowsHomeServiceLabel')}</p>
-                      <p className="text-[10px] text-slate-500 font-medium tracking-tight italic">{t('form.allowsHomeServiceHint')}</p>
+                  <div className="flex items-center justify-between gap-4 p-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[24px]">
+                    <div className="flex items-center gap-3 pr-4">
+                       <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-tight">{t('form.allowsHomeServiceLabel')}</p>
+                       <div className="group relative shrink-0">
+                        <Info className="w-3.5 h-3.5 text-slate-400 cursor-help transition-colors hover:text-purple-500" />
+                        <div className="hidden group-hover:block absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-56 p-3 bg-slate-900/95 backdrop-blur-md text-[11px] text-zinc-100 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-1 duration-200 border border-white/10">
+                          {t('form.allowsHomeServiceHint')}
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900" />
+                        </div>
+                      </div>
                     </div>
                     <button 
                       type="button"
                       onClick={() => setFormData({...formData, allowsHomeService: !formData.allowsHomeService})}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 ${formData.allowsHomeService ? 'bg-purple-600' : 'bg-slate-300 dark:bg-white/10'}`}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 ${formData.allowsHomeService ? 'bg-purple-600' : 'bg-slate-300 dark:bg-white/20'}`}
                     >
                       <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.allowsHomeService ? 'translate-x-4' : 'translate-x-0'}`} />
                     </button>
@@ -383,14 +393,14 @@ export default function ServicesClient({
                       <button
                         type="button"
                         onClick={() => setAvailabilityType("all")}
-                        className={`p-3 rounded-xl text-[10px] font-black transition-all border ${availabilityType === "all" ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/20' : 'bg-white dark:bg-zinc-800 text-slate-500 border-slate-200 dark:border-white/5'}`}
+                        className={`p-3.5 rounded-xl text-xs font-bold transition-all border ${availabilityType === "all" ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/20' : 'bg-white dark:bg-zinc-800 text-slate-500 border-slate-200 dark:border-white/5'}`}
                       >
                         {t('form.allBranchesOption')}
                       </button>
                       <button
                         type="button"
                         onClick={() => setAvailabilityType("specific")}
-                        className={`p-3 rounded-xl text-[10px] font-black transition-all border ${availabilityType === "specific" ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/20' : 'bg-white dark:bg-zinc-800 text-slate-500 border-slate-200 dark:border-white/5'}`}
+                        className={`p-3.5 rounded-xl text-xs font-bold transition-all border ${availabilityType === "specific" ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/20' : 'bg-white dark:bg-zinc-800 text-slate-500 border-slate-200 dark:border-white/5'}`}
                       >
                         {t('form.specificBranchesOption')}
                       </button>
@@ -398,7 +408,7 @@ export default function ServicesClient({
 
                     {availabilityType === "specific" && (
                       <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <p className="text-[9px] font-black text-slate-400 mb-3 ml-1">{t('form.exclusiveBranchesLabel')}</p>
+                        <p className="text-[11px] font-bold text-slate-400 mb-3 ml-1 uppercase tracking-wider">{t('form.exclusiveBranchesLabel')}</p>
                         <div className="flex flex-col gap-2">
                           {branches.map(branch => {
                             const isSelected = formData.branchIds.includes(branch.id);
@@ -430,7 +440,7 @@ export default function ServicesClient({
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 ml-1">{t('form.descriptionLabel')}</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1">{t('form.descriptionLabel')}</label>
                   <textarea 
                     value={formData.description}
                     onChange={e => setFormData({...formData, description: e.target.value})}
@@ -439,10 +449,9 @@ export default function ServicesClient({
                   />
                 </div>
 
-                {/* Inclusiones / Exclusiones */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
-                    <label className="text-[10px] font-black text-emerald-600 flex items-center gap-2">
+                    <label className="text-xs font-bold text-emerald-600 flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4" /> {t('form.includesLabel')}
                     </label>
                     <div className="flex gap-2">
@@ -460,7 +469,7 @@ export default function ServicesClient({
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {formData.includes.map((tag, i) => (
-                        <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-xl text-[10px] font-bold">
+                        <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-xl text-xs font-bold">
                           {tag}
                           <button type="button" onClick={() => removeTag('includes', i)} className="hover:text-rose-500 transition-colors"><X className="w-3.5 h-3.5" /></button>
                         </span>
@@ -469,7 +478,7 @@ export default function ServicesClient({
                   </div>
 
                   <div className="space-y-4">
-                    <label className="text-[10px] font-black text-rose-600 flex items-center gap-2">
+                    <label className="text-xs font-bold text-rose-600 flex items-center gap-2">
                       <XCircle className="w-4 h-4" /> {t('form.excludesLabel')}
                     </label>
                     <div className="flex gap-2">
@@ -487,7 +496,7 @@ export default function ServicesClient({
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {formData.excludes.map((tag, i) => (
-                        <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 text-rose-500 rounded-xl text-[10px] font-bold">
+                        <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 text-rose-500 rounded-xl text-xs font-bold">
                           {tag}
                           <button type="button" onClick={() => removeTag('excludes', i)} className="hover:text-rose-500 transition-colors"><X className="w-3.5 h-3.5" /></button>
                         </span>
