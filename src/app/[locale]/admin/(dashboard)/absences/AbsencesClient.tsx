@@ -20,6 +20,7 @@ export default function AbsencesClient({
   tenantId: string 
 }) {
   const t = useTranslations('Dashboard.absences');
+  const tServices = useTranslations('Dashboard.services.table');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -145,7 +146,7 @@ export default function AbsencesClient({
                          <th className="p-6 text-xs font-black text-slate-400">{t('table.affected')}</th>
                          <th className="p-6 text-xs font-black text-slate-400">{t('table.start')}</th>
                          <th className="p-6 text-xs font-black text-slate-400">{t('table.end')}</th>
-                         <th className="p-6 text-xs font-black text-slate-400 text-right">{useTranslations('Dashboard.services.table')('actions')}</th>
+                         <th className="p-6 text-xs font-black text-slate-400 text-right">{tServices('actions')}</th>
                       </tr>
                    </thead>
                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -208,7 +209,7 @@ export default function AbsencesClient({
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
              {/* Backdrop con Blur Dinámico - Fixed para cubrir todo */}
              <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => { setIsModalOpen(false); setEditingId(null); }} />
-            <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+            <div className="relative z-10 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
               <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5">
                 <div>
                   <h3 className="text-xl font-black tracking-tight">

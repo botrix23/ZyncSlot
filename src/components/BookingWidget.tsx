@@ -38,6 +38,34 @@ const AVAILABLE_TIMES = [
   { time: "05:00 PM", available: true }
 ];
 
+// Helper functions moved up for hoisting
+function formatTimeToMilitary(time12h: string) {
+  const [time, modifier] = time12h.split(' ');
+  let [hours, minutes] = time.split(':');
+  if (hours === '12') hours = '00';
+  if (modifier === 'PM' && hours !== '12') hours = (parseInt(hours, 10) + 12).toString();
+  if (modifier === 'AM' && hours === '12') hours = '00';
+  return `${hours.padStart(2, '0')}:${minutes}:00`;
+}
+
+function formatTo12h(time24h: string) {
+  const [hours, minutes] = time24h.split(':');
+  let h = parseInt(hours, 10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12;
+  h = h ? h : 12;
+  return `${h}:${minutes} ${ampm}`;
+}
+
+const parsePrice = (price: any) => {
+  if (typeof price === 'number') return price;
+  if (!price) return 0;
+  const clean = String(price).replace(/[^0-9.]/g, '');
+  const parsed = parseFloat(clean);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
+
 export default function BookingWidget({
   branches,
   services,
@@ -206,7 +234,7 @@ export default function BookingWidget({
   const calculateTransferFees = () => {
     if (modality !== 'domicilio' || !selectedZone || cartBookings.length === 0) return 0;
 
-    const zoneFee = parseFloat(selectedZone.fee);
+    const zoneFee = parsePrice(selectedZone.fee);
     let transferBlocks = 1;
 
     const sortedBookings = [...cartBookings].sort((a, b) => {
@@ -235,7 +263,9 @@ export default function BookingWidget({
   };
 
   const transferTotal = calculateTransferFees();
-  const servicesTotal = selectedServices.reduce((acc, s) => acc + parseFloat(s.price), 0);
+
+
+  const servicesTotal = selectedServices.reduce((acc, s) => acc + parsePrice(s.price), 0);
   const totalPrice = servicesTotal + transferTotal;
   const totalDuration = selectedServices.reduce((acc, s) => acc + s.durationMinutes, 0);
 
@@ -292,36 +322,37 @@ export default function BookingWidget({
             const filteredSlots = slots.map((slot: any) => {
               if (!slot.available) return slot;
 
-              const slotStartTime = new Date(`${selectedDate}T${slot.time}:00`);
+              const slotTime24 = (slot.time?.includes('AM') || slot.time?.includes('PM')) ? formatTimeToMilitary(slot.time) : slot.time;
+              const slotStartTime = new Date(`${selectedDate}T${slotTime24}`);
               const slotEndTime = new Date(slotStartTime.getTime() + serviceToQuery.durationMinutes * 60000);
 
               const overlappingEntries = cartBookings.filter(prev => {
                 if (!prev.date || !prev.time) return false;
-                const prevStart = new Date(`${prev.date}T${prev.time}:00`);
+                const prevTime24 = (prev.time?.includes('AM') || prev.time?.includes('PM')) ? formatTimeToMilitary(prev.time) : prev.time;
+                const prevStart = new Date(`${prev.date}T${prevTime24}`);
                 const prevEnd = new Date(prevStart.getTime() + prev.service.durationMinutes * 60000);
                 return slotStartTime < prevEnd && slotEndTime > prevStart;
               });
 
               let hasConflict = false;
 
-              if (overlappingEntries.length > 0) {
-                const someParticipantDisallows = !currentAllowSimult || overlappingEntries.some(e => !e.service.allowSimultaneous);
+              const currentAllowSimult = modality === 'domicilio' ? false : (res.allowSimultaneous ?? false);
+              const someParticipantDisallows = !currentAllowSimult || overlappingEntries.some(e => !e.service.allowSimultaneous);
 
-                if (someParticipantDisallows) {
-                  hasConflict = true;
+              if (someParticipantDisallows) {
+                hasConflict = true;
+              } else {
+                const staffInCartForThisSlot = overlappingEntries.map(e => e.staff?.id).filter(id => !!id);
+
+                if (selectedStaff?.id) {
+                  if (staffInCartForThisSlot.includes(selectedStaff.id)) {
+                    hasConflict = true;
+                  }
                 } else {
-                  const staffInCartForThisSlot = overlappingEntries.map(e => e.staff?.id).filter(id => !!id);
-
-                  if (selectedStaff?.id) {
-                    if (staffInCartForThisSlot.includes(selectedStaff.id)) {
-                      hasConflict = true;
-                    }
-                  } else {
-                    const availableForAnyone = slot.availableStaffIds || (slot.staffId ? [slot.staffId] : []);
-                    const trulyFreeStaff = availableForAnyone.filter((id: string) => !staffInCartForThisSlot.includes(id as string));
-                    if (trulyFreeStaff.length === 0) {
-                      hasConflict = true;
-                    }
+                  const availableForAnyone = slot.availableStaffIds || (slot.staffId ? [slot.staffId] : []);
+                  const trulyFreeStaff = availableForAnyone.filter((id: string) => !staffInCartForThisSlot.includes(id as string));
+                  if (trulyFreeStaff.length === 0) {
+                    hasConflict = true;
                   }
                 }
               }
@@ -403,8 +434,6 @@ export default function BookingWidget({
 
       const sessionBookingsData = cartBookings.map((item) => {
         const militaryTime = formatTimeToMilitary(item.time!);
-        const localIsoString = `${item.date}T${militaryTime}:00`;
-
         const baseStartTime = new Date(`${item.date}T${militaryTime}`);
         const actualStartTime = (schedulingMode === 'bulk' && currentStartTime)
           ? currentStartTime
@@ -415,13 +444,14 @@ export default function BookingWidget({
           currentStartTime = actualEndTime;
         }
 
+        const formattedStart = format(actualStartTime, "yyyy-MM-dd'T'HH:mm:ss");
         const formattedEnd = format(actualEndTime, "yyyy-MM-dd'T'HH:mm:ss");
 
         return {
           branchId: selectedBranch?.id || branches[0]?.id || '',
           serviceId: item.service.id,
           staffId: item.staff?.id || '',
-          startTime: localIsoString,
+          startTime: formattedStart,
           endTime: formattedEnd,
           price: item.service.price
         };
@@ -455,8 +485,7 @@ export default function BookingWidget({
             .replace(/{fecha}/g, cartBookings[0].date!)
             .replace(/{hora}/g, cartBookings[0].time!)
             .replace(/{cliente}/g, guestName);
-
-          window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(formattedMsg)}`, '_blank');
+          // Movemos la lógica de redirección al Paso 5 para mostrar primero la confirmación manual
         }
         setStep(5);
       } else {
@@ -470,22 +499,6 @@ export default function BookingWidget({
     }
   };
 
-  const formatTimeToMilitary = (time12h: string) => {
-    const [time, modifier] = time12h.split(' ');
-    let [hours, minutes] = time.split(':');
-    if (hours === '12') hours = '00';
-    if (modifier === 'PM') hours = (parseInt(hours, 10) + 12).toString();
-    return `${hours.padStart(2, '0')}:${minutes}:00`;
-  };
-
-  const formatTo12h = (time24h: string) => {
-    const [hours, minutes] = time24h.split(':');
-    let h = parseInt(hours, 10);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    h = h ? h : 12;
-    return `${h}:${minutes} ${ampm}`;
-  };
 
   const today = new Date();
   const nextDays = Array.from({ length: 30 }).map((_, i) => {
@@ -715,47 +728,49 @@ export default function BookingWidget({
                       <Clock className="w-5 h-5 text-blue-400" />
                       <span className="font-bold text-sm tracking-wider">{t("selected_services")}:</span>
                     </div>
-                    <div className="pl-8 space-y-1">
+                    <div className="pl-8 space-y-2">
                       {selectedServices.map((s, idx) => {
                         const booking = cartBookings[idx];
                         const isCurrent = schedulingMode === 'separate' && currentServiceIndex === idx;
                         const displayDate = booking?.date || (isCurrent ? selectedDate : null);
-                        const displayTime = booking?.time || (isCurrent ? selectedTime : null);
+
+                        let displayTime = booking?.time || (isCurrent ? selectedTime : null);
+                        if (schedulingMode === 'bulk' && selectedTime && idx > 0) {
+                          const prevDurations = selectedServices.slice(0, idx).reduce((acc, curr) => acc + curr.durationMinutes, 0);
+                          try {
+                            const [h, m] = formatTimeToMilitary(selectedTime).split(':').map(Number);
+                            const d = new Date(2000, 0, 1, h, m);
+                            d.setMinutes(d.getMinutes() + prevDurations);
+                            displayTime = formatTo12h(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
+                          } catch (e) {
+                            displayTime = selectedTime;
+                          }
+                        }
 
                         return (
                           <div key={`${s.id}-${idx}`} className="flex flex-col gap-0.5">
-                            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 flex items-center gap-2">
-                              <Check className="w-3 h-3 text-emerald-500" /> {s.name}
-                            </p>
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 flex items-center gap-2">
+                                <Check className="w-3 h-3 text-emerald-500" /> {s.name}
+                              </p>
+                              <span className="text-[10px] font-bold text-slate-400/60 transition-colors uppercase tracking-widest">{s.durationMinutes} min</span>
+                            </div>
                             {displayDate && displayTime && (
-                              <p className="text-[10px] font-bold text-slate-400 ml-5">
-                                {getDayName(displayDate).split(',')[0]} · {formatTo12h(displayTime)}
+                              <p className="text-[10px] font-bold text-slate-400 ml-5 opacity-80">
+                                {getDayName(displayDate).split(',')[0]} · {displayTime}
                               </p>
                             )}
                           </div>
                         );
                       })}
-                      <p className="text-xs font-bold text-purple-400 mt-2">
-                        Total: {totalDuration} min · ${totalPrice.toFixed(2)}
-                      </p>
                     </div>
                   </div>
                 )}
 
                 {selectedStaff && schedulingMode !== 'separate' && (
                   <div className="flex items-center gap-3 text-slate-600 dark:text-zinc-300 animate-in fade-in slide-in-from-left-2 duration-300">
-                    <User className="w-5 h-5 text-emerald-400" />
-                    <span className="font-medium">{t("with_staff", { staff: selectedStaff.name })}</span>
-                  </div>
-                )}
-
-                {(selectedDate || selectedTime) && schedulingMode !== 'separate' && (
-                  <div className="flex items-center gap-3 text-slate-600 dark:text-zinc-300 animate-in fade-in slide-in-from-left-2 duration-300">
-                    <Calendar className="w-5 h-5 text-orange-400" />
-                    <span className="font-medium text-sm">
-                      {selectedDate ? getDayName(selectedDate) : t("date_tbd")}
-                      {selectedTime ? ` · ${formatTo12h(selectedTime)}` : ""}
-                    </span>
+                    <UserCircle className="w-5 h-5 text-emerald-400" />
+                    <span className="font-medium text-sm">{t("with_staff", { staff: selectedStaff.name })}</span>
                   </div>
                 )}
 
@@ -826,7 +841,7 @@ export default function BookingWidget({
                       <div className="bg-emerald-500/20 p-3 rounded-full text-emerald-400"><Truck /></div>
                       <div>
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-emerald-400">{t("home_service")}</h3>
-                        <p className="text-slate-400 dark:text-zinc-500 text-sm">{t("home_service_desc")}</p>
+                        <p className="text-slate-400 dark:text-zinc-500 text-sm">{t("home_service_desc", { days: homeServiceLeadDays ?? 7 })}</p>
                       </div>
                     </button>
                   </>
@@ -850,7 +865,7 @@ export default function BookingWidget({
                   <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                     {t('home_service')}
                   </h2>
-                  <p className="text-xs text-slate-500 mt-1">{t('home_service_desc')}</p>
+                  <p className="text-xs text-slate-500 mt-1">{t('home_service_desc', { days: homeServiceLeadDays ?? 7 })}</p>
                 </div>
               </div>
 
@@ -917,8 +932,8 @@ export default function BookingWidget({
                       key={srv.id}
                       onClick={() => handleToggleService(srv)}
                       className={`w-full p-4 bg-white dark:bg-white/5 border rounded-xl text-left transition-all duration-300 group shadow-lg flex flex-col ${isSelected
-                          ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(139,92,246,0.1)]'
-                          : 'border-slate-200 dark:border-white/10 hover:border-purple-500/40'
+                        ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(139,92,246,0.1)]'
+                        : 'border-slate-200 dark:border-white/10 hover:border-purple-500/40'
                         }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
@@ -1102,8 +1117,8 @@ export default function BookingWidget({
                     <button
                       onClick={() => handleSelectStaff(null)}
                       className={`flex items-center gap-2 px-3 py-2 border rounded-full transition-all duration-300 shrink-0 ${selectedStaff === null
-                          ? 'bg-purple-500/20 border-purple-500 text-purple-700 dark:text-purple-400 shadow-sm'
-                          : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/10'
+                        ? 'bg-purple-500/20 border-purple-500 text-purple-700 dark:text-purple-400 shadow-sm'
+                        : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/10'
                         }`}
                     >
                       <span className="text-sm">✨ {t("anyone")}</span>
@@ -1114,8 +1129,8 @@ export default function BookingWidget({
                         key={member.id}
                         onClick={() => handleSelectStaff(member)}
                         className={`flex items-center gap-2 px-3 py-2 border rounded-full transition-all duration-300 shrink-0 ${selectedStaff?.id === member.id
-                            ? 'bg-blue-500/20 border-blue-500 text-blue-700 dark:text-blue-400 shadow-sm'
-                            : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/10'
+                          ? 'bg-blue-500/20 border-blue-500 text-blue-700 dark:text-blue-400 shadow-sm'
+                          : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/10'
                           }`}
                       >
                         <div className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-500 font-bold flex items-center justify-center text-[10px] border border-blue-500/30">
@@ -1131,7 +1146,7 @@ export default function BookingWidget({
                   {/* DATE SELECTION - Interactive Calendar */}
                   <div className="w-full md:w-[260px] lg:w-[300px] flex flex-col shrink-0">
                     <p className="text-[10px] font-bold text-slate-400 tracking-widest mb-3 uppercase">
-                      {modality === 'domicilio' ? t("dates_home") : t("dates")}
+                      {modality === 'domicilio' ? t("dates_home", { days: homeServiceLeadDays ?? 7 }) : t("dates")}
                     </p>
 
                     <div className="bg-white/5 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 p-4 shadow-xl overflow-hidden relative group">
@@ -1258,10 +1273,10 @@ export default function BookingWidget({
                                         onClick={() => available && setSelectedTime(time)}
                                         disabled={!available}
                                         className={`px-1 py-3 rounded-xl transition-all duration-300 flex flex-col items-center justify-center border ${!available
-                                            ? "bg-slate-50 dark:bg-black/40 text-slate-300 dark:text-zinc-700 border-slate-100 dark:border-white/5 cursor-not-allowed hidden"
-                                            : selectedTime === time
-                                              ? "bg-purple-600 text-white border-purple-500 shadow-md ring-2 ring-purple-500/20"
-                                              : "bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-300"
+                                          ? "bg-slate-50 dark:bg-black/40 text-slate-300 dark:text-zinc-700 border-slate-100 dark:border-white/5 cursor-not-allowed hidden"
+                                          : selectedTime === time
+                                            ? "bg-purple-600 text-white border-purple-500 shadow-md ring-2 ring-purple-500/20"
+                                            : "bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-300"
                                           }`}
                                       >
                                         <span className="font-bold text-[10px]">{formatTo12h(time)}</span>
@@ -1446,7 +1461,7 @@ export default function BookingWidget({
                   className="w-full py-5 bg-purple-600 hover:bg-purple-500 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:border-zinc-700 disabled:cursor-not-allowed text-white rounded-xl font-black tracking-widest shadow-xl shadow-purple-500/20 disabled:shadow-none transition-all duration-300 border border-purple-500/50 flex items-center justify-center gap-2 uppercase text-sm"
                 >
                   {isFinishing && <Loader2 className="w-5 h-5 animate-spin" />}
-                  {modality === 'domicilio' ? t("confirm_whatsapp") : t("finish_booking")}
+                  {modality === 'domicilio' ? t("finish_booking") : t("finish_booking")}
                 </button>
               </div>
             </div>
@@ -1460,20 +1475,20 @@ export default function BookingWidget({
               </div>
 
               <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2 leading-tight">
-                {modality === 'domicilio' ? t("redirecting") : t("success")}
+                {modality === 'domicilio' ? "¡Espacio reservado!" : t("success")}
               </h2>
 
-              <div className="space-y-2 text-slate-600 dark:text-zinc-300 mb-4 max-w-md w-full">
+              <div className="space-y-4 text-slate-600 dark:text-zinc-300 mb-6 max-w-4xl w-full">
                 <p className="text-sm">
                   {modality === 'domicilio'
-                    ? t("redirecting_desc", { service: selectedServices.map(s => s.name).join(", "), tenant: tenantName })
+                    ? "Recuerda que debes de terminar de ajustar los últimos detalles, puedes contactarte con nosotros en el botón de WhatsApp en este momento o espera a que te contactemos para confirmar tu cita."
                     : t("success_desc", { name: guestName.split(' ')[0], branch: selectedBranch?.name || '', service: selectedServices.map(s => s.name).join(", ") })
                   }
                 </p>
 
-                <div className="flex flex-col md:flex-row gap-5 items-stretch w-full">
+                <div className="flex flex-col md:flex-row gap-8 items-stretch w-full mt-6">
                   {/* Card Resumen Servicios */}
-                  <div className="flex-1 bg-slate-50 dark:bg-black/30 p-5 rounded-3xl border border-slate-200 dark:border-white/5 flex flex-col">
+                  <div className="flex-1 bg-slate-50 dark:bg-black/30 p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/5 flex flex-col shadow-inner">
                     <div className="flex items-center gap-2 mb-4 border-b border-slate-200 dark:border-white/5 pb-3">
                       <Layers className="w-4 h-4 text-purple-400" />
                       <h3 className="text-[10px] uppercase font-black tracking-widest text-slate-400">{t("selected_services")}</h3>
@@ -1494,15 +1509,30 @@ export default function BookingWidget({
                       ))}
                     </div>
                     <div className="mt-6 pt-4 border-t border-slate-200 dark:border-white/5">
+                      <div className="space-y-2 mb-4 border-b border-slate-200 dark:border-white/5 pb-4">
+                        <div className="flex items-center justify-between opacity-60">
+                          <p className="text-[10px] font-bold tracking-widest uppercase">{t("selected_services")}</p>
+                          <p className="text-sm font-bold">${servicesTotal.toFixed(2)}</p>
+                        </div>
+                        {transferTotal > 0 && (
+                          <div className="flex items-center justify-between text-emerald-500">
+                            <p className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-1">
+                              <Truck className="w-3 h-3" /> Tarifa de traslado
+                            </p>
+                            <p className="text-sm font-bold">+${transferTotal.toFixed(2)}</p>
+                          </div>
+                        )}
+                      </div>
+
                       <div className="flex items-center justify-between">
                         <p className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">Total</p>
-                        <p className="text-xl font-black text-purple-400">${totalPrice.toFixed(2)}</p>
+                        <p className="text-2xl font-black text-purple-400 animate-in fade-in duration-700">${totalPrice.toFixed(2)}</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Card Info Cliente */}
-                  <div className="flex-1 bg-slate-50 dark:bg-black/30 p-5 rounded-3xl border border-slate-200 dark:border-white/5 flex flex-col">
+                  <div className="flex-1 bg-slate-50 dark:bg-black/30 p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/5 flex flex-col shadow-inner">
                     <div className="flex items-center gap-2 mb-4 border-b border-slate-200 dark:border-white/5 pb-3">
                       <UserCircle className="w-4 h-4 text-emerald-400" />
                       <h3 className="text-[10px] uppercase font-black tracking-widest text-slate-400">{t("title_data")}</h3>
@@ -1566,10 +1596,27 @@ export default function BookingWidget({
               </div>
 
               {/* Botones Finales */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mt-4">
+              <div className={`grid grid-cols-1 ${modality === 'domicilio' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-3 w-full mt-4`}>
+                {modality === 'domicilio' && (
+                  <button
+                    onClick={() => {
+                      const waNumber = whatsappNumber?.replace(/\D/g, '') || '';
+                      const template = waMessageTemplate || "Hola, me gustaría confirmar mi cita para {servicios} por un total de {total} el día {fecha} a las {hora}. Mi nombre es {cliente}.";
+                      const formattedMsg = template
+                        .replace(/{servicios}/g, cartBookings.map(b => b.service.name).join(", "))
+                        .replace(/{total}/g, `$${totalPrice.toFixed(2)}`)
+                        .replace(/{fecha}/g, cartBookings[0]?.date || '')
+                        .replace(/{hora}/g, cartBookings[0]?.time || '')
+                        .replace(/{cliente}/g, guestName);
+                      window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(formattedMsg)}`, '_blank');
+                    }}
+                    className="w-full flex items-center justify-center py-4 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl font-black tracking-widest uppercase transition-all text-[11px] shadow-lg shadow-emerald-500/20"
+                  >
+                    Confirmar por WhatsApp
+                  </button>
+                )}
                 <div className="relative group">
-                  <button className="w-full flex items-center justify-center gap-2 py-4 bg-white dark:bg-white/5 hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl font-black tracking-widest uppercase transition-all text-[11px] shadow-sm">
-                    <CalendarRange className="w-4 h-4 text-purple-400" />
+                  <button className="w-full flex items-center justify-center py-4 bg-white dark:bg-white/5 hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl font-black tracking-widest uppercase transition-all text-[11px] shadow-sm">
                     Sincronizar
                   </button>
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[99] p-2 text-left ring-1 ring-black/5 dark:ring-white/5">
@@ -1631,7 +1678,7 @@ export default function BookingWidget({
                 </div>
 
                 <button
-                  onClick={() => { setStep(1); setSelectedDate(null); setSelectedTime(null); setSelectedServices([]); setSelectedStaff(null); setModality(null); setGuestName(""); setGuestEmail(""); setGuestPhone(""); setSelectedZone(null); setCartBookings([]); }}
+                  onClick={() => { setStep(1); setSelectedDate(null); setSelectedTime(null); setSelectedServices([]); setSelectedStaff(null); setModality(null); setGuestName(""); setGuestEmail(""); setGuestPhone(""); setGuestNotes(""); setSelectedZone(null); setCartBookings([]); }}
                   className="w-full py-4 bg-white dark:bg-white/5 hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl font-black tracking-widest uppercase transition-all text-[11px] shadow-sm hover:shadow-md"
                 >
                   {t("back_to_start")}

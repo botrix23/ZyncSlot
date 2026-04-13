@@ -203,7 +203,7 @@ export default function ClientsClient({
            {/* Backdrop con Blur Dinámico - Fixed para cubrir todo incluso con scroll */}
            <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setSelectedClient(null)} />
            
-           <div className="relative bg-white dark:bg-zinc-900 w-full max-w-3xl max-h-[85vh] overflow-hidden rounded-[2.5rem] shadow-2xl flex flex-col animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 border border-white/10">
+           <div className="relative z-10 bg-white dark:bg-zinc-900 w-full max-w-3xl max-h-[85vh] overflow-hidden rounded-[2.5rem] shadow-2xl flex flex-col animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 border border-white/10">
               {/* Header Modal - Refined Size */}
               <div className="p-6 border-b border-slate-100 dark:border-white/5 relative bg-slate-50/50 dark:bg-white/[0.02]">
                  <button onClick={() => setSelectedClient(null)} className="absolute top-5 right-5 p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-all">

@@ -454,7 +454,7 @@ export default function SurveyClient({
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
              {/* Backdrop con Blur Dinámico - Fixed para cubrir todo */}
              <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setIsModalOpen(false)} />
-            <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[40px] w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="relative z-10 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[40px] w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
               <div className="p-8 space-y-8">
                 <div className="flex items-center justify-between">
                   <div>

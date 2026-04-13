@@ -323,7 +323,7 @@ export default function ServicesClient({
         <Portal>
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
              <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" />
-            <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
+            <div className="relative z-10 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
               <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5 shrink-0">
                 <h3 className="text-xl font-black tracking-tight">{editingService ? t('form.edit') : t('form.new')}</h3>
                 <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">

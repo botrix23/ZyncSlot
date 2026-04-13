@@ -62,8 +62,8 @@ export default async function ReviewPage({
     return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-black">
           <div className="max-w-md w-full bg-white dark:bg-zinc-900 rounded-[32px] p-8 shadow-2xl text-center space-y-6 border border-slate-200 dark:border-white/5">
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white">{t('notFound')}</h1>
-            <p className="text-slate-500 dark:text-zinc-400">El sistema de reseñas no está activo para este negocio.</p>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white">{t('disabledTitle')}</h1>
+            <p className="text-slate-500 dark:text-zinc-400">{t('disabledDesc')}</p>
           </div>
         </div>
       );
