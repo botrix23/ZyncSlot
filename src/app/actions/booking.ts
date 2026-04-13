@@ -59,16 +59,21 @@ export async function getAvailableSlots(
   durationOverride?: number,
   isHomeService: boolean = false,
   allowPast: boolean = false
-): Promise<{ slots: any[], errorType: 'BRANCH_CLOSED' | 'STAFF_UNAVAILABLE' | null }> {
+): Promise<{ 
+  slots: any[], 
+  errorType: 'BRANCH_CLOSED' | 'STAFF_UNAVAILABLE' | null,
+  allowSimultaneous?: boolean 
+}> {
   try {
     let duration = durationOverride;
+    let serviceData = null;
     
-    if (!duration) {
-      const service = await db.query.services.findFirst({
+    if (!duration || !serviceData) {
+      serviceData = await db.query.services.findFirst({
         where: eq(services.id, serviceId)
       });
-      if (!service) return { slots: [], errorType: null };
-      duration = service.durationMinutes;
+      if (!serviceData) return { slots: [], errorType: null };
+      if (!duration) duration = serviceData.durationMinutes;
     }
 
     // 2. Obtener branch y tenant para timezone
@@ -194,11 +199,14 @@ export async function getAvailableSlots(
     const effectiveStaffIds = staffId ? [staffId] : finalActiveStaffIds;
     const totalStaffCount = effectiveStaffIds.length;
 
+    // Sanitizar staffId para tratar nulos, undefined o strings "null" por igual
+    const sanitizedStaffId = (!staffId || staffId === "null" || staffId === "") ? null : staffId;
+
     // Consultar citas existentes
     const existingBookings = await db.select().from(bookings).where(
       and(
         eq(bookings.branchId, branchId),
-        staffId ? eq(bookings.staffId, staffId) : undefined,
+        sanitizedStaffId ? eq(bookings.staffId, sanitizedStaffId) : undefined,
         lte(bookings.startTime, dayEndRange),
         gte(bookings.endTime, dayStartRange),
         not(eq(bookings.status, 'CANCELLED'))
@@ -206,19 +214,23 @@ export async function getAvailableSlots(
     );
 
     // Consultar bloqueos (vacaciones, descansos, etc)
-    const existingBlocks = await db.select().from(blocks).where(
+    // TECH LEAD: Obtenemos todos los bloqueos relevantes de una vez para filtrar en memoria
+    const allBlocks = await db.select().from(blocks).where(
       and(
         or(eq(blocks.branchId, branchId), isNull(blocks.branchId)),
-        staffId ? or(isNull(blocks.staffId), eq(blocks.staffId, staffId)) : isNull(blocks.staffId),
         lte(blocks.startTime, dayEndRange),
         gte(blocks.endTime, dayStartRange)
       )
     );
 
-    const occupiedRanges = [
-      ...existingBookings.map(b => ({ start: b.startTime, end: b.endTime, staffId: b.staffId })),
-      ...existingBlocks.map(b => ({ start: b.startTime, end: b.endTime, staffId: b.staffId }))
-    ];
+    // Filtrar bloqueos según si es consulta individual o global
+    const relevantBlocks = allBlocks.filter(b => {
+        // Bloqueo de sucursal (staffId es nulo en el bloque) aplica a todos
+        if (!b.staffId) return true;
+        // Bloqueo de staff específico aplica solo si consultamos a ese staff o si es búsqueda global
+        if (sanitizedStaffId) return b.staffId === sanitizedStaffId;
+        return true; 
+    });
 
     // 5. Generar todos los slots posibles según los tramos horarios activos
     const slots: any[] = [];
@@ -250,45 +262,54 @@ export async function getAvailableSlots(
            const assignEnd = a.endTime || '23:59';
            return localSlotStartStr >= assignStart && localSlotEndStr <= assignEnd;
         };
-        
+
+        const checkStaffIsFree = (sId: string) => {
+           // 1. ¿Está asignado para trabajar en este horario?
+           if (!staffIsAssignedInTime(sId)) return false;
+           
+           // 2. ¿Tiene una cita que se solape?
+           const hasBookingConflict = existingBookings.some(b => 
+              b.staffId === sId && isBefore(slotStart, b.endTime) && isAfter(slotEnd, b.startTime)
+           );
+           if (hasBookingConflict) return false;
+
+           // 3. ¿Tiene un bloqueo (descanso/vacación) que se solape?
+           const hasBlockConflict = relevantBlocks.some(b => 
+              b.staffId === sId && isBefore(slotStart, b.endTime) && isAfter(slotEnd, b.startTime)
+           );
+           if (hasBlockConflict) return false;
+
+           return true;
+        };
+
+        // El bloque completo está bloqueado si la sucursal tiene un bloqueo global
+        const isBranchBlocked = relevantBlocks.some(b => 
+           !b.staffId && isBefore(slotStart, b.endTime) && isAfter(slotEnd, b.startTime)
+        );
+
         let isOccupied = false;
+        let availableStaffForThisSlot: string[] = [];
 
-        if (staffId) {
-          if (!staffIsAssignedInTime(staffId)) {
-            isOccupied = true;
-          } else {
-            isOccupied = [
-              ...existingBookings.map(b => ({ start: b.startTime, end: b.endTime })),
-              ...existingBlocks.map(b => ({ start: b.startTime, end: b.endTime }))
-            ].some(range => isBefore(slotStart, range.end) && isAfter(slotEnd, range.start));
-          }
+        if (isBranchBlocked) {
+          isOccupied = true;
         } else {
-          const hasBranchBlock = existingBlocks.filter(b => !b.staffId).some(b => 
-            isBefore(slotStart, b.endTime) && isAfter(slotEnd, b.startTime)
-          );
-
-          if (hasBranchBlock) {
-            isOccupied = true;
+          if (sanitizedStaffId) {
+            isOccupied = !checkStaffIsFree(sanitizedStaffId);
+            if (!isOccupied) availableStaffForThisSlot = [sanitizedStaffId];
           } else {
-            const busyStaffIds = new Set<string>();
-            existingBookings.forEach(b => {
-              if (isBefore(slotStart, b.endTime) && isAfter(slotEnd, b.startTime)) busyStaffIds.add(b.staffId);
-            });
-            existingBlocks.forEach(b => {
-              if (b.staffId && isBefore(slotStart, b.endTime) && isAfter(slotEnd, b.startTime)) busyStaffIds.add(b.staffId);
-            });
-            const availableStaffIds = activeStaffIds.filter((id) => typeof id === 'string' && staffIsAssignedInTime(id) && !busyStaffIds.has(id));
-            isOccupied = availableStaffIds.length === 0;
+            availableStaffForThisSlot = finalActiveStaffIds.filter(id => checkStaffIsFree(id));
+            isOccupied = availableStaffForThisSlot.length === 0;
           }
         }
 
         const isPast = isBefore(slotStart, new Date());
 
-        // Si no se permite el pasado, no agregamos slots que ya pasaron
         if (!isPast || allowPast) {
           slots.push({
             time: format(slotStart, "HH:mm"),
-            available: !isOccupied && (!isPast || allowPast)
+            available: !isOccupied && (!isPast || allowPast),
+            staffId: sanitizedStaffId || undefined,
+            availableStaffIds: !sanitizedStaffId ? availableStaffForThisSlot : undefined
           });
         }
         
@@ -309,7 +330,8 @@ export async function getAvailableSlots(
 
     return {
       slots,
-      errorType
+      errorType,
+      allowSimultaneous: serviceData?.allowSimultaneous ?? false
     };
   } catch (error) {
     console.error("Error fetching available slots:", error);
@@ -485,8 +507,6 @@ export async function createBookingSessionAction(data: {
     };
 
     // 3. Transacción de Base de Datos
-    // NOTA: Usamos tx.select() en lugar de tx.query.X.findFirst() dentro de la transacción
-    // para garantizar que se use la misma conexión y evitar deadlocks con el pool.
     const result = await db.transaction(async (tx) => {
       // 3a. Crear la sesión agrupadora
       const [session] = await tx.insert(bookingSessions).values({
@@ -502,18 +522,69 @@ export async function createBookingSessionAction(data: {
 
       // 3b. Crear cada booking individual, verificando conflictos primero
       const newBookings = [];
+      const sessionStaffAssignments: { staffId: string, start: Date, end: Date }[] = [];
+
       for (const bData of data.bookings) {
         const utcStart = convertToUtc(bData.startTime);
         const utcEnd = convertToUtc(bData.endTime);
+        
+        let assignedStaffId = bData.staffId;
 
-        // 3c. Verificar solapamiento usando select() para mantener la misma conexión de TX
+        // Si el staffId es vacío/null o fue "Cualquiera", intentamos buscar uno disponible
+        if (!assignedStaffId || assignedStaffId === "" || assignedStaffId === "null") {
+           const availableData = await getAvailableSlots(
+             format(utcStart, 'yyyy-MM-dd'),
+             bData.serviceId,
+             bData.branchId,
+             null, // Cualquiera
+             undefined,
+             !!data.zoneId
+           );
+           
+           // IMPORTANTE: Filtrar staff que YA fue asignado en esta misma sesión para este mismo horario
+            const eligibleSlots = availableData.slots.filter(s => {
+              const slotTime = format(utcStart, 'HH:mm');
+              const isTimeMatch = s.time === slotTime && s.available;
+              if (!isTimeMatch) return false;
+              
+              const isAlreadyTakenInSession = sessionStaffAssignments.some(sas => 
+                sas.staffId === s.staffId && 
+                sas.start < utcEnd && 
+                sas.end > utcStart
+              );
+              
+              return !isAlreadyTakenInSession;
+            });
+
+            if (eligibleSlots.length === 0) {
+              throw new Error("STAFF_UNAVAILABLE");
+            }
+
+            // Balanceo de Carga: Elegir uno al azar de los elegibles
+            // IMPORTANTE: Un slot puede tener múltiples staff disponibles
+            const randomSlot = eligibleSlots[Math.floor(Math.random() * eligibleSlots.length)];
+            
+            if (bData.staffId) {
+                assignedStaffId = bData.staffId;
+            } else {
+                // Si es cualquiera, elegimos uno de los disponibles en ese slot que NO esté ya tomado en la sesión
+                const possibleStaffIds = (randomSlot.availableStaffIds || []).filter((id: string) => 
+                   !sessionStaffAssignments.some(sas => sas.staffId === id && sas.start < utcEnd && sas.end > utcStart)
+                );
+                
+                if (possibleStaffIds.length === 0) throw new Error("STAFF_UNAVAILABLE");
+                assignedStaffId = possibleStaffIds[Math.floor(Math.random() * possibleStaffIds.length)];
+            }
+        }
+
+        // 3c. Verificar solapamiento (Staff Ocupado en DB)
         const conflicts = await tx
           .select({ id: bookings.id })
           .from(bookings)
           .where(
             and(
               eq(bookings.tenantId, data.tenantId),
-              eq(bookings.staffId, bData.staffId),
+              eq(bookings.staffId, assignedStaffId),
               not(eq(bookings.status, 'CANCELLED')),
               lt(bookings.startTime, utcEnd),
               gt(bookings.endTime, utcStart)
@@ -525,11 +596,14 @@ export async function createBookingSessionAction(data: {
           throw new Error("STAFF_BUSY");
         }
 
+        // Registrar asignación para la lógica de la sesión
+        sessionStaffAssignments.push({ staffId: assignedStaffId, start: utcStart, end: utcEnd });
+
         const [nb] = await tx.insert(bookings).values({
           tenantId: data.tenantId,
           branchId: bData.branchId,
           serviceId: bData.serviceId,
-          staffId: bData.staffId,
+          staffId: assignedStaffId,
           customerName: data.customerName,
           customerEmail: data.customerEmail,
           customerPhone: data.customerPhone,

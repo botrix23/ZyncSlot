@@ -87,6 +87,7 @@ export const services = pgTable('services', {
   excludes: json('excludes').$type<string[]>().default([]).notNull(),
   sortOrder: integer('sort_order').notNull().default(0), // Para ordenamiento personalizado
   allowsHomeService: boolean('allows_home_service').notNull().default(true),
+  allowSimultaneous: boolean('allow_simultaneous').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });

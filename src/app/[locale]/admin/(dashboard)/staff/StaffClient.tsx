@@ -383,7 +383,7 @@ export default function StaffClient({
       {isModalOpen && (
         <Portal>
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
-             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setIsModalOpen(false)} />
+             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" />
             <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
               <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5">
                 <div>
@@ -632,7 +632,7 @@ export default function StaffClient({
       {isReviewsModalOpen && selectedStaffReviews && (
         <Portal>
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
-             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setIsReviewsModalOpen(false)} />
+             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" />
              <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[80vh]">
                 <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-zinc-800/50">
                   <div className="flex items-center gap-4">

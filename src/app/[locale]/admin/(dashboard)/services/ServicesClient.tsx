@@ -47,6 +47,7 @@ export default function ServicesClient({
     includes: [] as string[],
     excludes: [] as string[],
     allowsHomeService: true,
+    allowSimultaneous: false,
     branchIds: [] as string[]
   });
 
@@ -71,6 +72,7 @@ export default function ServicesClient({
         includes: service.includes || [],
         excludes: service.excludes || [],
         allowsHomeService: service.allowsHomeService ?? true,
+        allowSimultaneous: service.allowSimultaneous ?? false,
         branchIds: serviceBranchIds
       });
       setAvailabilityType(serviceBranchIds.length > 0 ? "specific" : "all");
@@ -84,6 +86,7 @@ export default function ServicesClient({
         includes: [],
         excludes: [],
         allowsHomeService: true,
+        allowSimultaneous: false,
         branchIds: []
       });
       setAvailabilityType("all");
@@ -319,7 +322,7 @@ export default function ServicesClient({
       {isModalOpen && (
         <Portal>
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
-             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setIsModalOpen(false)} />
+             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" />
             <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
               <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5 shrink-0">
                 <h3 className="text-xl font-black tracking-tight">{editingService ? t('form.edit') : t('form.new')}</h3>
@@ -365,24 +368,48 @@ export default function ServicesClient({
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 p-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[24px]">
-                    <div className="flex items-center gap-3 pr-4">
-                       <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-tight">{t('form.allowsHomeServiceLabel')}</p>
-                       <div className="group relative shrink-0">
-                        <Info className="w-3.5 h-3.5 text-slate-400 cursor-help transition-colors hover:text-purple-500" />
-                        <div className="hidden group-hover:block absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-56 p-3 bg-slate-900/95 backdrop-blur-md text-[11px] text-zinc-100 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-1 duration-200 border border-white/10">
-                          {t('form.allowsHomeServiceHint')}
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900" />
+                  <div className="flex flex-col gap-4 p-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[24px]">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 pr-4">
+                         <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-tight">{t('form.allowsHomeServiceLabel')}</p>
+                         <div className="group relative shrink-0">
+                          <Info className="w-3.5 h-3.5 text-slate-400 cursor-help transition-colors hover:text-purple-500" />
+                          <div className="hidden group-hover:block absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-56 p-3 bg-slate-900/95 backdrop-blur-md text-[11px] text-zinc-100 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-1 duration-200 border border-white/10">
+                            {t('form.allowsHomeServiceHint')}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900" />
+                          </div>
                         </div>
                       </div>
+                      <button 
+                        type="button"
+                        onClick={() => setFormData({...formData, allowsHomeService: !formData.allowsHomeService})}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 ${formData.allowsHomeService ? 'bg-purple-600' : 'bg-slate-300 dark:bg-white/20'}`}
+                      >
+                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.allowsHomeService ? 'translate-x-4' : 'translate-x-0'}`} />
+                      </button>
                     </div>
-                    <button 
-                      type="button"
-                      onClick={() => setFormData({...formData, allowsHomeService: !formData.allowsHomeService})}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 ${formData.allowsHomeService ? 'bg-purple-600' : 'bg-slate-300 dark:bg-white/20'}`}
-                    >
-                      <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.allowsHomeService ? 'translate-x-4' : 'translate-x-0'}`} />
-                    </button>
+
+                    <div className="h-px bg-slate-200 dark:bg-white/5 w-full" />
+
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 pr-4">
+                         <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-tight">{t('form.allowSimultaneousLabel')}</p>
+                         <div className="group relative shrink-0">
+                          <Info className="w-3.5 h-3.5 text-slate-400 cursor-help transition-colors hover:text-purple-500" />
+                          <div className="hidden group-hover:block absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-56 p-3 bg-slate-900/95 backdrop-blur-md text-[11px] text-zinc-100 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-1 duration-200 border border-white/10">
+                            {t('form.allowSimultaneousHint')}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900" />
+                          </div>
+                        </div>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => setFormData({...formData, allowSimultaneous: !formData.allowSimultaneous})}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 ${formData.allowSimultaneous ? 'bg-purple-600' : 'bg-slate-300 dark:bg-white/20'}`}
+                      >
+                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.allowSimultaneous ? 'translate-x-4' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-4 p-5 bg-slate-50 dark:bg-white/5 rounded-[24px] border border-slate-200 dark:border-white/10">

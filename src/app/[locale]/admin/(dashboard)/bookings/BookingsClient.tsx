@@ -29,7 +29,8 @@ import {
   FileText,
   Truck,
   Layers,
-  CalendarRange
+  CalendarRange,
+  MessageSquare
 } from 'lucide-react';
 import { updateBookingAction, deleteBookingAction, createBookingAction, createBookingSessionAction, getAvailableSlots } from "@/app/actions/booking";
 import { useRouter } from "next/navigation";
@@ -182,34 +183,73 @@ export default function BookingsClient({
   });
   
   // Algoritmo para posicionar citas solapadas lado a lado
+  // Algoritmo para posicionar citas solapadas lado a lado (estilo Outlook/Google Calendar)
   const getEventLayout = (events: any[]) => {
     if (events.length === 0) return [];
     
-    // 1. Ordenar por tiempo de inicio, luego por duración (más larga primero)
+    // 1. Clonar y ordenar por tiempo de inicio, luego por duración (más larga primero)
     const sorted = [...events].sort((a, b) => {
       const aStart = new Date(a.startTime).getTime();
       const bStart = new Date(b.startTime).getTime();
       if (aStart !== bStart) return aStart - bStart;
       const aEnd = new Date(a.endTime).getTime();
       const bEnd = new Date(b.endTime).getTime();
-      return (bEnd - bStart) - (aEnd - aStart);
+      return bEnd - bStart - (aEnd - aStart);
     });
 
-    return sorted.map(event => {
-      // Encontrar el grupo de solapamiento para determinar el ancho real
-      const overlappingInGroup = events.filter(e => {
-        const eStart = new Date(e.startTime);
-        const eEnd = new Date(e.endTime);
-        const eventStart = new Date(event.startTime);
-        const eventEnd = new Date(event.endTime);
-        return eStart < eventEnd && eEnd > eventStart;
+    const results: any[] = [];
+    let currentCluster: any[] = [];
+    let clusterEnd = 0;
+
+    const processCluster = (cluster: any[]) => {
+      if (cluster.length === 0) return;
+
+      const columns: any[][] = [];
+      cluster.forEach(event => {
+        let placed = false;
+        const eStart = new Date(event.startTime).getTime();
+
+        for (let i = 0; i < columns.length; i++) {
+          const lastInCol = columns[i][columns[i].length - 1];
+          const lastEnd = new Date(lastInCol.endTime).getTime();
+          
+          if (eStart >= lastEnd) {
+            columns[i].push(event);
+            event.colIndex = i;
+            placed = true;
+            break;
+          }
+        }
+
+        if (!placed) {
+          event.colIndex = columns.length;
+          columns.push([event]);
+        }
       });
-      
-      return {
-        ...event,
-        totalCols: overlappingInGroup.length
-      };
+
+      // El ancho total de cada evento en el cluster depende del número total de columnas
+      cluster.forEach(event => {
+        event.totalCols = columns.length;
+      });
+    };
+
+    sorted.forEach(event => {
+      const eStart = new Date(event.startTime).getTime();
+      const eEnd = new Date(event.endTime).getTime();
+
+      if (eStart >= clusterEnd) {
+        processCluster(currentCluster);
+        currentCluster = [event];
+        clusterEnd = eEnd;
+      } else {
+        currentCluster.push(event);
+        if (eEnd > clusterEnd) clusterEnd = eEnd;
+      }
     });
+
+    processCluster(currentCluster);
+
+    return sorted;
   };
 
   // Detección de solapamiento (Overlap)
@@ -762,11 +802,16 @@ export default function BookingsClient({
                             <div className="flex flex-col h-full gap-0.5">
                               {/* Fila Cliente y Horario */}
                               <div className="flex items-center justify-between gap-4 mb-0.5">
-                                <h4 className={`font-extrabold text-[14px] truncate flex-1 leading-tight ${
-                                  isCancelled ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white'
-                                }`} title={booking.customerName}>
-                                  {booking.customerName}
-                                </h4>
+                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                  <h4 className={`font-extrabold text-[14px] truncate leading-tight ${
+                                    isCancelled ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white'
+                                  }`} title={booking.customerName}>
+                                    {booking.customerName}
+                                  </h4>
+                                  {booking.notes && booking.notes.trim().length > 0 && (
+                                    <MessageSquare className="w-3.5 h-3.5 text-orange-500 shrink-0 fill-orange-500/20" />
+                                  )}
+                                </div>
                                 <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                                   {format(start, "h:mm")} - {format(end, "h:mm a")}
                                 </span>
@@ -860,8 +905,8 @@ export default function BookingsClient({
                             const end = new Date(booking.endTime);
                             const startMinutes = (start.getHours() - calendarStartHour) * 60 + start.getMinutes();
                             const duration = (end.getTime() - start.getTime()) / 60000;
-                            const top = (startMinutes * 80) / 60;
-                            const height = Math.max((duration * 80) / 60, 28);
+                            const top = (startMinutes * 96) / 60;
+                            const height = Math.max((duration * 96) / 60, 28);
                             
                             const colWidth = 100 / booking.totalCols;
                             const colLeft = `calc(64px + ${di} * (100% - 64px) / 7 + (${booking.colIndex} * (100% - 64px) / 7 / ${booking.totalCols}) + 2px)`;
@@ -894,11 +939,16 @@ export default function BookingsClient({
                               >
                                 <div className="flex flex-col h-full gap-0.5">
                                   <div className="flex items-center justify-between gap-1 overflow-hidden">
-                                    <p className={`font-black text-xs truncate flex-1 leading-tight ${
-                                      isCancelled ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white'
-                                    }`}>
-                                      {booking.customerName}
-                                    </p>
+                                    <div className="flex items-center gap-1 flex-1 min-w-0">
+                                      <p className={`font-black text-xs truncate leading-tight ${
+                                        isCancelled ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white'
+                                      }`}>
+                                        {booking.customerName}
+                                      </p>
+                                      {booking.notes && booking.notes.trim().length > 0 && (
+                                        <MessageSquare className="w-3 h-3 text-purple-500 shrink-0 fill-purple-500/20" />
+                                      )}
+                                    </div>
                                     <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap opacity-60">{format(start, "h:mm a")}</span>
                                   </div>
                                   <p className="text-[11px] text-slate-500 font-bold truncate">
