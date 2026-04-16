@@ -12,7 +12,7 @@ import { canUseFeature, getPlanFeatures } from "@/core/plans";
 import { getGoogleCalendarUrl, getOutlookCalendarUrl, generateICSFile } from "@/lib/calendar";
 
 type Branch = { id: string; name: string; businessHours?: string | null };
-type Service = { id: string; name: string; durationMinutes: number; price: string; includes: string[]; excludes: string[]; allowsHomeService?: boolean; allowSimultaneous?: boolean; branches?: { id: string; branchId: string }[]; categoryIds?: string[] };
+type Service = { id: string; name: string; durationMinutes: number; price: string; includes: string[]; excludes: string[]; allowsHomeService?: boolean; allowSimultaneous?: boolean; isExclusive?: boolean; branches?: { id: string; branchId: string }[]; categoryIds?: string[] };
 type Staff = { id: string; name: string; allowsHomeService?: boolean; categoryIds?: string[] };
 type CoverageZone = { id: string; name: string; fee: string; description?: string | null };
 
@@ -140,6 +140,11 @@ export default function BookingWidget({
 
   const [schedulingMode, setSchedulingMode] = useState<'bulk' | 'separate' | null>(null);
   const [currentServiceIndex, setCurrentServiceIndex] = useState(0);
+  // Servicios en simultaneo
+  const [simultaneousMode, setSimultaneousMode] = useState<boolean | null>(null);
+  const [showSimultaneousPrompt, setShowSimultaneousPrompt] = useState(false);
+  // Grupos de servicios simultáneos: array de arrays de índices en selectedServices
+  const [simulGroups, setSimulGroups] = useState<number[][] | null>(null);
   const [cartBookings, setCartBookings] = useState<{
     service: Service;
     staff: Staff | null;
@@ -203,11 +208,22 @@ export default function BookingWidget({
   }, []);
 
   useEffect(() => {
-    if (forcedTheme) {
+    if (!forcedTheme) return;
+
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(forcedTheme === 'dark' ? 'dark' : 'light');
+    document.documentElement.style.colorScheme = forcedTheme === 'dark' ? 'dark' : 'light';
+
+    return () => {
+      // Al desmontar (navegación al admin u otra ruta), restaurar el tema
+      // que el ThemeProvider (next-themes) guardó en localStorage
       document.documentElement.classList.remove('light', 'dark');
-      document.documentElement.classList.add(forcedTheme === 'dark' ? 'dark' : 'light');
-      document.documentElement.style.colorScheme = forcedTheme === 'dark' ? 'dark' : 'light';
-    }
+      document.documentElement.style.colorScheme = '';
+      const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('theme') : null;
+      const prefersDark = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const resolved = (!saved || saved === 'system') ? (prefersDark ? 'dark' : 'light') : saved;
+      document.documentElement.classList.add(resolved);
+    };
   }, [forcedTheme]);
 
   useEffect(() => {
@@ -271,16 +287,53 @@ export default function BookingWidget({
 
   const displayServices = useMemo(() => {
     if (modality === 'domicilio') {
-      return services.filter(s => s.allowsHomeService !== false);
+      // Regla 15: solo servicios con allowsHomeService
+      // Regla 19: servicios exclusivos de sucursal nunca en domicilio
+      return services.filter(s => s.allowsHomeService !== false && !s.isExclusive);
     }
     if (modality === 'local' && selectedBranch) {
       return services.filter(s => {
+        if (s.isExclusive) {
+          // Regla 18: exclusivos solo en su sucursal asignada (debe tener match explícito)
+          return (s.branches || []).some(b => b.branchId === selectedBranch.id);
+        }
+        // No-exclusivos: sin restricción de sucursal = mostrar en todas
         if (!s.branches || s.branches.length === 0) return true;
         return s.branches.some(b => b.branchId === selectedBranch.id);
       });
     }
     return services;
   }, [services, modality, selectedBranch]);
+
+  // Regla 25: el prompt de simultáneos solo aplica si HAY AL MENOS 2 servicios con el tag
+  const hasSomeSimultaneous = selectedServices.filter(s => s.allowSimultaneous).length >= 2;
+
+  // Calcula los grupos de simultaneidad: pares de servicios allowSimultaneous primero,
+  // luego los no-simultáneos individualmente al final.
+  const computeSimulGroups = (svcs: Service[]): number[][] => {
+    const simulIdx = svcs.map((s, i) => s.allowSimultaneous ? i : null).filter(i => i !== null) as number[];
+    const nonSimulIdx = svcs.map((s, i) => !s.allowSimultaneous ? i : null).filter(i => i !== null) as number[];
+    const groups: number[][] = [];
+    for (let i = 0; i < simulIdx.length; i += 2) groups.push(simulIdx.slice(i, i + 2));
+    for (const i of nonSimulIdx) groups.push([i]);
+    return groups;
+  };
+
+  // Obtiene el tiempo real de inicio de un cartBooking[idx] considerando grupos simultáneos
+  const getSimulStartTime = (idx: number): Date => {
+    const base = new Date(`${cartBookings[0]?.date}T${formatTimeToMilitary(cartBookings[0]?.time!)}`);
+    if (!simultaneousMode || !simulGroups) {
+      const offsetMs = cartBookings.slice(0, idx).reduce((acc, b) => acc + b.service.durationMinutes * 60000, 0);
+      return new Date(base.getTime() + offsetMs);
+    }
+    let groupStart = base;
+    for (const group of simulGroups) {
+      if (group.includes(idx)) return groupStart;
+      const maxDur = Math.max(...group.map(i => cartBookings[i]?.service.durationMinutes ?? 0));
+      groupStart = new Date(groupStart.getTime() + maxDur * 60000);
+    }
+    return groupStart;
+  };
 
   const displayStaff = useMemo(() => {
     let filtered = modality === 'domicilio'
@@ -447,7 +500,10 @@ export default function BookingWidget({
 
               let hasConflict = false;
 
-              const currentAllowSimult = modality === 'domicilio' ? false : (res.allowSimultaneous ?? false);
+              // Regla 13: domicilio+separate con tag simultáneo SÍ puede coincidir (se cobran 2 traslados)
+              // Regla 12: domicilio+bulk nunca simultáneo (ese caso no llega aquí, se controla en step 2.5)
+              // Regla 14: domicilio+separate sin tag simultáneo NO puede coincidir
+              const currentAllowSimult = res.allowSimultaneous ?? false;
               const someParticipantDisallows = overlappingEntries.length > 0 && (!currentAllowSimult || overlappingEntries.some(e => !e.service.allowSimultaneous));
 
               if (someParticipantDisallows) {
@@ -559,34 +615,48 @@ export default function BookingWidget({
 
     setIsFinishing(true);
     try {
-      let currentStartTime: Date | null = null;
+      const militaryTime = formatTimeToMilitary(cartBookings[0].time!);
+      const baseStartTime = new Date(`${cartBookings[0].date}T${militaryTime}`);
 
-      const sessionBookingsData = cartBookings.map((item) => {
-        const militaryTime = formatTimeToMilitary(item.time!);
-        const baseStartTime = new Date(`${item.date}T${militaryTime}`);
-        const actualStartTime = (schedulingMode === 'bulk' && currentStartTime)
-          ? currentStartTime
-          : baseStartTime;
-        const actualEndTime = new Date(actualStartTime.getTime() + item.service.durationMinutes * 60000);
+      let sessionBookingsData: ReturnType<typeof buildBookingEntry>[];
 
-        if (schedulingMode === 'bulk') {
-          currentStartTime = actualEndTime;
-        }
-
-        const formattedStart = format(actualStartTime, "yyyy-MM-dd'T'HH:mm:ss");
-        const formattedEnd = format(actualEndTime, "yyyy-MM-dd'T'HH:mm:ss");
-
+      const buildBookingEntry = (item: typeof cartBookings[0], start: Date) => {
+        const end = new Date(start.getTime() + item.service.durationMinutes * 60000);
         return {
           branchId: selectedBranch?.id || branches[0]?.id || '',
           serviceId: item.service.id,
           staffId: item.staff?.id || '',
-          startTime: formattedStart,
-          endTime: formattedEnd,
+          startTime: format(start, "yyyy-MM-dd'T'HH:mm:ss"),
+          endTime: format(end, "yyyy-MM-dd'T'HH:mm:ss"),
           price: item.service.price,
-          // Si no hay staff específico, restringir al staff que pasa el filtro de categorías
           ...(!item.staff?.id ? { allowedStaffIds: displayStaff.map(s => s.id) } : {})
         };
-      });
+      };
+
+      if (schedulingMode === 'bulk' && simultaneousMode && simulGroups) {
+        // Modo simultáneo: agrupar servicios en parejas, luego los no-simultáneos
+        const entries: ReturnType<typeof buildBookingEntry>[] = [];
+        let groupStart = baseStartTime;
+        for (const group of simulGroups) {
+          const maxDur = Math.max(...group.map(i => cartBookings[i].service.durationMinutes));
+          for (const i of group) {
+            entries.push(buildBookingEntry(cartBookings[i], groupStart));
+          }
+          groupStart = new Date(groupStart.getTime() + maxDur * 60000);
+        }
+        sessionBookingsData = entries;
+      } else {
+        // Modo secuencial (bulk o separate): uno tras otro
+        let currentStartTime: Date | null = null;
+        sessionBookingsData = cartBookings.map((item) => {
+          const itemMilitary = formatTimeToMilitary(item.time!);
+          const itemBase = new Date(`${item.date}T${itemMilitary}`);
+          const actualStart = (schedulingMode === 'bulk' && currentStartTime) ? currentStartTime : itemBase;
+          const entry = buildBookingEntry(item, actualStart);
+          if (schedulingMode === 'bulk') currentStartTime = new Date(actualStart.getTime() + item.service.durationMinutes * 60000);
+          return entry;
+        });
+      }
 
       const result = await createBookingSessionAction({
         tenantId: tenantId,
@@ -1046,7 +1116,16 @@ export default function BookingWidget({
             <div className="relative z-10 flex flex-col w-full items-start animate-in fade-in slide-in-from-right-8 duration-500">
               <div className="flex items-center gap-3 mb-6">
                 <button
-                  onClick={() => setStep(1)}
+                  onClick={() => {
+                    setStep(1);
+                    // Limpiar servicios al volver para evitar servicios incompatibles con la nueva modalidad
+                    setSelectedServices([]);
+                    setCartBookings([]);
+                    setSchedulingMode(null);
+                    setSimultaneousMode(null);
+                    setShowSimultaneousPrompt(false);
+                    setSimulGroups(null);
+                  }}
                   className="p-2 bg-white dark:bg-white/5 hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl text-slate-600 dark:text-zinc-300 transition-colors"
                 >
                   <ArrowLeft className="w-5 h-5" />
@@ -1194,9 +1273,22 @@ export default function BookingWidget({
               </div>
 
               <div className="flex-1 flex flex-col justify-center gap-5">
+                {/* Opción: Todo seguido */}
                 <button
-                  onClick={() => { setSchedulingMode('bulk'); setStep(3); }}
-                  className="w-full p-7 bg-white dark:bg-white/5 hover:bg-purple-500/10 border border-slate-200 dark:border-white/10 hover:border-purple-500/40 rounded-2xl flex items-center gap-5 transition-all duration-300 group shadow-lg text-left"
+                  onClick={() => {
+                    setSchedulingMode('bulk');
+                    if (hasSomeSimultaneous && modality !== 'domicilio') {
+                      setShowSimultaneousPrompt(true);
+                    } else {
+                      setSimultaneousMode(false);
+                      setStep(3);
+                    }
+                  }}
+                  className={`w-full p-7 bg-white dark:bg-white/5 border shadow-lg text-left flex items-center gap-5 transition-all duration-300 group rounded-2xl ${
+                    showSimultaneousPrompt
+                      ? 'border-purple-500/50 bg-purple-500/5 dark:bg-purple-500/10'
+                      : 'hover:bg-purple-500/10 border-slate-200 dark:border-white/10 hover:border-purple-500/40'
+                  }`}
                 >
                   <div className="bg-purple-500/20 p-4 rounded-full text-purple-400 group-hover:scale-110 transition-transform shrink-0"><Layers className="w-8 h-8" /></div>
                   <div>
@@ -1205,8 +1297,50 @@ export default function BookingWidget({
                   </div>
                 </button>
 
+                {/* Sub-prompt: ¿servicios en simultaneo? */}
+                {showSimultaneousPrompt && (
+                  <div className="animate-in slide-in-from-top-2 duration-300 p-5 bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 rounded-2xl space-y-4">
+                    <div className="flex items-start gap-3">
+                      <Layers className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-black text-slate-900 dark:text-white leading-snug">
+                          ¡Tenemos una opción para ahorrarte tiempo!
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                          Algunos de tus servicios pueden realizarse al mismo tiempo con diferentes especialistas. ¿Deseas programarlos de forma simultánea?
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          setSimultaneousMode(true);
+                          setSimulGroups(computeSimulGroups(selectedServices));
+                          setShowSimultaneousPrompt(false);
+                          setStep(3);
+                        }}
+                        className="flex-1 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-black tracking-wide transition-all active:scale-95"
+                      >
+                        Sí, al mismo tiempo
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSimultaneousMode(false);
+                          setSimulGroups(null);
+                          setShowSimultaneousPrompt(false);
+                          setStep(3);
+                        }}
+                        className="flex-1 py-3 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white rounded-xl text-sm font-black tracking-wide transition-all active:scale-95"
+                      >
+                        No, uno tras otro
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Opción: En días u horas distintas */}
                 <button
-                  onClick={() => { setSchedulingMode('separate'); setStep(3); setCurrentServiceIndex(0); }}
+                  onClick={() => { setSchedulingMode('separate'); setShowSimultaneousPrompt(false); setSimultaneousMode(null); setStep(3); setCurrentServiceIndex(0); }}
                   className="w-full p-7 bg-white dark:bg-white/5 hover:bg-blue-500/10 border border-slate-200 dark:border-white/10 hover:border-blue-500/40 rounded-2xl flex items-center gap-5 transition-all duration-300 group shadow-lg text-left"
                 >
                   <div className="bg-blue-500/20 p-4 rounded-full text-blue-400 group-hover:scale-110 transition-transform shrink-0"><CalendarRange className="w-8 h-8" /></div>
@@ -1719,15 +1853,18 @@ export default function BookingWidget({
                     
                     <div className="grid grid-cols-1 gap-3">
                       {cartBookings.map((b, idx) => {
-                        // Compute actual sequential start time for bulk mode (all same date/time → stacked)
+                        // Compute actual start time considering sequential or simultaneous grouping
                         let actualStartTime: Date;
                         if (schedulingMode === 'bulk') {
-                          const base = new Date(`${cartBookings[0].date}T${formatTimeToMilitary(cartBookings[0].time!)}`);
-                          const offsetMs = cartBookings.slice(0, idx).reduce((acc, prev) => acc + prev.service.durationMinutes * 60000, 0);
-                          actualStartTime = new Date(base.getTime() + offsetMs);
+                          actualStartTime = getSimulStartTime(idx);
                         } else {
                           actualStartTime = new Date(`${b.date}T${formatTimeToMilitary(b.time!)}`);
                         }
+
+                        // Badge: is this service part of a simultaneous group?
+                        const isInSimulGroup = simultaneousMode && simulGroups
+                          ? simulGroups.some(g => g.length > 1 && g.includes(idx))
+                          : false;
 
                         // Logic to check if this service starts a new transfer block
                         let showsTransferInCard = false;
@@ -1764,7 +1901,14 @@ export default function BookingWidget({
                                   <span className="text-xs font-black text-purple-500">{idx + 1}</span>
                                 </div>
                                 <div className="min-w-0">
-                                  <h3 className="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">{b.service.name}</h3>
+                                  <div className="flex items-center gap-2">
+                                    <h3 className="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">{b.service.name}</h3>
+                                    {isInSimulGroup && (
+                                      <span className="shrink-0 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-full">
+                                        Simultáneo
+                                      </span>
+                                    )}
+                                  </div>
                                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                                     <div className="flex items-center gap-1 text-xs font-bold text-purple-500">
                                       <Calendar className="w-3 h-3" />

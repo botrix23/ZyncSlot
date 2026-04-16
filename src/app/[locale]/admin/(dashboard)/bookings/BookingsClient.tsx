@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   Calendar, 
   Search, 
@@ -208,6 +208,7 @@ export default function BookingsClient({
   const [modalStep, setModalStep] = useState(1); // 1: Cliente info, 2: Servicios, 3: Modalidad, 4: Agendamiento, 5: Resumen
   const [selectedServicesList, setSelectedServicesList] = useState<any[]>([]); // Servicios seleccionados en el Paso 2
   const [modality, setModality] = useState<'local' | 'domicilio'>('local');
+  const [selectedBranch, setSelectedBranch] = useState<any | null>(null); // Sucursal seleccionada en modo local
   const [selectedZone, setSelectedZone] = useState<any | null>(null);
   const [schedulingMode, setSchedulingMode] = useState<'bulk' | 'separate'>('bulk');
   const [cart, setCart] = useState<any[]>([]); // [{ service, staff, date, time, duration }]
@@ -215,17 +216,75 @@ export default function BookingsClient({
   const [availableSlots, setAvailableSlots] = useState<{time: string, available: boolean}[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  // -- MODO SIMULTÁNEO (réplica widget) --
+  const [simultaneousMode, setSimultaneousMode] = useState<boolean | null>(null);
+  const [showSimultaneousPrompt, setShowSimultaneousPrompt] = useState(false);
+  const [simulGroups, setSimulGroups] = useState<number[][] | null>(null);
   // -- FIN NUEVOS ESTADOS --
 
-  // Filtrar staff según modalidad
-  const filteredStaff = staff.filter(s => {
-    if (modality === 'domicilio') return s.allowsHomeService !== false;
-    return true;
-  });
+  // Regla 25: el prompt de simultáneos solo aplica si HAY AL MENOS 2 servicios con el tag
+  const hasSomeSimultaneous = selectedServicesList.filter(s => s.allowSimultaneous).length >= 2;
 
-  // Filtrar servicios según modalidad
+  // Calcula grupos de simultaneidad: pares de servicios allowSimultaneous primero, luego los no-simultáneos
+  const computeSimulGroups = (svcs: any[]): number[][] => {
+    const simulIdx = svcs.map((s, i) => s.allowSimultaneous ? i : null).filter(i => i !== null) as number[];
+    const nonSimulIdx = svcs.map((s, i) => !s.allowSimultaneous ? i : null).filter(i => i !== null) as number[];
+    const groups: number[][] = [];
+    for (let i = 0; i < simulIdx.length; i += 2) groups.push(simulIdx.slice(i, i + 2));
+    for (const i of nonSimulIdx) groups.push([i]);
+    return groups;
+  };
+
+  // Filtrar staff según modalidad + sucursal seleccionada + categorías de los servicios seleccionados
+  const filteredStaff = useMemo(() => {
+    // Paso 1: filtrar por modalidad y sucursal
+    const byModality = staff.filter(s => {
+      if (modality === 'domicilio') return s.allowsHomeService !== false;
+      if (modality === 'local' && selectedBranch) return s.branchId === selectedBranch.id;
+      return true;
+    });
+
+    if (selectedServicesList.length === 0) return byModality;
+
+    // Paso 2: filtrar por categorías requeridas
+    const targetService = schedulingMode === 'separate'
+      ? selectedServicesList[currentServiceIndex]
+      : null;
+
+    let requiredCategoryIds: string[];
+    if (schedulingMode === 'bulk') {
+      // Bulk: el staff debe cubrir TODAS las categorías de todos los servicios
+      requiredCategoryIds = [...new Set(selectedServicesList.flatMap(s => s.categoryIds || []))];
+    } else if (targetService) {
+      // Separate: el staff debe cubrir las categorías del servicio actual
+      requiredCategoryIds = targetService.categoryIds || [];
+    } else {
+      requiredCategoryIds = [];
+    }
+
+    if (requiredCategoryIds.length === 0) return byModality;
+
+    const categoryFiltered = byModality.filter(s => {
+      const staffCats: string[] = s.categoryIds || [];
+      return requiredCategoryIds.every(catId => staffCats.includes(catId));
+    });
+
+    // Si ningún staff cumple las categorías, mostrar todos los de la modalidad como fallback
+    return categoryFiltered.length > 0 ? categoryFiltered : byModality;
+  }, [staff, modality, selectedBranch, selectedServicesList, schedulingMode, currentServiceIndex]);
+
+  // Filtrar servicios según modalidad + regla isExclusive (reglas 18/19)
   const filteredServices = services.filter(s => {
-    if (modality === 'domicilio') return s.allowsHomeService !== false;
+    if (modality === 'domicilio') return s.allowsHomeService !== false && !s.isExclusive;
+    if (modality === 'local' && selectedBranch) {
+      if (s.isExclusive) {
+        // Regla 18: exclusivos solo en su sucursal asignada
+        return (s.branches || []).some((b: any) => b.branchId === selectedBranch.id);
+      }
+      // No-exclusivos: sin restricción = aparecen en todas; con restricción = filtrar por sucursal
+      if (!s.branches || s.branches.length === 0) return true;
+      return s.branches.some((b: any) => b.branchId === selectedBranch.id);
+    }
     return true;
   });
   
@@ -347,7 +406,7 @@ export default function BookingsClient({
         const res = await getAvailableSlots(
           formData.date,
           currentService.id,
-          formData.branchId || staff[0].branchId,
+          selectedBranch?.id || formData.branchId || staff[0]?.branchId,
           formData.staffId,
           durationToValidate,
           modality === 'domicilio',
@@ -356,23 +415,36 @@ export default function BookingsClient({
         
         if (res.slots) {
           const inMemoryFiltered = res.slots.map(slot => {
-             let isAvailable = slot.available;
-             if (isAvailable && schedulingMode === 'separate') {
-                const slotStart = parse(`${formData.date} ${slot.time}`, "yyyy-MM-dd HH:mm", new Date());
-                const slotEnd = addMinutes(slotStart, currentService.durationMinutes);
-                
-                for (const appt of cart) {
-                   if (appt.staff.id === formData.staffId && appt.date === formData.date) {
-                      const apptStart = parse(`${appt.date} ${appt.time}`, "yyyy-MM-dd HH:mm", new Date());
-                      const apptEnd = addMinutes(apptStart, appt.duration);
-                      if (slotStart < apptEnd && slotEnd > apptStart) {
-                         isAvailable = false;
-                         break;
-                      }
-                   }
+            let isAvailable = slot.available;
+            if (isAvailable && schedulingMode === 'separate') {
+              const slotStart = parse(`${formData.date} ${slot.time}`, "yyyy-MM-dd HH:mm", new Date());
+              const slotEnd = addMinutes(slotStart, currentService.durationMinutes);
+
+              // Encontrar entradas del carrito que se solapan con este slot (mismo día)
+              const overlappingAppts = cart.filter(appt => {
+                if (appt.date !== formData.date) return false;
+                const apptStart = parse(`${appt.date} ${appt.time}`, "yyyy-MM-dd HH:mm", new Date());
+                const apptEnd = addMinutes(apptStart, appt.duration);
+                return slotStart < apptEnd && slotEnd > apptStart;
+              });
+
+              if (overlappingAppts.length > 0) {
+                const currentAllowSimult = currentService.allowSimultaneous ?? false;
+                // Regla 13/14: si el servicio actual O algún servicio solapado NO permite simultáneo → bloquear
+                const someParticipantDisallows = !currentAllowSimult ||
+                  overlappingAppts.some(a => !(a.service.allowSimultaneous ?? false));
+
+                if (someParticipantDisallows) {
+                  isAvailable = false;
+                } else {
+                  // Todos permiten simultáneo: solo bloquear si el mismo staff ya está ocupado
+                  if (overlappingAppts.some(a => a.staff?.id === formData.staffId)) {
+                    isAvailable = false;
+                  }
                 }
-             }
-             return { ...slot, available: isAvailable };
+              }
+            }
+            return { ...slot, available: isAvailable };
           });
           setAvailableSlots(inMemoryFiltered);
         }
@@ -395,10 +467,14 @@ export default function BookingsClient({
     setSelectedServicesList([]);
     setCart([]);
     setModality('local');
+    setSelectedBranch(null);
     setSelectedZone(null);
     setSchedulingMode('bulk');
     setCurrentServiceIndex(0);
     setIsSuccess(false);
+    setSimultaneousMode(null);
+    setShowSimultaneousPrompt(false);
+    setSimulGroups(null);
     setFormData({
       customerName: "",
       customerEmail: "",
@@ -410,7 +486,8 @@ export default function BookingsClient({
       date: format(new Date(), "yyyy-MM-dd"),
       time: "09:00",
       durationMinutes: services[0]?.durationMinutes || 30,
-      notes: ""
+      notes: "",
+      homeAddress: ""
     });
     setDurationInput((services[0]?.durationMinutes || 30).toString());
     setIsEditModalOpen(true);
@@ -475,23 +552,51 @@ export default function BookingsClient({
         });
       } else {
         // CREACIÓN DE NUEVA SESIÓN (Multi-servicio / Remota)
-        // Transformar el carrito al formato de la acción de sesión
-        const sessionBookings = cart.map(item => {
-          const start = parse(`${item.date} ${item.time}`, "yyyy-MM-dd HH:mm", new Date());
-          const end = addMinutes(start, item.duration || item.service.durationMinutes);
-          
-          // Formatear como ISO local (la acción se encarga del offset del tenant)
-          const formatLocalIso = (d: Date) => format(d, "yyyy-MM-dd'T'HH:mm:ss");
+        const formatLocalIso = (d: Date) => format(d, "yyyy-MM-dd'T'HH:mm:ss");
+        let sessionBookings: any[];
 
-          return {
-            branchId: item.staff.branchId || formData.branchId, 
-            serviceId: item.service.id,
-            staffId: item.staff.id,
-            startTime: formatLocalIso(start),
-            endTime: formatLocalIso(end),
-            price: item.service.price.toString()
-          };
-        });
+        if (schedulingMode === 'bulk' && simultaneousMode && simulGroups) {
+          // Modo simultáneo: agrupar servicios según simulGroups, los del mismo grupo comparten start
+          const baseStart = parse(`${cart[0].date} ${cart[0].time}`, "yyyy-MM-dd HH:mm", new Date());
+          const entries: any[] = [];
+          let groupStart = baseStart;
+          for (const group of simulGroups) {
+            const maxDur = Math.max(...group.map(i => cart[i]?.service.durationMinutes ?? 0));
+            for (const i of group) {
+              const item = cart[i];
+              if (!item) continue;
+              const end = addMinutes(groupStart, item.service.durationMinutes);
+              entries.push({
+                branchId: selectedBranch?.id || item.staff.branchId || formData.branchId,
+                serviceId: item.service.id,
+                staffId: item.staff.id,
+                startTime: formatLocalIso(groupStart),
+                endTime: formatLocalIso(end),
+                price: item.service.price.toString()
+              });
+            }
+            groupStart = addMinutes(groupStart, maxDur);
+          }
+          sessionBookings = entries;
+        } else {
+          // Modo secuencial: bulk → uno tras otro desde el mismo inicio; separate → cada uno su propio inicio
+          let currentStart: Date | null = null;
+          sessionBookings = cart.map(item => {
+            const itemBase = parse(`${item.date} ${item.time}`, "yyyy-MM-dd HH:mm", new Date());
+            const actualStart = (schedulingMode === 'bulk' && currentStart) ? currentStart : itemBase;
+            const dur = item.duration || item.service.durationMinutes;
+            const end = addMinutes(actualStart, dur);
+            if (schedulingMode === 'bulk') currentStart = end;
+            return {
+              branchId: item.staff.branchId || formData.branchId,
+              serviceId: item.service.id,
+              staffId: item.staff.id,
+              startTime: formatLocalIso(actualStart),
+              endTime: formatLocalIso(end),
+              price: item.service.price.toString()
+            };
+          });
+        }
 
         result = await createBookingSessionAction({
           tenantId,
@@ -1408,15 +1513,32 @@ export default function BookingsClient({
                         <div className="p-7 space-y-6 flex-1">
                            <h4 className="text-lg font-black">{t('form.modalityTitle')}</h4>
                            <div className="grid grid-cols-2 gap-4">
-                              <button 
-                                onClick={() => { setModality('local'); setSelectedZone(null); }}
+                              <button
+                                onClick={() => {
+                                  setModality('local');
+                                  setSelectedZone(null);
+                                  setSelectedBranch(null);
+                                  // Re-evaluar servicios al volver a local (pueden volver servicios que se ocultaron)
+                                  setSelectedServicesList(prev => prev.filter(s => {
+                                    if (!s.isExclusive) return true;
+                                    // Exclusivos sin sucursal seleccionada: mantener, se filtrará al elegir sucursal
+                                    return true;
+                                  }));
+                                }}
                                 className={`p-6 rounded-[24px] border-2 transition-all flex flex-col items-center gap-3 ${modality === 'local' ? 'bg-purple-500/10 border-purple-500' : 'bg-slate-50 dark:bg-white/5 border-transparent opacity-60'}`}
                               >
                                 <Sparkles className={`w-8 h-8 ${modality === 'local' ? 'text-purple-500' : 'text-slate-400'}`} />
                                 <span className="font-bold text-sm">{t('modality.local')}</span>
                               </button>
-                              <button 
-                                onClick={() => setModality('domicilio')}
+                              <button
+                                onClick={() => {
+                                  setModality('domicilio');
+                                  setSelectedBranch(null);
+                                  // Quitar servicios exclusivos o sin domicilio que ya no aplican
+                                  setSelectedServicesList(prev =>
+                                    prev.filter(s => s.allowsHomeService !== false && !s.isExclusive)
+                                  );
+                                }}
                                 disabled={!tenantSettings?.allowsHomeService}
                                 className={`p-6 rounded-[24px] border-2 transition-all flex flex-col items-center gap-3 ${modality === 'domicilio' ? 'bg-emerald-500/10 border-emerald-500' : 'bg-slate-50 dark:bg-white/5 border-transparent opacity-60'} ${!tenantSettings?.allowsHomeService ? 'cursor-not-allowed grayscale' : ''}`}
                               >
@@ -1425,6 +1547,37 @@ export default function BookingsClient({
                                 {!tenantSettings?.allowsHomeService && <span className="text-[8px] text-rose-500 font-black uppercase">NO ACTIVADO</span>}
                               </button>
                            </div>
+
+                           {/* Selector de sucursal para modo local (regla 18: exclusivos por sucursal) */}
+                           {modality === 'local' && branches.length > 1 && (
+                             <div className="space-y-3 p-5 bg-purple-500/5 rounded-[24px] border border-purple-500/10 animate-in zoom-in-95">
+                               <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Sucursal</label>
+                               <div className="space-y-2">
+                                 <button
+                                   onClick={() => setSelectedBranch(null)}
+                                   className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all ${!selectedBranch ? 'bg-purple-500 text-white border-purple-400 shadow-lg' : 'bg-white dark:bg-white/5 border-slate-100 dark:border-white/5'}`}
+                                 >
+                                   <p className="font-bold text-sm">Todas las sucursales</p>
+                                 </button>
+                                 {branches.map((branch: any) => (
+                                   <button
+                                     key={branch.id}
+                                     onClick={() => {
+                                       setSelectedBranch(branch);
+                                       // Quitar servicios exclusivos que no pertenecen a esta sucursal
+                                       setSelectedServicesList(prev => prev.filter(s => {
+                                         if (!s.isExclusive) return true;
+                                         return (s.branches || []).some((b: any) => b.branchId === branch.id);
+                                       }));
+                                     }}
+                                     className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all ${selectedBranch?.id === branch.id ? 'bg-purple-500 text-white border-purple-400 shadow-lg' : 'bg-white dark:bg-white/5 border-slate-100 dark:border-white/5'}`}
+                                   >
+                                     <p className="font-bold text-sm">{branch.name}</p>
+                                   </button>
+                                 ))}
+                               </div>
+                             </div>
+                           )}
 
                            {modality === 'domicilio' && (
                              <div className="space-y-4 p-5 bg-emerald-500/5 rounded-[24px] border border-emerald-500/10 animate-in zoom-in-95">
@@ -1448,11 +1601,72 @@ export default function BookingsClient({
                              <div className="space-y-4 border-t border-slate-100 dark:border-white/5 pt-6">
                                <label className="text-xs font-black text-slate-500">{t('form.schedulingMode')}</label>
                                <div className="grid grid-cols-1 gap-3">
-                                  <button onClick={() => setSchedulingMode('bulk')} className={`p-4 rounded-xl border flex items-center gap-4 text-left ${schedulingMode === 'bulk' ? 'bg-purple-500/10 border-purple-500' : 'border-slate-100 dark:border-white/5'}`}>
+                                  <button
+                                    onClick={() => {
+                                      setSchedulingMode('bulk');
+                                      if (hasSomeSimultaneous && modality !== 'domicilio') {
+                                        setShowSimultaneousPrompt(true);
+                                      } else {
+                                        setSimultaneousMode(false);
+                                        setShowSimultaneousPrompt(false);
+                                      }
+                                    }}
+                                    className={`p-4 rounded-xl border flex items-center gap-4 text-left transition-all ${schedulingMode === 'bulk' ? 'bg-purple-500/10 border-purple-500' : 'border-slate-100 dark:border-white/5'}`}
+                                  >
                                     <Layers className="w-5 h-5 text-purple-500" />
                                     <div><p className="font-bold text-sm">{t('schedulingMode.bulk')}</p></div>
                                   </button>
-                                  <button onClick={() => setSchedulingMode('separate')} className={`p-4 rounded-xl border flex items-center gap-4 text-left ${schedulingMode === 'separate' ? 'bg-blue-500/10 border-blue-500' : 'border-slate-100 dark:border-white/5'}`}>
+
+                                  {/* Sub-prompt: ¿servicios en simultáneo? */}
+                                  {showSimultaneousPrompt && schedulingMode === 'bulk' && (
+                                    <div className="animate-in slide-in-from-top-2 duration-300 p-4 bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 rounded-xl space-y-3">
+                                      <div className="flex items-start gap-3">
+                                        <Layers className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
+                                        <div>
+                                          <p className="text-sm font-black text-slate-900 dark:text-white leading-snug">
+                                            ¡Algunos servicios pueden realizarse al mismo tiempo!
+                                          </p>
+                                          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                                            Servicios con diferentes especialistas pueden ejecutarse en simultáneo. ¿Deseas programarlos así?
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setSimultaneousMode(true);
+                                            setSimulGroups(computeSimulGroups(selectedServicesList));
+                                            setShowSimultaneousPrompt(false);
+                                          }}
+                                          className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-black transition-all active:scale-95"
+                                        >
+                                          Sí, en simultáneo
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setSimultaneousMode(false);
+                                            setSimulGroups(null);
+                                            setShowSimultaneousPrompt(false);
+                                          }}
+                                          className="flex-1 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white rounded-xl text-xs font-black transition-all active:scale-95"
+                                        >
+                                          No, uno tras otro
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  <button
+                                    onClick={() => {
+                                      setSchedulingMode('separate');
+                                      setShowSimultaneousPrompt(false);
+                                      setSimultaneousMode(null);
+                                      setSimulGroups(null);
+                                    }}
+                                    className={`p-4 rounded-xl border flex items-center gap-4 text-left transition-all ${schedulingMode === 'separate' ? 'bg-blue-500/10 border-blue-500' : 'border-slate-100 dark:border-white/5'}`}
+                                  >
                                     <CalendarRange className="w-5 h-5 text-blue-500" />
                                     <div><p className="font-bold text-sm">{t('schedulingMode.separate')}</p></div>
                                   </button>
@@ -1461,8 +1675,25 @@ export default function BookingsClient({
                            )}
                         </div>
                         <div className="p-7 bg-white dark:bg-zinc-900 border-t border-slate-100 dark:border-white/5 sticky bottom-0 z-20 shrink-0 w-full mt-auto flex gap-3">
-                          <button onClick={() => setModalStep(2)} className="flex-1 py-4 bg-slate-100 dark:bg-white/5 rounded-2xl font-black">{t('back')}</button>
-                          <button onClick={() => setModalStep(4)} className="flex-[2] py-4 bg-purple-600 text-white rounded-2xl font-black">{t('continue')}</button>
+                          <button
+                            onClick={() => {
+                              setModalStep(2);
+                              setSimultaneousMode(null);
+                              setShowSimultaneousPrompt(false);
+                              setSimulGroups(null);
+                              setSchedulingMode('bulk');
+                            }}
+                            className="flex-1 py-4 bg-slate-100 dark:bg-white/5 rounded-2xl font-black"
+                          >
+                            {t('back')}
+                          </button>
+                          <button
+                            onClick={() => setModalStep(4)}
+                            disabled={showSimultaneousPrompt}
+                            className="flex-[2] py-4 bg-purple-600 text-white rounded-2xl font-black disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {t('continue')}
+                          </button>
                         </div>
                       </div>
                     )}

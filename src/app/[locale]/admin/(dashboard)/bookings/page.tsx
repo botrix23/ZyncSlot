@@ -3,7 +3,7 @@ import { db } from '@/db';
 import { getSession, getEffectiveTenantId } from '@/lib/auth-session';
 import { redirect } from 'next/navigation';
 import { eq, desc, and, lt } from 'drizzle-orm';
-import { bookings as bookingsTable, services, staff, branches, coverageZones, tenants } from '@/db/schema';
+import { bookings as bookingsTable, branches, coverageZones, tenants } from '@/db/schema';
 import BookingsClient from './BookingsClient';
 
 export default async function BookingsPage() {
@@ -38,8 +38,15 @@ export default async function BookingsPage() {
       },
       orderBy: [desc(bookingsTable.startTime)]
     }),
-    db.select().from(services).where(eq(services.tenantId, tenantId)),
-    db.select().from(staff).where(eq(staff.tenantId, tenantId)),
+    db.query.services.findMany({
+      where: (srv, { eq }) => eq(srv.tenantId, tenantId),
+      with: { branches: true, categories: true },
+      orderBy: (srv, { asc }) => [asc(srv.sortOrder)],
+    }),
+    db.query.staff.findMany({
+      where: (s, { eq }) => eq(s.tenantId, tenantId),
+      with: { categories: true },
+    }),
     db.select().from(branches).where(eq(branches.tenantId, tenantId)),
     db.select().from(coverageZones).where(eq(coverageZones.tenantId, tenantId)),
     db.query.tenants.findFirst({
@@ -47,11 +54,20 @@ export default async function BookingsPage() {
     })
   ]);
 
+  const mappedServices = dbServices.map((s: any) => ({
+    ...s,
+    categoryIds: (s.categories || []).map((c: any) => c.categoryId),
+  }));
+  const mappedStaff = dbStaff.map((s: any) => ({
+    ...s,
+    categoryIds: (s.categories || []).map((c: any) => c.categoryId),
+  }));
+
   return (
-    <BookingsClient 
+    <BookingsClient
       initialBookings={dbBookings}
-      services={dbServices}
-      staff={dbStaff}
+      services={mappedServices}
+      staff={mappedStaff}
       branches={dbBranches}
       coverageZones={dbZones}
       tenantId={tenantId}

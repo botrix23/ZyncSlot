@@ -16,6 +16,7 @@ export async function createServiceAction(data: {
   sortOrder?: number;
   allowsHomeService?: boolean;
   allowSimultaneous?: boolean;
+  isExclusive?: boolean;
   branchIds?: string[];
   categoryIds?: string[];
 }) {
@@ -32,6 +33,7 @@ export async function createServiceAction(data: {
         sortOrder: data.sortOrder || 0,
         allowsHomeService: data.allowsHomeService ?? true,
         allowSimultaneous: data.allowSimultaneous ?? false,
+        isExclusive: data.isExclusive ?? false,
       }).returning();
 
       if (data.branchIds && data.branchIds.length > 0) {
@@ -78,6 +80,7 @@ export async function updateServiceAction(data: {
   sortOrder?: number;
   allowsHomeService?: boolean;
   allowSimultaneous?: boolean;
+  isExclusive?: boolean;
   branchIds?: string[];
   categoryIds?: string[];
 }) {
@@ -94,6 +97,7 @@ export async function updateServiceAction(data: {
           sortOrder: data.sortOrder,
           allowsHomeService: data.allowsHomeService,
           allowSimultaneous: data.allowSimultaneous,
+          isExclusive: data.isExclusive,
           updatedAt: new Date(),
         })
         .where(and(eq(services.id, data.id), eq(services.tenantId, data.tenantId)));

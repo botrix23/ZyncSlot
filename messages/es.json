@@ -228,13 +228,16 @@
         "allowsHomeServiceHint": "Permite que el cliente agende este servicio fuera de la sucursal.",
         "allowSimultaneousLabel": "¿Servicio simultáneo?",
         "allowSimultaneousHint": "Permite que este servicio se realice al mismo tiempo que otros para el mismo cliente (por distintos especialistas).",
+        "isExclusiveLabel": "¿Servicio exclusivo de sucursal?",
+        "isExclusiveHint": "Este servicio solo se podrá agendar en la sucursal asignada. No aparecerá en modalidad a domicilio.",
         "availabilityTypeLabel": "Disponibilidad en sucursales",
         "allBranchesOption": "Todas",
         "specificBranchesOption": "Seleccionadas",
         "exclusiveBranchesLabel": "Seleccionar sucursales",
         "badgeHomeService": "DOMICILIO OK",
         "badgeGlobal": "GLOBAL",
-        "badgeExclusive": "EXCLUSIVO"
+        "badgeExclusive": "EXCLUSIVO",
+        "badgeSimultaneous": "SIMULTÁNEO"
       },
       "confirmDelete": "¿Estás seguro de eliminar este servicio?",
       "errorSave": "Error al guardar el servicio",

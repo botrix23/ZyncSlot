@@ -17,7 +17,8 @@ import {
   Info,
   Tag,
   Truck,
-  Save
+  Save,
+  Users
 } from 'lucide-react';
 import { Portal } from "@/components/Portal";
 import { createServiceAction, updateServiceAction, deleteServiceAction, reorderServicesAction } from "@/app/actions/services";
@@ -115,6 +116,7 @@ export default function ServicesClient({
     excludes: [] as string[],
     allowsHomeService: true,
     allowSimultaneous: false,
+    isExclusive: false,
     branchIds: [] as string[],
     categoryIds: [] as string[]
   });
@@ -142,6 +144,7 @@ export default function ServicesClient({
         excludes: service.excludes || [],
         allowsHomeService: service.allowsHomeService ?? true,
         allowSimultaneous: service.allowSimultaneous ?? false,
+        isExclusive: service.isExclusive ?? false,
         branchIds: serviceBranchIds,
         categoryIds: serviceCategoryIds
       });
@@ -157,6 +160,7 @@ export default function ServicesClient({
         excludes: [],
         allowsHomeService: true,
         allowSimultaneous: false,
+        isExclusive: false,
         branchIds: [],
         categoryIds: []
       });
@@ -399,15 +403,20 @@ export default function ServicesClient({
                             <Sparkles className="w-3 h-3" /> {t('form.badgeHomeService')}
                           </span>
                         )}
-                        {(service.branches || []).length === 0 ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-bold rounded-md uppercase tracking-widest border border-blue-500/10">
-                            {t('form.badgeGlobal')}
+                        {service.allowSimultaneous && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold rounded-md uppercase tracking-widest border border-emerald-500/10">
+                            <Users className="w-3 h-3" /> {t('form.badgeSimultaneous')}
                           </span>
-                        ) : (
+                        )}
+                        {service.isExclusive ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-bold rounded-md uppercase tracking-widest border border-amber-500/10">
                             {t('form.badgeExclusive')}
                           </span>
-                        )}
+                        ) : (service.branches || []).length === 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-bold rounded-md uppercase tracking-widest border border-blue-500/10">
+                            {t('form.badgeGlobal')}
+                          </span>
+                        ) : null}
                         {(service.categories || []).map((sc: any) => (
                           <span
                             key={sc.categoryId}
@@ -552,12 +561,39 @@ export default function ServicesClient({
                           </div>
                         </div>
                       </div>
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setFormData({...formData, allowSimultaneous: !formData.allowSimultaneous})}
                         className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 ${formData.allowSimultaneous ? 'bg-purple-600' : 'bg-slate-300 dark:bg-white/20'}`}
                       >
                         <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.allowSimultaneous ? 'translate-x-4' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+
+                    <div className="h-px bg-slate-200 dark:bg-white/5 w-full" />
+
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 pr-4">
+                         <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-tight">{t('form.isExclusiveLabel')}</p>
+                         <div className="group relative shrink-0">
+                          <Info className="w-3.5 h-3.5 text-slate-400 cursor-help transition-colors hover:text-amber-500" />
+                          <div className="hidden group-hover:block absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-56 p-3 bg-slate-900/95 backdrop-blur-md text-[11px] text-zinc-100 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-1 duration-200 border border-white/10">
+                            {t('form.isExclusiveHint')}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900" />
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({
+                          ...formData,
+                          isExclusive: !formData.isExclusive,
+                          // Al activar exclusivo, forzar que no esté disponible a domicilio
+                          allowsHomeService: formData.isExclusive ? formData.allowsHomeService : false
+                        })}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${formData.isExclusive ? 'bg-amber-500' : 'bg-slate-300 dark:bg-white/20'}`}
+                      >
+                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.isExclusive ? 'translate-x-4' : 'translate-x-0'}`} />
                       </button>
                     </div>
                   </div>
