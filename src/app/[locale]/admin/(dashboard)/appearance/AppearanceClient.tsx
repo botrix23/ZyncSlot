@@ -15,7 +15,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import PhoneInput from "@/components/PhoneInput";
-import { supabase } from "@/lib/supabase";
 
 export default function AppearanceClient({
   tenant,
@@ -155,26 +154,22 @@ return;
 
 setIsUploadingCover(true);
 try {
-const fileExt = file.name.split('.').pop();
-const fileName = `${tenant.id}/cover-${Math.random()}.${fileExt}`;
+  const form = new FormData();
+  form.append('file', file);
+  form.append('type', 'cover');
 
-const { data, error } = await supabase.storage
-.from('tenant-assets')
-.upload(fileName, file);
+  const res = await fetch('/api/upload-asset', { method: 'POST', body: form });
+  const json = await res.json();
 
-if (error) throw error;
+  if (!res.ok) throw new Error(json.error || 'Upload failed');
 
-const { data: { publicUrl } } = supabase.storage
-.from('tenant-assets')
-.getPublicUrl(fileName);
-
-setCoverUrl(publicUrl);
-setMessage({ type: 'success', text: tPortal('logoLoaded') });
+  setCoverUrl(json.url);
+  setMessage({ type: 'success', text: tPortal('logoLoaded') });
 } catch (err: any) {
-console.error("Upload error:", err);
-setMessage({ type: 'error', text: tPortal('errorUpload') });
+  console.error("Upload error:", err);
+  setMessage({ type: 'error', text: tPortal('errorUpload') });
 } finally {
-setIsUploadingCover(false);
+  setIsUploadingCover(false);
 }
 };
 
@@ -188,24 +183,20 @@ return;
 }
 
 try {
-const fileExt = file.name.split('.').pop();
-const fileName = `${tenant.id}/logo-${Math.random()}.${fileExt}`;
+  const form = new FormData();
+  form.append('file', file);
+  form.append('type', 'logo');
 
-const { data, error } = await supabase.storage
-.from('tenant-assets')
-.upload(fileName, file);
+  const res = await fetch('/api/upload-asset', { method: 'POST', body: form });
+  const json = await res.json();
 
-if (error) throw error;
+  if (!res.ok) throw new Error(json.error || 'Upload failed');
 
-const { data: { publicUrl } } = supabase.storage
-.from('tenant-assets')
-.getPublicUrl(fileName);
-
-setLogoUrl(publicUrl);
-setMessage({ type: 'success', text: tPortal('logoLoaded') });
+  setLogoUrl(json.url);
+  setMessage({ type: 'success', text: tPortal('logoLoaded') });
 } catch (err: any) {
-console.error("Logo upload error:", err);
-setMessage({ type: 'error', text: tPortal('errorUpload') });
+  console.error("Logo upload error:", err);
+  setMessage({ type: 'error', text: tPortal('errorUpload') });
 }
 };
 
