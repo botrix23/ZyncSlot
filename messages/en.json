@@ -515,7 +515,10 @@
       "errorSave": "Error saving settings.",
       "errorUpload": "Error uploading image.",
       "errorLogo": "Please select an image.",
+      "errorLogoSize": "Logo must not exceed 1 MB.",
+      "errorCoverSize": "Cover image must not exceed 2 MB.",
       "logoLoaded": "Logo uploaded. Don't forget to save changes.",
+      "coverLoaded": "Cover image uploaded. Don't forget to save changes.",
       "livePreview": "Preview",
       "viewLive": "View portal live",
       "tabs": {

@@ -16,7 +16,7 @@ const STEPS = [
   {
     num: 3,
     title: "Compartí tu enlace",
-    desc: "Obtenés una URL única: app.zyncslot.com/tu-negocio para compartir en redes o WhatsApp.",
+    desc: "Obtenés una URL única: app.zyncrox.com/tu-negocio para compartir en redes o WhatsApp.",
   },
   {
     num: 4,
@@ -65,7 +65,7 @@ function MockStep2() {
         <div className="w-10 h-10 rounded-[10px] bg-purple-600 flex items-center justify-center text-white font-black text-[16px]">N</div>
         <div>
           <div className="text-[13px] font-bold text-slate-900">Studio Noa</div>
-          <div className="text-[11px] text-zinc-400">app.zyncslot.com/studionoa</div>
+          <div className="text-[11px] text-zinc-400">app.zyncrox.com/studionoa</div>
         </div>
       </div>
       {[
@@ -91,7 +91,7 @@ function MockStep3() {
       <div className="text-[18px] font-black text-slate-900 tracking-tight mb-1">Tu link único</div>
       <div className="text-[12.5px] text-zinc-500 mb-4">Compartilo donde quieras</div>
       <div className="bg-zinc-100 rounded-[10px] px-4 py-[14px] mb-4 flex items-center gap-2.5">
-        <span className="text-[12.5px] text-zinc-600 font-medium flex-1 truncate">app.zyncslot.com/studionoa</span>
+        <span className="text-[12.5px] text-zinc-600 font-medium flex-1 truncate">app.zyncrox.com/studionoa</span>
         <button
           onClick={() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }}
           className="text-[11px] font-bold text-purple-600 flex-shrink-0 cursor-pointer"

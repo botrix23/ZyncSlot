@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://zyncslot_user:zyncslot_password@localhost:5432/zyncslot_db';
+const connectionString = process.env.DATABASE_URL || 'postgresql://zyncrox_user:zyncrox_password@localhost:5432/zyncrox_db';
 
 // En desarrollo, Next.js borra el caché e inicializa nuevas conexiones a cada rato.
 // Esto agota rápidamente el pool de PostgreSQL. Usamos globalThis para evitarlo.

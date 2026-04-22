@@ -106,9 +106,9 @@ export function LandingPricingSection() {
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-4 max-w-[420px] sm:max-w-none mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-4 max-w-[420px] sm:max-w-none mx-auto items-stretch">
           {/* Free */}
-          <div className="bg-white dark:bg-zinc-900 border border-black/[0.13] dark:border-white/[0.13] rounded-[20px] p-[32px_26px] transition-colors duration-300">
+          <div className="group bg-white dark:bg-zinc-900 border border-black/[0.13] dark:border-white/[0.13] rounded-[20px] p-[32px_26px] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_12px_40px_-12px_rgba(139,92,246,0.15)] hover:border-purple-500/30 flex flex-col">
             <div className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 tracking-[1px] uppercase mb-[10px]">Free</div>
             <div className="flex items-baseline gap-0.5 mb-1">
               <span className="text-[20px] font-semibold text-slate-900 dark:text-white">$</span>
@@ -117,7 +117,7 @@ export function LandingPricingSection() {
             <div className="text-[13px] text-slate-500 dark:text-zinc-400 mb-1">/mes · Para siempre</div>
             <div className="text-[12.5px] text-slate-400 dark:text-zinc-500 italic mb-[22px]">Para empezar</div>
             <div className="h-px bg-black/[0.08] dark:bg-white/[0.08] mb-[18px]" />
-            <ul className="flex flex-col gap-[9px] mb-[26px] list-none p-0">
+            <ul className="flex flex-col gap-[9px] mb-[26px] list-none p-0 flex-grow">
               {FREE_FEATS.map((f, i) => (
                 <li key={i} className="flex items-start gap-2 text-[13.5px] text-slate-500 dark:text-zinc-400">
                   <span className={`flex-shrink-0 mt-px font-bold ${f.ok ? "text-green-600" : "text-red-400"}`}>
@@ -136,15 +136,18 @@ export function LandingPricingSection() {
           </div>
 
           {/* Pro */}
-          <div className="relative bg-white dark:bg-zinc-900 border-2 border-purple-600 rounded-[20px] p-[32px_26px] overflow-hidden transition-colors duration-300">
-            <div
-              className="absolute inset-0 rounded-[20px] pointer-events-none"
-              style={{ background: "radial-gradient(ellipse 90% 55% at 50% 0%, rgba(109,40,217,0.18) 0%, transparent 65%)" }}
-            />
-            <div className="absolute top-[-14px] left-1/2 -translate-x-1/2 bg-purple-600 text-white text-[11.5px] font-bold px-4 py-[5px] rounded-full whitespace-nowrap z-10">
+          <div className="group relative bg-white dark:bg-zinc-900 border-2 border-purple-600 rounded-[20px] overflow-visible transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_12px_40px_-12px_rgba(139,92,246,0.4)] flex flex-col">
+            <div className="absolute inset-0 rounded-[18px] pointer-events-none overflow-hidden">
+              <div
+                className="absolute inset-0"
+                style={{ background: "radial-gradient(ellipse 90% 55% at 50% 0%, rgba(109,40,217,0.18) 0%, transparent 65%)" }}
+              />
+            </div>
+            <div className="absolute top-[-16px] left-1/2 -translate-x-1/2 bg-purple-600 text-white text-[11.5px] font-bold px-4 py-[5px] rounded-full whitespace-nowrap z-10 shadow-[0_4px_14px_rgba(139,92,246,0.35)] group-hover:scale-105 transition-transform duration-300">
               Más popular
             </div>
-            <div className="relative">
+            
+            <div className="relative p-[32px_26px] flex flex-col flex-grow">
               <div className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 tracking-[1px] uppercase mb-[10px]">Pro</div>
               <div className="flex items-baseline gap-0.5 mb-1">
                 <span className="text-[20px] font-semibold text-slate-900 dark:text-white">$</span>
@@ -158,7 +161,8 @@ export function LandingPricingSection() {
               </div>
               <div className="text-[12.5px] text-slate-400 dark:text-zinc-500 italic mb-[22px]">El más elegido</div>
               <div className="h-px bg-black/[0.08] dark:bg-white/[0.08] mb-[18px]" />
-              <ul className="flex flex-col gap-[9px] mb-[26px] list-none p-0">
+              
+              <ul className="flex flex-col gap-[9px] mb-[26px] list-none p-0 flex-grow">
                 {PRO_FEATS.map((f, i) => (
                   <li key={i} className="flex items-start gap-2 text-[13.5px] text-slate-500 dark:text-zinc-400">
                     <span className="flex-shrink-0 mt-px font-bold text-green-600">✓</span>
@@ -166,9 +170,10 @@ export function LandingPricingSection() {
                   </li>
                 ))}
               </ul>
+              
               <Link
                 href="/admin/register"
-                className="block w-full text-center py-[13px] rounded-[10px] text-[14px] font-bold text-white bg-purple-600 hover:bg-purple-700 shadow-[0_2px_12px_rgba(139,92,246,0.35)] hover:shadow-[0_4px_20px_rgba(139,92,246,0.45)] hover:-translate-y-px transition-all duration-150 no-underline"
+                className="block w-full text-center py-[13px] rounded-[10px] text-[14px] font-bold text-white bg-purple-600 hover:bg-purple-700 shadow-[0_2px_12px_rgba(139,92,246,0.35)] hover:shadow-[0_4px_20px_rgba(139,92,246,0.45)] hover:-translate-y-px transition-all duration-150 no-underline mt-auto"
               >
                 Empezar 14 días gratis
               </Link>
@@ -176,7 +181,7 @@ export function LandingPricingSection() {
           </div>
 
           {/* Enterprise */}
-          <div className="bg-white dark:bg-zinc-900 border border-black/[0.13] dark:border-white/[0.13] rounded-[20px] p-[32px_26px] transition-colors duration-300">
+          <div className="group bg-white dark:bg-zinc-900 border border-black/[0.13] dark:border-white/[0.13] rounded-[20px] p-[32px_26px] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_12px_40px_-12px_rgba(139,92,246,0.15)] hover:border-purple-500/30 flex flex-col">
             <div className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 tracking-[1px] uppercase mb-[10px]">Enterprise</div>
             <div className="flex items-baseline gap-0.5 mb-1">
               <span className="text-[20px] font-semibold text-slate-900 dark:text-white">$</span>
@@ -190,7 +195,7 @@ export function LandingPricingSection() {
             </div>
             <div className="text-[12.5px] text-slate-400 dark:text-zinc-500 italic mb-[22px]">Para equipos grandes</div>
             <div className="h-px bg-black/[0.08] dark:bg-white/[0.08] mb-[18px]" />
-            <ul className="flex flex-col gap-[9px] mb-[26px] list-none p-0">
+            <ul className="flex flex-col gap-[9px] mb-[26px] list-none p-0 flex-grow">
               {ENT_FEATS.map((f, i) => (
                 <li key={i} className="flex items-start gap-2 text-[13.5px] text-slate-500 dark:text-zinc-400">
                   <span className="flex-shrink-0 mt-px font-bold text-green-600">✓</span>

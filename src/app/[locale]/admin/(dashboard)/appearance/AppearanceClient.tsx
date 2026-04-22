@@ -151,8 +151,15 @@ const file = e.target.files?.[0];
 if (!file) return;
 
 if (!file.type.startsWith('image/')) {
-setMessage({ type: 'error', text: tPortal('errorLogo') });
-return;
+  setMessage({ type: 'error', text: tPortal('errorLogo') });
+  e.target.value = '';
+  return;
+}
+
+if (file.size > 2 * 1024 * 1024) {
+  setMessage({ type: 'error', text: tPortal('errorCoverSize') });
+  e.target.value = '';
+  return;
 }
 
 setIsUploadingCover(true);
@@ -167,7 +174,7 @@ try {
   if (!res.ok) throw new Error(json.error || 'Upload failed');
 
   setCoverUrl(json.url);
-  setMessage({ type: 'success', text: tPortal('logoLoaded') });
+  setMessage({ type: 'success', text: tPortal('coverLoaded') });
 } catch (err: any) {
   console.error("Upload error:", err);
   setMessage({ type: 'error', text: tPortal('errorUpload') });
@@ -181,8 +188,15 @@ const file = e.target.files?.[0];
 if (!file) return;
 
 if (!file.type.startsWith('image/')) {
-setMessage({ type: 'error', text: tPortal('errorLogo') });
-return;
+  setMessage({ type: 'error', text: tPortal('errorLogo') });
+  e.target.value = '';
+  return;
+}
+
+if (file.size > 1 * 1024 * 1024) {
+  setMessage({ type: 'error', text: tPortal('errorLogoSize') });
+  e.target.value = '';
+  return;
 }
 
 try {

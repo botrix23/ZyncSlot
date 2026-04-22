@@ -515,7 +515,10 @@
       "errorSave": "Error al guardar la configuración.",
       "errorUpload": "Error al subir imagen.",
       "errorLogo": "Por favor selecciona una imagen.",
+      "errorLogoSize": "El logo no debe superar 1 MB.",
+      "errorCoverSize": "La imagen de portada no debe superar 2 MB.",
       "logoLoaded": "Logo cargado. No olvides guardar los cambios.",
+      "coverLoaded": "Imagen de portada cargada. No olvides guardar los cambios.",
       "livePreview": "Vista previa",
       "viewLive": "Ver portal en vivo",
       "tabs": {

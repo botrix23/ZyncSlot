@@ -922,7 +922,7 @@ export default function BookingWidget({
       {!isAdmin && coverUrl && (
         <div className="absolute top-0 left-0 w-full h-[30vh] sm:h-[40vh] z-0 overflow-hidden">
           <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-slate-50 dark:to-black/95"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-slate-50 dark:to-black/95"></div>
         </div>
       )}
 
@@ -943,12 +943,12 @@ export default function BookingWidget({
                 {tenantLogo ? (
                   <div className="flex items-center gap-4">
                     <img src={tenantLogo} alt={tenantName} className="h-16 w-auto object-contain" />
-                    <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                    <h1 className={`text-3xl md:text-4xl font-extrabold tracking-tight ${coverUrl ? 'text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]' : 'text-slate-900 dark:text-white'}`}>
                       {tenantName}
                     </h1>
                   </div>
                 ) : (
-                  <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
+                  <h1 className={`text-4xl md:text-5xl font-black tracking-tight leading-tight ${coverUrl ? 'text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]' : 'text-slate-900 dark:text-white'}`}>
                     {tenantName}
                   </h1>
                 )}
@@ -959,7 +959,7 @@ export default function BookingWidget({
                   </div>
                 )}
               </div>
-              <p className="text-slate-500 dark:text-zinc-400 text-lg leading-relaxed max-w-xl">
+              <p className={`text-lg leading-relaxed max-w-xl ${coverUrl ? 'text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]' : 'text-slate-500 dark:text-zinc-400'}`}>
                 {heroSubtitle || t("hero_subtitle")}
               </p>
 
