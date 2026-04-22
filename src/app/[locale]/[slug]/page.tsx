@@ -46,7 +46,7 @@ export default async function Home({ params }: { params: { locale: string, slug:
           branches={tenantBranches}
           services={tenantServices} 
           staff={tenantStaff}
-          tenantName={tenant.name || "ZyncSlot Premium Studio"} 
+          tenantName={tenant.name || "Zyncrox Premium Studio"} 
           tenantId={tenant.id}
           whatsappNumber={tenant.whatsappNumber || ''}
           homeServiceTerms={tenant.homeServiceTerms || ''}

@@ -33,7 +33,7 @@ export function generateICSFile(event: CalendarEvent): string {
   const icsData = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//ZyncSlot//NONSGML v1.0//EN',
+    'PRODID:-//Zyncrox//NONSGML v1.0//EN',
     'BEGIN:VEVENT',
     `DTSTART:${start}`,
     `DTEND:${end}`,

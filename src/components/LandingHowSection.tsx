@@ -30,7 +30,7 @@ function MockStep1() {
     <div>
       <div className="text-center mb-6">
         <span className="inline-flex items-center gap-[7px] text-[15px] font-bold text-slate-900">
-          <span className="text-purple-600 text-[18px]">⚡</span>ZyncSlot
+          <span className="text-purple-600 text-[18px]">⚡</span>Zyncrox
         </span>
       </div>
       <div className="text-[18px] font-black text-center text-slate-900 tracking-tight mb-1">Creá tu negocio</div>

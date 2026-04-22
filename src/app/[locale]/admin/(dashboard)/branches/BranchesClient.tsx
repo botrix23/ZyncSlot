@@ -22,15 +22,21 @@ import BusinessHoursPicker from "@/components/BusinessHoursPicker";
 import { useTranslations } from "next-intl";
 import { Portal } from "@/components/Portal";
 
-export default function BranchesClient({ 
+export default function BranchesClient({
   initialBranches,
   staff,
-  tenantId 
-}: { 
+  tenantId,
+  planLimit,
+  plan,
+}: {
   initialBranches: any[],
   staff: any[],
-  tenantId: string 
+  tenantId: string,
+  planLimit?: number,
+  plan?: string,
 }) {
+  const limit = planLimit ?? 999;
+  const atLimit = initialBranches.length >= limit;
   const t = useTranslations('Dashboard.branches');
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -80,7 +86,7 @@ export default function BranchesClient({
     e.preventDefault();
     setIsLoading(true);
 
-    let result;
+    let result: any;
     if (editingBranch) {
       result = await updateBranchAction({
         id: editingBranch.id,
@@ -97,6 +103,8 @@ export default function BranchesClient({
     if (result.success) {
       setIsModalOpen(false);
       router.refresh();
+    } else if (result.error === 'PLAN_LIMIT_EXCEEDED') {
+      alert(`Límite del plan ${plan ?? 'FREE'} alcanzado (${result.current}/${result.limit} sucursales). Actualiza tu plan para agregar más.`);
     } else {
       alert(t('errorSave'));
     }
@@ -151,13 +159,32 @@ export default function BranchesClient({
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title')}</h1>
           <p className="text-slate-500 dark:text-zinc-400 mt-1">{t('subtitle')}</p>
         </div>
-        <button 
-          onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl text-sm font-bold shadow-xl shadow-purple-500/20 transition-all active:scale-95"
-        >
-          <Plus className="w-5 h-5" />
-          {t('new')}
-        </button>
+        <div className="flex items-center gap-3">
+          {limit < 999 && (
+            <span className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${
+              atLimit
+                ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                : initialBranches.length >= limit - 1
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
+                  : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-zinc-400'
+            }`}>
+              {initialBranches.length} / {limit} sucursales · {plan ?? 'FREE'}
+            </span>
+          )}
+          <button
+            onClick={() => !atLimit && handleOpenModal()}
+            disabled={atLimit}
+            title={atLimit ? `Límite de ${limit} sucursales alcanzado. Actualiza tu plan para agregar más.` : undefined}
+            className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold shadow-xl transition-all ${
+              atLimit
+                ? 'bg-slate-200 dark:bg-zinc-700 text-slate-400 dark:text-zinc-500 cursor-not-allowed shadow-none'
+                : 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-500/20 active:scale-95'
+            }`}
+          >
+            <Plus className="w-5 h-5" />
+            {t('new')}
+          </button>
+        </div>
       </div>
 
       {/* Filters & Search */}

@@ -4,6 +4,7 @@ import { staff as staffTable, branches as branchesTable, serviceCategories } fro
 import { eq, desc } from 'drizzle-orm';
 import { getSession, getEffectiveTenantId } from '@/lib/auth-session';
 import { redirect } from 'next/navigation';
+import { checkPlanLimit } from '@/lib/plan-guard';
 import StaffClient from './StaffClient';
 
 export default async function StaffPage() {
@@ -15,7 +16,7 @@ export default async function StaffPage() {
     redirect('/admin/login');
   }
 
-  const [dbStaff, dbBranches, dbCategories] = await Promise.all([
+  const [dbStaff, dbBranches, dbCategories, planLimit] = await Promise.all([
     db.query.staff.findMany({
       where: eq(staffTable.tenantId, tenantId),
       with: {
@@ -30,6 +31,7 @@ export default async function StaffPage() {
       where: eq(serviceCategories.tenantId, tenantId),
       orderBy: (c, { asc }) => [asc(c.createdAt)],
     }),
+    checkPlanLimit(tenantId, 'staff'),
   ]);
 
   return (
@@ -38,6 +40,8 @@ export default async function StaffPage() {
       branches={dbBranches}
       categories={dbCategories}
       tenantId={tenantId}
+      planLimit={planLimit.limit}
+      plan={planLimit.plan}
     />
   );
 }

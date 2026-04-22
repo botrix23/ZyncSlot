@@ -6,6 +6,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { getSession } from "@/lib/auth-session";
 import { logAuditEvent } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
+import { checkPlanLimit } from "@/lib/plan-guard";
 
 /**
  * Obtener todas las sucursales de un tenant
@@ -35,6 +36,17 @@ export async function createBranchAction(data: {
   const session = await getSession();
   if (!session || (session.tenantId !== data.tenantId && session.role !== 'SUPER_ADMIN')) {
     throw new Error("Unauthorized");
+  }
+
+  const limitCheck = await checkPlanLimit(data.tenantId, "branches");
+  if (!limitCheck.allowed) {
+    return {
+      success: false,
+      error: "PLAN_LIMIT_EXCEEDED",
+      limit: limitCheck.limit,
+      current: limitCheck.current,
+      plan: limitCheck.plan,
+    };
   }
 
   const [newBranch] = await db.insert(branches).values({

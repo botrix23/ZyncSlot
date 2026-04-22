@@ -15,7 +15,7 @@ const dmSerif = DM_Serif_Display({
 });
 
 export const metadata: Metadata = {
-  title: "ZyncSlot | Reservas que se adaptan a tu negocio",
+  title: "Zyncrox | Reservas que se adaptan a tu negocio",
   description: "Gestión de citas online. Personaliza, automatiza y crece sin complicaciones técnicas.",
 };
 

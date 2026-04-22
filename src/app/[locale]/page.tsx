@@ -3,6 +3,9 @@ import { LandingHero } from "@/components/LandingHero";
 import { LandingHowSection } from "@/components/LandingHowSection";
 import { LandingFeaturesSection } from "@/components/LandingFeaturesSection";
 import { LandingPainSection } from "@/components/LandingPainSection";
+import { LandingBrandSection } from "@/components/LandingBrandSection";
+import { LandingPricingSection } from "@/components/LandingPricingSection";
+import { LandingFaqCtaSection } from "@/components/LandingFaqCtaSection";
 import { getSession } from "@/lib/auth-session";
 import { redirect } from "next/navigation";
 
@@ -31,12 +34,10 @@ export default async function LandingPage({ params: { locale } }: { params: { lo
           <LandingHowSection />
           <LandingFeaturesSection />
           <LandingPainSection />
+          <LandingBrandSection />
+          <LandingPricingSection />
         </main>
-        <footer className="py-12 border-t border-black/[0.09] dark:border-white/[0.08] text-center">
-          <p className="text-sm text-slate-400 dark:text-zinc-500 font-medium">
-            © 2026 ZyncSlot. Todos los derechos reservados.
-          </p>
-        </footer>
+        <LandingFaqCtaSection />
       </div>
     </div>
   );

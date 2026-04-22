@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { staff, staffAssignments, branches, staffToCategories } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { checkPlanLimit } from "@/lib/plan-guard";
 
 export async function createStaffAction(data: {
   tenantId: string;
@@ -27,6 +28,17 @@ export async function createStaffAction(data: {
   }>;
 }) {
   try {
+    const limitCheck = await checkPlanLimit(data.tenantId, "staff");
+    if (!limitCheck.allowed) {
+      return {
+        success: false,
+        error: "PLAN_LIMIT_EXCEEDED",
+        limit: limitCheck.limit,
+        current: limitCheck.current,
+        plan: limitCheck.plan,
+      };
+    }
+
     const [newStaff] = await db.insert(staff).values({
       tenantId: data.tenantId,
       branchId: data.branchId,

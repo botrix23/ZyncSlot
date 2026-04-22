@@ -4,6 +4,7 @@ import { services as servicesTable, branches as branchesTable, serviceCategories
 import { eq, desc } from 'drizzle-orm';
 import { getSession, getEffectiveTenantId } from '@/lib/auth-session';
 import { redirect } from 'next/navigation';
+import { checkPlanLimit } from '@/lib/plan-guard';
 import ServicesClient from './ServicesClient';
 
 export default async function ServicesPage() {
@@ -16,7 +17,7 @@ export default async function ServicesPage() {
   }
   const sessionTenantId = tenantId as string;
 
-  const [dbServices, dbBranches, dbCategories, tenant] = await Promise.all([
+  const [dbServices, dbBranches, dbCategories, tenant, planLimit] = await Promise.all([
     db.query.services.findMany({
       where: eq(servicesTable.tenantId, sessionTenantId),
       with: { branches: true, categories: { with: { category: true } } },
@@ -28,6 +29,7 @@ export default async function ServicesPage() {
       orderBy: (c, { asc }) => [asc(c.createdAt)],
     }),
     db.query.tenants.findFirst({ where: eq(tenants.id, sessionTenantId) }),
+    checkPlanLimit(sessionTenantId, 'services'),
   ]);
 
   return (
@@ -37,6 +39,8 @@ export default async function ServicesPage() {
       categories={dbCategories}
       tenantId={sessionTenantId}
       initialTravelTime={(tenant as any)?.homeServiceTravelTime ?? 0}
+      planLimit={planLimit.limit}
+      plan={planLimit.plan}
     />
   );
 }

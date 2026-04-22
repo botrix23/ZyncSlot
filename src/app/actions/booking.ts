@@ -441,7 +441,7 @@ export async function createBookingAction(data: {
         console.log(`[Email] Intentando enviar a ${data.customerEmail} para tenant ${tenant.name}`);
         try {
           const result = await resend.emails.send({
-            from: 'ZyncSlot <onboarding@resend.dev>', // Cambiado temporalmente para asegurar entrega en cuentas no verificadas
+            from: 'Zyncrox <onboarding@resend.dev>', // Cambiado temporalmente para asegurar entrega en cuentas no verificadas
             to: data.customerEmail,
             subject: `Cita Confirmada - ${tenant.name}`,
             react: BookingConfirmationEmail({
@@ -747,7 +747,7 @@ export async function createBookingSessionAction(data: {
         if (service && branch) {
           const startDate = parseISO(firstBooking.startTime);
           await resend.emails.send({
-            from: 'ZyncSlot <onboarding@resend.dev>',
+            from: 'Zyncrox <onboarding@resend.dev>',
             to: data.customerEmail,
             subject: `${data.bookings.length > 1 ? 'Sesión de Reservas Confirmada' : 'Cita Confirmada'} - ${tenant.name}`,
             react: BookingConfirmationEmail({

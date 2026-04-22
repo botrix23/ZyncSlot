@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isBefore, startOfToday, isAfter } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, enUS } from "date-fns/locale";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "./LangToggle";
 import { getAvailableSlots, createBookingAction, createBookingSessionAction, lockSlotAction, releaseSlotLocksAction, releaseServiceSlotLockAction } from "@/app/actions/booking";
@@ -129,6 +129,8 @@ export default function BookingWidget({
   showStaffSelection?: boolean;
 }) {
   const t = useTranslations('BookingWidget');
+  const locale = useLocale();
+  const dateFnsLocale = locale === 'en' ? enUS : es;
   const [step, setStep] = useState(1);
   const currentPlan = tenantPlan || 'FREE';
 
@@ -179,9 +181,9 @@ export default function BookingWidget({
   const [businessOffsetLabel, setBusinessOffsetLabel] = useState("");
   const [openTimeSections, setOpenTimeSections] = useState<Set<string>>(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return new Set(['Mañana']);
-    if (hour < 18) return new Set(['Tarde']);
-    return new Set(['Noche']);
+    if (hour < 12) return new Set(['morning']);
+    if (hour < 18) return new Set(['afternoon']);
+    return new Set(['evening']);
   });
 
   useEffect(() => {
@@ -247,18 +249,18 @@ export default function BookingWidget({
     if (isToday) {
       // For today: open the section that covers the current hour
       const hour = new Date().getHours();
-      if (hour < 12) setOpenTimeSections(new Set(['Mañana']));
-      else if (hour < 18) setOpenTimeSections(new Set(['Tarde']));
-      else setOpenTimeSections(new Set(['Noche']));
+      if (hour < 12) setOpenTimeSections(new Set(['morning']));
+      else if (hour < 18) setOpenTimeSections(new Set(['afternoon']));
+      else setOpenTimeSections(new Set(['evening']));
     } else {
       // For future dates: open the section that covers the branch's opening hour
       if (schedule.isOpen && schedule.slots.length > 0) {
         const openH = parseInt(schedule.slots[0].open.split(':')[0], 10);
-        if (openH < 12) setOpenTimeSections(new Set(['Mañana']));
-        else if (openH < 18) setOpenTimeSections(new Set(['Tarde']));
-        else setOpenTimeSections(new Set(['Noche']));
+        if (openH < 12) setOpenTimeSections(new Set(['morning']));
+        else if (openH < 18) setOpenTimeSections(new Set(['afternoon']));
+        else setOpenTimeSections(new Set(['evening']));
       } else {
-        setOpenTimeSections(new Set(['Mañana']));
+        setOpenTimeSections(new Set(['morning']));
       }
     }
   }, [selectedDate]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -267,9 +269,9 @@ export default function BookingWidget({
   useEffect(() => {
     if (!availableTimes || availableTimes.length === 0) return;
     const sections = [
-      { label: "Mañana", range: [0, 11] },
-      { label: "Tarde", range: [12, 17] },
-      { label: "Noche", range: [18, 23] }
+      { label: "morning", range: [0, 11] },
+      { label: "afternoon", range: [12, 17] },
+      { label: "evening", range: [18, 23] }
     ];
     setOpenTimeSections(prev => {
       const openHasSlots = [...prev].some(label => {
@@ -942,12 +944,12 @@ export default function BookingWidget({
                   <div className="flex items-center gap-4">
                     <img src={tenantLogo} alt={tenantName} className="h-16 w-auto object-contain" />
                     <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                      {heroTitle || tenantName}
+                      {tenantName}
                     </h1>
                   </div>
                 ) : (
                   <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
-                    {heroTitle || tenantName}
+                    {tenantName}
                   </h1>
                 )}
                 {!isAdmin && (
@@ -1371,8 +1373,8 @@ export default function BookingWidget({
                 >
                   <div className="bg-blue-500/20 p-4 rounded-full text-blue-400 group-hover:scale-110 transition-transform shrink-0"><CalendarRange className="w-8 h-8" /></div>
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-400">En días u horas distintas</h3>
-                    <p className="text-slate-400 dark:text-zinc-500 text-sm mt-1">Elige una fecha y especialista diferente para cada servicio.</p>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-400">{t("separate_days_title")}</h3>
+                    <p className="text-slate-400 dark:text-zinc-500 text-sm mt-1">{t("separate_days_desc")}</p>
                   </div>
                 </button>
 
@@ -1505,7 +1507,7 @@ export default function BookingWidget({
                     <div className="bg-white dark:bg-white/5 rounded-[32px] border border-slate-200 dark:border-white/10 p-4 sm:p-7 shadow-xl relative group w-full overflow-hidden">
                       <div className="flex items-center justify-between mb-8">
                         <h3 className="text-base font-black capitalize text-slate-900 dark:text-white truncate pr-2 tracking-tight">
-                          {format(currentMonth, "MMMM yyyy", { locale: es })}
+                          {format(currentMonth, "MMMM yyyy", { locale: dateFnsLocale })}
                         </h3>
                         <div className="flex gap-2 shrink-0">
                           <button onClick={prevMonth} className="p-2.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-all border border-slate-100 dark:border-white/10">
@@ -1518,8 +1520,11 @@ export default function BookingWidget({
                       </div>
 
                       <div className="grid grid-cols-7 mb-6">
-                        {['LU', 'MA', 'MI', 'JU', 'VI', 'SA', 'DO'].map(d => (
-                          <div key={d} className="text-[10px] font-black text-slate-400 dark:text-zinc-500 text-center tracking-[0.1em]">{d}</div>
+                        {Array.from({ length: 7 }, (_, i) => {
+                          const d = new Date(2024, 0, 1 + i); // 2024-01-01 is Monday
+                          return new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(d).slice(0, 2).toUpperCase();
+                        }).map((d, i) => (
+                          <div key={i} className="text-[10px] font-black text-slate-400 dark:text-zinc-500 text-center tracking-[0.1em]">{d}</div>
                         ))}
                       </div>
 
@@ -1593,7 +1598,7 @@ export default function BookingWidget({
                         disabled={!selectedTime || !selectedDate}
                         className="py-4 px-2 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-100 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-zinc-700 text-white rounded-2xl font-black tracking-widest uppercase transition-all shadow-2xl active:scale-[0.98] text-xs flex items-center justify-center gap-2"
                       >
-                        {schedulingMode === 'separate' && currentServiceIndex < selectedServices.length - 1 ? 'Siguiente' : t("continue")} <ChevronRight className="w-4 h-4 shrink-0" />
+                        {schedulingMode === 'separate' && currentServiceIndex < selectedServices.length - 1 ? t("next") : t("continue")} <ChevronRight className="w-4 h-4 shrink-0" />
                       </button>
                     </div>
                   </div>
@@ -1603,56 +1608,56 @@ export default function BookingWidget({
                     <div className="flex flex-col bg-white dark:bg-white/5 rounded-3xl border border-slate-200 dark:border-white/10 p-4 sm:p-6 shadow-sm">
                       <h3 className="text-xs font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
                         <Clock className="w-4 h-4" />
-                        Horarios Disponibles
+                        {t("available_slots_title")}
                       </h3>
 
                       <div className="lg:flex-1 lg:overflow-y-auto custom-scrollbar pr-1 space-y-6">
                         {isLoadingTimes ? (
                           <div className="flex flex-col items-center justify-center py-20">
                             <Loader2 className="w-10 h-10 text-purple-500 animate-spin" />
-                            <p className="mt-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculando...</p>
+                            <p className="mt-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t("calculating")}</p>
                           </div>
                         ) : errorType || (selectedDate && availableTimes.length === 0) ? (
                           <div className="flex flex-col items-center justify-center py-12 px-6 text-center bg-rose-500/5 dark:bg-rose-500/10 border-2 border-dashed border-rose-500/20 rounded-3xl">
                             <XCircle className="w-10 h-10 mb-4 text-rose-500/30" />
-                            <p className="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">Sin disponibilidad</p>
+                            <p className="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">{t("no_availability")}</p>
                           </div>
                         ) : !selectedDate ? (
                           <div className="flex flex-col items-center justify-center py-20 text-slate-300 dark:text-zinc-800 border-2 border-dashed border-slate-100 dark:border-zinc-800 rounded-3xl">
                             <Calendar className="w-12 h-12 mb-4 opacity-30" />
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Elige una fecha</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t("choose_date")}</p>
                           </div>
                         ) : (
                           <>
                             {[
-                              { label: "MAÑANA", icon: "🌅", range: [0, 11] },
-                              { label: "TARDE", icon: "☀️", range: [12, 17] },
-                              { label: "NOCHE", icon: "🌙", range: [18, 23] }
+                              { key: "morning",   icon: "🌅", range: [0, 11] },
+                              { key: "afternoon", icon: "☀️", range: [12, 17] },
+                              { key: "evening",   icon: "🌙", range: [18, 23] }
                             ].map((section) => {
-                              const sectionTimes = (availableTimes as any[]).filter(t => { 
-                                const h = parseInt(t.time.split(':')[0], 10); 
+                              const sectionTimes = (availableTimes as any[]).filter(t => {
+                                const h = parseInt(t.time.split(':')[0], 10);
                                 const isPM = t.time.includes('PM');
                                 const militaryH = (isPM && h !== 12) ? h + 12 : (!isPM && h === 12) ? 0 : h;
-                                return militaryH >= section.range[0] && militaryH <= section.range[1]; 
+                                return militaryH >= section.range[0] && militaryH <= section.range[1];
                               });
                               if (sectionTimes.length === 0) return null;
-                              const isOpen = openTimeSections.has(section.label);
+                              const isOpen = openTimeSections.has(section.key);
                               const availableCount = sectionTimes.filter((t: any) => t.available).length;
 
                               return (
-                                <div key={section.label} className="space-y-4">
+                                <div key={section.key} className="space-y-4">
                                   <button
                                     onClick={() => setOpenTimeSections(prev => {
                                       const next = new Set(prev);
-                                      if (next.has(section.label)) next.delete(section.label);
-                                      else next.add(section.label);
+                                      if (next.has(section.key)) next.delete(section.key);
+                                      else next.add(section.key);
                                       return next;
                                     })}
                                     className="w-full flex items-center justify-between group transition-all"
                                   >
                                     <div className="flex items-center gap-2">
-                                      <span className="text-sm font-black tracking-widest text-slate-900 dark:text-white uppercase">{section.label}</span>
-                                      <span className="text-[10px] font-black text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full">{availableCount} libres</span>
+                                      <span className="text-sm font-black tracking-widest text-slate-900 dark:text-white uppercase">{t(section.key as any)}</span>
+                                      <span className="text-[10px] font-black text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full">{availableCount} {t('slots_available')}</span>
                                     </div>
                                     <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
                                   </button>
@@ -1731,7 +1736,7 @@ export default function BookingWidget({
                   disabled={!selectedTime || !selectedDate}
                   className="py-4 px-2 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-100 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-zinc-700 text-white rounded-2xl font-black tracking-widest uppercase transition-all shadow-2xl active:scale-[0.98] text-xs flex items-center justify-center gap-2"
                 >
-                  {schedulingMode === 'separate' && currentServiceIndex < selectedServices.length - 1 ? 'Siguiente' : t("continue")} <ChevronRight className="w-4 h-4 shrink-0" />
+                  {schedulingMode === 'separate' && currentServiceIndex < selectedServices.length - 1 ? t("next") : t("continue")} <ChevronRight className="w-4 h-4 shrink-0" />
                 </button>
               </div>
 
@@ -1761,7 +1766,7 @@ export default function BookingWidget({
                   <label className="block text-sm font-semibold text-slate-500 dark:text-zinc-400 tracking-wider mb-2">{t("full_name")}</label>
                   <div className="relative">
                     <UserCircle className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
-                    <input type="text" value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Nombre y Apellido" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all" />
+                    <input type="text" value={guestName} onChange={e => setGuestName(e.target.value)} placeholder={t("full_name_placeholder")} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all" />
                   </div>
                 </div>
 
@@ -2178,7 +2183,7 @@ export default function BookingWidget({
                   }}
                   className="flex-1 py-5 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl font-black tracking-[0.2em] uppercase transition-all text-xs shadow-sm shadow-black/5 active:scale-[0.98]"
                 >
-                  {isAdmin ? 'Volver al Calendario' : t("back_to_start")}
+                  {isAdmin ? t("back_to_calendar") : t("back_to_start")}
                 </button>
               </div>
             </div>

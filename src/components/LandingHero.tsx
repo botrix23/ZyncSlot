@@ -32,7 +32,7 @@ export function LandingHero() {
 
           {/* Subtitle */}
           <p className="text-[clamp(14px,1.3vw,15.5px)] leading-[1.72] text-slate-500 dark:text-zinc-400 max-w-[400px] mb-[34px] animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
-            ZyncSlot transforma la gestión de citas en una experiencia fluida. Personaliza, automatiza y crece — sin complicaciones técnicas.
+            Zyncrox transforma la gestión de citas en una experiencia fluida. Personaliza, automatiza y crece — sin complicaciones técnicas.
           </p>
 
           {/* CTAs */}
@@ -68,7 +68,7 @@ export function LandingHero() {
               ))}
             </div>
             <p className="text-[12.5px] text-slate-400 dark:text-zinc-500">
-              <strong className="text-slate-500 dark:text-zinc-400 font-semibold">+2.400 negocios</strong> ya gestionan sus citas con ZyncSlot
+              <strong className="text-slate-500 dark:text-zinc-400 font-semibold">+2.400 negocios</strong> ya gestionan sus citas con Zyncrox
             </p>
           </div>
         </div>

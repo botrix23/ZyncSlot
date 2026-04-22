@@ -32,7 +32,7 @@ export default async function SuperAdminDashboard() {
           <ShieldAlert className="w-6 h-6 text-purple-400" />
           <h1 className="text-3xl font-black tracking-tight">Panel Super Admin</h1>
         </div>
-        <p className="text-zinc-500">Vista global de todas las empresas en ZyncSlot.</p>
+        <p className="text-zinc-500">Vista global de todas las empresas en Zyncrox.</p>
       </div>
 
       {/* KPIs */}

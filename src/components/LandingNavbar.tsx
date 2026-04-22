@@ -18,7 +18,7 @@ export function LandingNavbar() {
           <Link href="/" className="flex items-center gap-2 flex-shrink-0 no-underline">
             <Zap className="w-[18px] h-[18px] text-purple-600 fill-purple-600" />
             <span className="text-[16px] font-bold text-slate-900 dark:text-white tracking-[-0.4px] transition-colors duration-300">
-              ZyncSlot
+              Zyncrox
             </span>
           </Link>
 

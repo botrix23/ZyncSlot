@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { services, serviceBranches, serviceToCategories } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { checkPlanLimit } from "@/lib/plan-guard";
 
 export async function createServiceAction(data: {
   tenantId: string;
@@ -21,6 +22,17 @@ export async function createServiceAction(data: {
   categoryIds?: string[];
 }) {
   try {
+    const limitCheck = await checkPlanLimit(data.tenantId, "services");
+    if (!limitCheck.allowed) {
+      return {
+        success: false,
+        error: "PLAN_LIMIT_EXCEEDED",
+        limit: limitCheck.limit,
+        current: limitCheck.current,
+        plan: limitCheck.plan,
+      };
+    }
+
     const newService = await db.transaction(async (tx) => {
       const [inserted] = await tx.insert(services).values({
         tenantId: data.tenantId,

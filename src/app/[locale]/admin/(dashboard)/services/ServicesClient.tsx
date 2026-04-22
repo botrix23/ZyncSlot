@@ -38,14 +38,20 @@ export default function ServicesClient({
   branches,
   categories = [],
   tenantId,
-  initialTravelTime = 0
+  initialTravelTime = 0,
+  planLimit,
+  plan,
 }: {
   initialServices: any[],
   branches: any[],
   categories?: any[],
   tenantId: string,
-  initialTravelTime?: number
+  initialTravelTime?: number,
+  planLimit?: number,
+  plan?: string,
 }) {
+  const limit = planLimit ?? 999;
+  const atLimit = initialServices.length >= limit;
   const t = useTranslations('Dashboard.services');
   const [activeTab, setActiveTab] = useState<'services' | 'categories'>('services');
   const [searchTerm, setSearchTerm] = useState("");
@@ -197,6 +203,8 @@ export default function ServicesClient({
     if (result.success) {
       setIsModalOpen(false);
       router.refresh();
+    } else if ((result as any).error === 'PLAN_LIMIT_EXCEEDED') {
+      alert(`Límite del plan ${plan ?? 'FREE'} alcanzado (${(result as any).current}/${(result as any).limit} servicios). Actualiza tu plan para agregar más.`);
     } else {
       alert(t('errorSave'));
     }
@@ -260,13 +268,32 @@ export default function ServicesClient({
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title')}</h1>
           <p className="text-slate-500 dark:text-zinc-400 mt-1">{t('subtitle')}</p>
         </div>
-        <button
-          onClick={() => activeTab === 'services' ? handleOpenModal() : handleOpenCatModal()}
-          className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl text-sm font-bold shadow-xl shadow-purple-500/20 transition-all active:scale-95"
-        >
-          <Plus className="w-5 h-5" />
-          {activeTab === 'services' ? t('new') : 'Nueva categoría'}
-        </button>
+        <div className="flex items-center gap-3">
+          {activeTab === 'services' && limit < 999 && (
+            <span className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${
+              atLimit
+                ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                : initialServices.length >= limit - 1
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
+                  : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-zinc-400'
+            }`}>
+              {initialServices.length} / {limit} servicios · {plan ?? 'FREE'}
+            </span>
+          )}
+          <button
+            onClick={() => activeTab === 'services' ? (!atLimit && handleOpenModal()) : handleOpenCatModal()}
+            disabled={activeTab === 'services' && atLimit}
+            title={activeTab === 'services' && atLimit ? `Límite de ${limit} servicios alcanzado. Actualiza tu plan para agregar más.` : undefined}
+            className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold shadow-xl transition-all ${
+              activeTab === 'services' && atLimit
+                ? 'bg-slate-200 dark:bg-zinc-700 text-slate-400 dark:text-zinc-500 cursor-not-allowed shadow-none'
+                : 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-500/20 active:scale-95'
+            }`}
+          >
+            <Plus className="w-5 h-5" />
+            {activeTab === 'services' ? t('new') : 'Nueva categoría'}
+          </button>
+        </div>
       </div>
 
       {/* Tab switcher */}

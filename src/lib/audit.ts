@@ -1,5 +1,5 @@
 /**
- * Sistema de Auditoría Central — ZyncSlot
+ * Sistema de Auditoría Central — Zyncrox
  * Registra eventos críticos de toda la aplicación en la tabla audit_logs.
  *
  * Uso:

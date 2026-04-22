@@ -307,95 +307,122 @@ try {
               </div>
               
               <div className="space-y-6">
+                {/* Business Name */}
                 <div>
                   <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.businessName')}</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder={tPortal('form.businessPlaceholder')}
                     className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white"
                   />
-</div>
+                </div>
 
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-<div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.heroTitle')}</label>
-<input 
-type="text" 
-value={heroTitle}
-onChange={e => setHeroTitle(e.target.value)}
-placeholder={tPortal('form.heroTitlePlaceholder')}
-className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white"
-/>
-</div>
-<div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.heroSubtitle')}</label>
-<input 
-type="text" 
-value={heroSubtitle}
-onChange={e => setHeroSubtitle(e.target.value)}
-placeholder={tPortal('form.heroSubtitlePlaceholder')}
-className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white"
-/>
-</div>
-</div>
+                {/* Subtitle */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.heroSubtitle')}</label>
+                  <input
+                    type="text"
+                    value={heroSubtitle}
+                    onChange={e => setHeroSubtitle(e.target.value)}
+                    placeholder={tPortal('form.heroSubtitlePlaceholder')}
+                    className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white"
+                  />
+                  <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">{tPortal('form.heroSubtitleHint')}</p>
+                </div>
 
-                <div className="space-y-2">
-                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Pie de página del Widget</label>
-                  <textarea 
+                {/* Widget Footer */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.footerLabel')}</label>
+                  <textarea
                     value={footerText}
                     onChange={e => setFooterText(e.target.value)}
-                    placeholder="Ej: Para consultas contáctanos al +503 ..."
-                    className="w-full min-h-[100px] p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white"
+                    placeholder={tPortal('form.footerPlaceholder')}
+                    className="w-full min-h-[80px] p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white"
                   />
-                  <p className="text-[10px] text-slate-500 italic">Este texto aparecerá en la parte inferior de todos los pasos del agendamiento.</p>
+                  <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">{tPortal('form.footerHint')}</p>
                 </div>
 
+                {/* Logo */}
                 <div>
-                   <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.logoLabel')}</label>
-                   <div className="flex items-center gap-4">
-                     {logoUrl ? (
-                        <div className="relative group w-20 h-20 rounded-xl border border-slate-200 dark:border-white/10 bg-white flex items-center justify-center overflow-hidden shrink-0">
-                          <img src={logoUrl} alt="Logo" className="w-full h-full object-contain p-2" />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                             <button onClick={() => setLogoUrl('')} className="text-white hover:text-rose-400 p-1">
-                               <Trash2 className="w-4 h-4" />
-                             </button>
-                          </div>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.logoLabel')}</label>
+                  <div className="flex items-center gap-4">
+                    {logoUrl ? (
+                      <div className="relative group w-20 h-20 rounded-xl border border-slate-200 dark:border-white/10 bg-white flex items-center justify-center overflow-hidden shrink-0">
+                        <img src={logoUrl} alt="Logo" className="w-full h-full object-contain p-2" />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <button onClick={() => setLogoUrl('')} className="text-white hover:text-rose-400 p-1">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
-                     ) : (
-                        <button onClick={() => logoInputRef.current?.click()} className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 flex flex-col items-center justify-center text-slate-400 hover:text-purple-500 transition-all shrink-0">
-                           <ImageIcon className="w-6 h-6 mb-1 opacity-50" />
-                           <span className="text-[11px] font-bold">{tPortal('form.upload')}</span>
-                        </button>
-                     )}
-                     <div className="flex-1">
-                        <input type="text" value={logoUrl.startsWith('data:') ? tPortal('form.localImage') : logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder={tPortal('form.logoPlaceholder')} readOnly={logoUrl.startsWith('data:')} className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white" />
-                     </div>
-                     <input type="file" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" accept="image/*" />
-                   </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => logoInputRef.current?.click()} className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 flex flex-col items-center justify-center text-slate-400 hover:text-purple-500 transition-all shrink-0">
+                        <ImageIcon className="w-6 h-6 mb-1 opacity-50" />
+                        <span className="text-[11px] font-bold">{tPortal('form.upload')}</span>
+                      </button>
+                    )}
+                    <div className="flex-1">
+                      <input type="text" value={logoUrl.startsWith('data:') ? tPortal('form.localImage') : logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder={tPortal('form.logoPlaceholder')} readOnly={logoUrl.startsWith('data:')} className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white" />
+                      <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">{tPortal('form.logoSpecs')}</p>
+                    </div>
+                    <input type="file" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" accept="image/*" />
+                  </div>
                 </div>
 
+                {/* Cover Image */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.coverLabel')}</label>
+                  <div className="flex items-center gap-4">
+                    {coverUrl ? (
+                      <div className="relative group w-20 h-20 rounded-xl border border-slate-200 dark:border-white/10 bg-white flex items-center justify-center overflow-hidden shrink-0">
+                        <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <button onClick={() => setCoverUrl('')} className="text-white hover:text-rose-400 p-1">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => coverInputRef.current?.click()} disabled={isUploadingCover} className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 flex flex-col items-center justify-center text-slate-400 hover:text-purple-500 transition-all shrink-0 disabled:opacity-50">
+                        {isUploadingCover
+                          ? <div className="w-5 h-5 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
+                          : <><ImageIcon className="w-6 h-6 mb-1 opacity-50" /><span className="text-[11px] font-bold">{tPortal('form.upload')}</span></>
+                        }
+                      </button>
+                    )}
+                    <div className="flex-1">
+                      <p className="text-xs text-slate-400 dark:text-zinc-500 mb-2">{tPortal('form.coverSpecs2')}</p>
+                      {coverUrl
+                        ? <button onClick={() => setCoverUrl('')} className="text-xs font-bold text-rose-500 hover:underline">{tPortal('cover.delete')}</button>
+                        : <button onClick={() => coverInputRef.current?.click()} className="text-xs font-bold text-purple-600 hover:underline">{tPortal('cover.hint')}</button>
+                      }
+                    </div>
+                    <input type="file" ref={coverInputRef} onChange={handleCoverUpload} accept="image/*" className="hidden" />
+                  </div>
+                </div>
+
+                {/* Social Links */}
                 <div className="space-y-3 pt-2">
-                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('sections.identity')}</label>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('sections.social')}</label>
                   <div className="relative">
-                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <Instagram className="w-4 h-4" />
-                     </div>
-                     <input type="url" value={instagramUrl} onChange={e => setInstagramUrl(e.target.value)} placeholder={tPortal('form.instagram')} className="w-full pl-10 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white" />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                      <Instagram className="w-4 h-4" />
+                    </div>
+                    <input type="url" value={instagramUrl} onChange={e => setInstagramUrl(e.target.value)} placeholder={tPortal('form.instagram')} className="w-full pl-10 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white" />
                   </div>
                   <div className="relative">
-                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <Facebook className="w-4 h-4" />
-                     </div>
-                     <input type="url" value={facebookUrl} onChange={e => setFacebookUrl(e.target.value)} placeholder={tPortal('form.facebook')} className="w-full pl-10 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white" />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                      <Facebook className="w-4 h-4" />
+                    </div>
+                    <input type="url" value={facebookUrl} onChange={e => setFacebookUrl(e.target.value)} placeholder={tPortal('form.facebook')} className="w-full pl-10 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white" />
                   </div>
                   <div className="relative">
-                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <Music className="w-4 h-4" />
-                     </div>
-                     <input type="url" value={tiktokUrl} onChange={e => setTiktokUrl(e.target.value)} placeholder={tPortal('form.tiktok')} className="w-full pl-10 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white" />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                      <Music className="w-4 h-4" />
+                    </div>
+                    <input type="url" value={tiktokUrl} onChange={e => setTiktokUrl(e.target.value)} placeholder={tPortal('form.tiktok')} className="w-full pl-10 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white" />
                   </div>
                 </div>
               </div>
@@ -417,49 +444,6 @@ className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:b
                   <Moon className="w-5 h-5" /> {tPortal('theme.dark')}
                 </button>
               </div>
-            </div>
-
-            {/* Imagen de Portada (Cover) */}
-            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-6">
-              <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-white/10">
-                <div className="p-2 bg-purple-500/10 rounded-lg">
-                  <ImageIcon className="w-5 h-5 text-purple-600" />
-                </div>
-                <h2 className="text-lg font-bold text-slate-800 dark:text-white">{tPortal('sections.cover')}</h2>
-              </div>
-
-              <div 
-                onClick={() => coverInputRef.current?.click()}
-                className={`w-full h-56 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative group ${coverUrl ? 'border-transparent bg-black/5' : 'border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10'}`}
-              >
-                <input type="file" ref={coverInputRef} onChange={handleCoverUpload} accept="image/*" className="hidden" />
-                
-                {isUploadingCover ? (
-                   <div className="flex flex-col items-center gap-3">
-                     <div className="w-8 h-8 rounded-full border-4 border-purple-200 border-t-purple-600 animate-spin"></div>
-                     <p className="font-bold text-purple-600 text-sm">{tPortal('cover.uploading')}</p>
-                   </div>
-                ) : coverUrl ? (
-                   <>
-                     <img src={coverUrl} alt="Cover Preview" className="absolute inset-0 w-full h-full object-cover group-hover:blur-sm transition-all" />
-                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
-                       <Upload className="w-8 h-8 text-white mb-2" />
-                       <span className="text-white font-bold">{tPortal('cover.replace')}</span>
-                     </div>
-                   </>
-                ) : (
-                   <div className="flex flex-col items-center gap-2 text-slate-500 group-hover:text-purple-600 transition-colors">
-                     <Upload className="w-10 h-10 mb-2" />
-                     <span className="font-bold">{tPortal('cover.hint')}</span>
-                     <span className="text-xs opacity-70">{tPortal('cover.specs')}</span>
-                   </div>
-                )}
-              </div>
-              {coverUrl && (
-                <div className="flex justify-end">
-                  <button onClick={() => setCoverUrl('')} className="text-sm font-bold text-rose-500 hover:underline">{tPortal('cover.delete')}</button>
-                </div>
-              )}
             </div>
 
             {/* Color Primario */}
@@ -698,14 +682,14 @@ className="w-full min-h-[150px] p-4 bg-slate-50 dark:bg-white/5 border border-sl
                   <User className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">Configuración del widget</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Controla qué opciones ve el cliente al agendar</p>
+                  <h2 className="text-xl font-bold">{tPortal('form.widgetConfigTitle')}</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">{tPortal('form.widgetConfigSubtitle')}</p>
                 </div>
               </div>
               <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10">
                 <div className="pr-4">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Mostrar selección de personal</p>
-                  <p className="text-xs text-slate-500 italic mt-0.5">Si está desactivado, el cliente no podrá elegir a un especialista — el sistema asigna uno automáticamente</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{tPortal('form.showStaffLabel')}</p>
+                  <p className="text-xs text-slate-500 italic mt-0.5">{tPortal('form.showStaffHint')}</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer shrink-0">
                   <input type="checkbox" checked={showStaffSelection} onChange={e => setShowStaffSelection(e.target.checked)} className="sr-only peer" />
@@ -771,21 +755,22 @@ className="w-full min-h-[150px] p-4 bg-slate-50 dark:bg-white/5 border border-sl
              
              <div className="w-full h-full overflow-y-auto no-scrollbar relative z-10">
                {/* MOCKUP HEADER */}
-               <div className={`relative w-full h-[180px] ${theme === 'dark' ? 'bg-zinc-800' : 'bg-zinc-100'} flex flex-col items-center justify-center pb-8 transition-all duration-500 shrink-0`}>
-                  {coverUrl && <img src={coverUrl} alt="Cover" className="absolute inset-0 w-full h-full object-cover opacity-80 mix-blend-overlay" /> }
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-0" />
-                  
-                  <div className="relative z-10 flex flex-col items-center gap-2 mt-2 px-4 text-center">
+               <div className={`relative w-full h-[200px] flex flex-col items-center justify-center pb-8 transition-all duration-500 shrink-0 overflow-hidden ${!coverUrl ? (theme === 'dark' ? 'bg-zinc-800' : 'bg-zinc-100') : ''}`}>
+                  {coverUrl && <img src={coverUrl} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10 z-0" />
+
+                  <div className="relative z-10 flex flex-col items-center gap-1 mt-2 px-4 text-center">
                     {logoUrl ? (
-                      <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-lg border border-white/20 p-1 mb-1">
+                      <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-lg border border-white/20 p-1 mb-1">
                         <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
                       </div>
                     ) : (
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shrink-0 shadow-lg border border-white/20 mb-1">
-                        <span className="text-white font-black text-2xl">{name.charAt(0) || 'Z'}</span>
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shrink-0 shadow-lg border border-white/20 mb-1">
+                        <span className="text-white font-black text-xl">{name.charAt(0) || 'Z'}</span>
                       </div>
                     )}
-                    <h2 className="text-xl font-black tracking-tight text-white drop-shadow-md px-1 leading-tight line-clamp-2">{name || tPortal('mockup.defaultBusiness')}</h2>
+                    <h2 className="text-lg font-black tracking-tight text-white drop-shadow-md px-1 leading-tight line-clamp-2">{name || tPortal('mockup.defaultBusiness')}</h2>
+                    {heroSubtitle && <p className="text-[10px] text-zinc-300 leading-tight line-clamp-1 mt-0.5">{heroSubtitle}</p>}
                   </div>
                </div>
 
