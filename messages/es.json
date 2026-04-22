@@ -60,7 +60,7 @@
     "times": "Horarios",
     "occupied": "Ocupado",
     "go_to_data": "Continuar",
-    "title_data": "Paso 4: Tus datos",
+    "title_data": "Tus datos",
     "full_name": "Nombre completo *",
     "email_placeholder": "Email",
     "email": "Email *",
@@ -345,6 +345,8 @@
     "staff": {
       "title": "Personal",
       "subtitle": "Gestiona a los profesionales que atienden en tu negocio.",
+      "showStaffLabel": "Mostrar selección de personal al crear una cita",
+      "showStaffHint": "Si se desactiva, el sistema asignará un especialista automáticamente.",
       "new": "Añadir miembro",
       "searchPlaceholder": "Buscar por nombre...",
       "verified": "Verificado",

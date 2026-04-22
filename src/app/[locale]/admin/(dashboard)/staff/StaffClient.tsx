@@ -21,6 +21,7 @@ import {
   Info
 } from 'lucide-react';
 import { createStaffAction, updateStaffAction, deleteStaffAction } from "@/app/actions/staff";
+import { updateShowStaffSelectionAction } from "@/app/actions/tenant";
 import { Tag } from 'lucide-react';
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useCallback } from "react";
@@ -35,6 +36,7 @@ export default function StaffClient({
   tenantId,
   planLimit,
   plan,
+  showStaffSelection: initialShowStaffSelection = true,
 }: {
   initialStaff: any[],
   branches: any[],
@@ -42,6 +44,7 @@ export default function StaffClient({
   tenantId: string,
   planLimit?: number,
   plan?: string,
+  showStaffSelection?: boolean,
 }) {
   const limit = planLimit ?? 999;
   const atLimit = initialStaff.length >= limit;
@@ -71,7 +74,14 @@ export default function StaffClient({
     categoryIds: [] as string[]
   });
 
-  const filteredStaff = initialStaff.filter(s => 
+  const [showStaffSelection, setShowStaffSelection] = useState(initialShowStaffSelection);
+
+  const handleToggleStaffSelection = async (value: boolean) => {
+    setShowStaffSelection(value);
+    await updateShowStaffSelectionAction(tenantId, value);
+  };
+
+  const filteredStaff = initialStaff.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -301,6 +311,17 @@ export default function StaffClient({
             {t('new')}
           </button>
         </div>
+      </div>
+
+      <div className="flex items-center justify-between p-4 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
+        <div>
+          <p className="text-sm font-semibold text-slate-900 dark:text-white">{t('showStaffLabel')}</p>
+          <p className="text-xs text-slate-500 dark:text-zinc-400 italic mt-0.5">{t('showStaffHint')}</p>
+        </div>
+        <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+          <input type="checkbox" checked={showStaffSelection} onChange={e => handleToggleStaffSelection(e.target.checked)} className="sr-only peer" />
+          <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+        </label>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">

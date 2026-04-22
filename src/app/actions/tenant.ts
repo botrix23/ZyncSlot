@@ -55,6 +55,19 @@ export async function updateTenantSettingsAction(data: {
   }
 }
 
+export async function updateShowStaffSelectionAction(tenantId: string, showStaffSelection: boolean) {
+  try {
+    await db.update(tenants)
+      .set({ showStaffSelection, updatedAt: new Date() })
+      .where(eq(tenants.id, tenantId));
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating showStaffSelection:", error);
+    return { success: false };
+  }
+}
+
 export async function updateHomeServiceTravelTimeAction(tenantId: string, travelTime: number) {
   try {
     await db.update(tenants)

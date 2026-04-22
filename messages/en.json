@@ -60,7 +60,7 @@
     "times": "Schedules",
     "occupied": "Occupied",
     "go_to_data": "GO TO MY DETAILS",
-    "title_data": "Step 4: Your Details",
+    "title_data": "Your Details",
     "full_name": "Full Name",
     "email": "Email Address *",
     "email_placeholder": "Email",
@@ -345,6 +345,8 @@
     "staff": {
       "title": "Staff / team",
       "subtitle": "Manage the professionals who provide services in your business.",
+      "showStaffLabel": "Show staff selection when booking",
+      "showStaffHint": "If disabled, the system will automatically assign a specialist.",
       "new": "Add member",
       "searchPlaceholder": "Search by name...",
       "verified": "Verified",

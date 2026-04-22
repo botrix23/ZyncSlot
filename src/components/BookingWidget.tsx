@@ -11,7 +11,7 @@ import { Calendar, Clock, ChevronRight, ChevronDown, Check, X, ArrowLeft, User, 
 import { canUseFeature, getPlanFeatures } from "@/core/plans";
 import { getGoogleCalendarUrl, getOutlookCalendarUrl, generateICSFile } from "@/lib/calendar";
 
-type Branch = { id: string; name: string; businessHours?: string | null };
+type Branch = { id: string; name: string; businessHours?: string | null; address?: string | null };
 type Service = { id: string; name: string; durationMinutes: number; price: string; includes: string[]; excludes: string[]; allowsHomeService?: boolean; allowSimultaneous?: boolean; isExclusive?: boolean; branches?: { id: string; branchId: string }[]; categoryIds?: string[] };
 type Staff = { id: string; name: string; allowsHomeService?: boolean; categoryIds?: string[] };
 type CoverageZone = { id: string; name: string; fee: string; description?: string | null };
@@ -1168,7 +1168,7 @@ export default function BookingWidget({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto flex-1 pr-2 custom-scrollbar items-start content-start w-full">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto flex-1 pr-2 pl-1 pt-1 pb-10 custom-scrollbar items-start content-start w-full">
                 {displayServices.map((srv) => {
                   const isSelected = selectedServices.some(s => s.id === srv.id);
                   return (
@@ -1758,7 +1758,7 @@ export default function BookingWidget({
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
-                <h2 className="text-2xl font-bold tracking-tight">
+                <h2 className="text-2xl font-black tracking-widest uppercase">
                   {bookingSettings?.step4Title || t("title_data")}
                 </h2>
               </div>
@@ -2163,10 +2163,21 @@ export default function BookingWidget({
                       </div>
 
                       <div className="pt-6 border-t border-slate-100 dark:border-white/5 flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-slate-300" />
-                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                          {modality === 'domicilio' ? 'Servicio a domicilio' : selectedBranch?.name}
-                        </p>
+                        <MapPin className="w-4 h-4 text-slate-300" />
+                        {modality === 'domicilio' ? (
+                          <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Servicio a domicilio</p>
+                        ) : selectedBranch?.address ? (
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedBranch.name + ' ' + selectedBranch.address)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-black text-purple-500 hover:text-purple-400 uppercase tracking-widest underline underline-offset-2 transition-colors"
+                          >
+                            {selectedBranch.name}
+                          </a>
+                        ) : (
+                          <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{selectedBranch?.name}</p>
+                        )}
                       </div>
                     </div>
                   </div>

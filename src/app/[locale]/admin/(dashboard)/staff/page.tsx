@@ -1,6 +1,6 @@
 import React from 'react';
 import { db } from '@/db';
-import { staff as staffTable, branches as branchesTable, serviceCategories } from '@/db/schema';
+import { staff as staffTable, branches as branchesTable, serviceCategories, tenants } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { getSession, getEffectiveTenantId } from '@/lib/auth-session';
 import { redirect } from 'next/navigation';
@@ -16,7 +16,7 @@ export default async function StaffPage() {
     redirect('/admin/login');
   }
 
-  const [dbStaff, dbBranches, dbCategories, planLimit] = await Promise.all([
+  const [dbStaff, dbBranches, dbCategories, planLimit, tenant] = await Promise.all([
     db.query.staff.findMany({
       where: eq(staffTable.tenantId, tenantId),
       with: {
@@ -32,6 +32,7 @@ export default async function StaffPage() {
       orderBy: (c, { asc }) => [asc(c.createdAt)],
     }),
     checkPlanLimit(tenantId, 'staff'),
+    db.query.tenants.findFirst({ where: eq(tenants.id, tenantId), columns: { showStaffSelection: true } }),
   ]);
 
   return (
@@ -42,6 +43,7 @@ export default async function StaffPage() {
       tenantId={tenantId}
       planLimit={planLimit.limit}
       plan={planLimit.plan}
+      showStaffSelection={tenant?.showStaffSelection ?? true}
     />
   );
 }
