@@ -220,6 +220,8 @@ export const users = pgTable('users', {
   password: text('password').notNull(),
   role: varchar('role', { length: 50 }).notNull().default('ADMIN'), // 'ADMIN' | 'SUPER_ADMIN' | 'STAFF'
   isActive: boolean('is_active').notNull().default(true),
+  mustChangePassword: boolean('must_change_password').notNull().default(false),
+  tempPasswordExpiresAt: timestamp('temp_password_expires_at', { withTimezone: true, mode: 'date' }),
   resetPasswordToken: text('reset_password_token'),
   resetPasswordExpiresAt: timestamp('reset_password_expires_at', { withTimezone: true, mode: 'date' }),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),

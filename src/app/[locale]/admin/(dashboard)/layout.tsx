@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { tenants, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { cookies } from "next/headers";
 
 export default async function AdminLayout({
   children,
@@ -17,15 +16,21 @@ export default async function AdminLayout({
   const session = await getSession();
   const locale = params.locale || 'es';
 
-  // Cierre inmediato de sesión: si el usuario tiene userId, verificar isActive en BD
+  // Cierre inmediato de sesión, check de cambio de contraseña, y backfill de nombre
   if (session?.userId) {
     const dbUser = await db.query.users.findFirst({
       where: eq(users.id, session.userId),
-      columns: { isActive: true },
+      columns: { isActive: true, mustChangePassword: true, name: true },
     });
-    if (dbUser && !dbUser.isActive) {
-      cookies().delete("zync_session");
+    if (!dbUser || !dbUser.isActive) {
       redirect(`/${locale}/admin/login`);
+    }
+    if (dbUser?.mustChangePassword) {
+      redirect(`/${locale}/admin/change-password`);
+    }
+    // Backfill del nombre en memoria (sin tocar la cookie)
+    if (dbUser?.name && !session.name) {
+      session.name = dbUser.name;
     }
   }
 

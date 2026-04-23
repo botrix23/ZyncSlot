@@ -55,6 +55,9 @@ export async function createStaffAccessAction(staffId: string, tenantId: string)
     const tempPassword = generateTempPassword();
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1);
+
     await db.insert(users).values({
       tenantId,
       staffId,
@@ -63,6 +66,8 @@ export async function createStaffAccessAction(staffId: string, tenantId: string)
       password: hashedPassword,
       role: 'STAFF',
       isActive: true,
+      mustChangePassword: true,
+      tempPasswordExpiresAt: expiresAt,
     });
 
     revalidatePath("/", "layout");

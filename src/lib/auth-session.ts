@@ -2,10 +2,12 @@ import { cookies } from "next/headers";
 
 export type SessionUser = {
   email: string;
+  name?: string | null;
   role: 'ADMIN' | 'SUPER_ADMIN' | 'STAFF';
   tenantId?: string | null;
   userId?: string;
   staffId?: string | null;
+  mustChangePassword?: boolean;
   impersonatedBy?: string;
   impersonatedTenantId?: string;
   impersonatedTenantName?: string;

@@ -30,7 +30,9 @@ export default function LoginPage() {
     const result = await loginAction(formData, locale);
 
     if (result.success) {
-      if (result.role === 'SUPER_ADMIN') {
+      if (result.mustChangePassword) {
+        window.location.href = `/${locale}/admin/change-password`;
+      } else if (result.role === 'SUPER_ADMIN') {
         window.location.href = `/${locale}/admin/super`;
       } else if (result.role === 'STAFF') {
         window.location.href = `/${locale}/admin/bookings`;
@@ -38,7 +40,8 @@ export default function LoginPage() {
         window.location.href = `/${locale}/admin`;
       }
     } else {
-      setError(result.error || 'Credenciales inválidas. Verifica tu correo y contraseña.');
+      const code = (result as any).errorCode as string | undefined;
+      setError(code ? t(code as any) : t('errorInvalid'));
       setIsLoading(false);
     }
   };
@@ -115,7 +118,7 @@ export default function LoginPage() {
                     className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 bg-slate-100 dark:bg-white/5 border-transparent"
                   />
                   <span className="text-xs font-bold text-slate-500 dark:text-zinc-500 group-hover:text-slate-700 dark:group-hover:text-zinc-300 transition-colors">
-                    Recordarme
+                    {t('rememberMe')}
                   </span>
                 </label>
                 <a href={`/${locale}/admin/forgot-password`} className="text-xs font-bold text-purple-600 hover:text-purple-500 transition-colors">

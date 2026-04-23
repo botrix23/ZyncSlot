@@ -53,7 +53,9 @@ export default function ResetPasswordPage({ params: { locale } }: { params: { lo
         router.push(`/${locale}/admin/login`);
       }, 3000);
     } else {
-      setMessage({ type: 'error', text: result.error || t('error') });
+      const errCode = result.error;
+      const msgKey = errCode === 'INVALID_TOKEN' ? 'errorInvalidToken' : 'error';
+      setMessage({ type: 'error', text: t(msgKey) });
     }
     setIsLoading(false);
   };

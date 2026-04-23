@@ -19,7 +19,9 @@
       "redirecting": "Redirecting to login...",
       "invalidToken": "Invalid link",
       "invalidTokenDesc": "This recovery link is invalid or has already expired.",
-      "requestNew": "Request new link"
+      "requestNew": "Request new link",
+      "errorInvalidToken": "Invalid or expired link. Please request a new one.",
+      "error": "An error occurred. Please try again."
     }
   },
   "BookingWidget": {
@@ -132,11 +134,17 @@
     "emailPlaceholder": "Email",
     "passwordLabel": "Password",
     "passwordPlaceholder": "Password",
+    "rememberMe": "Remember me",
     "submit": "Enter Dashboard",
     "forgotPassword": "Forgot password?",
     "recover": "Recover access",
     "noAccount": "Don't have an account?",
-    "register": "Register now"
+    "register": "Register now",
+    "errorInvalid": "Invalid credentials. Check your email and password.",
+    "errorDisabled": "Your access has been deactivated. Contact the administrator.",
+    "errorSuspended": "Your business account is suspended. Contact support.",
+    "errorTrialExpired": "Your trial period has expired. Please make a payment to continue.",
+    "errorTempExpired": "The temporary password has expired. Ask the administrator to generate new access."
   },
   "ForgotPassword": {
     "title": "Forgot your password?",
@@ -145,19 +153,56 @@
     "submit": "Send instructions",
     "backToLogin": "Back to login",
     "successMessage": "If the email is registered, you will receive a link to reset your password in a few minutes.",
-    "errorMessage": "An error occurred. Please try again."
+    "errorMessage": "An error occurred. Please try again.",
+    "footer": "Industrial Grade Security"
   },
   "Register": {
     "title": "Create your Account",
+    "subtitle": "The new era of bookings",
     "businessName": "Business Name",
     "businessNamePlaceholder": "Business Name",
     "adminName": "Your Name",
     "adminNamePlaceholder": "Your Name",
     "email": "Email Address",
     "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "submit": "Start now",
     "hasAccount": "Already have an account?",
-    "login": "Login"
+    "login": "Login",
+    "errorRegister": "Error registering. Does the email already exist?",
+    "strength": {
+      "veryWeak": "Very weak",
+      "weak": "Weak",
+      "fair": "Fair",
+      "strong": "Strong",
+      "veryStrong": "Very strong"
+    },
+    "rules": {
+      "length": "Min. 8 characters",
+      "upper": "At least one uppercase (A-Z)",
+      "lower": "At least one lowercase (a-z)",
+      "number": "At least one number (0-9)",
+      "special": "At least one special char (!@#$...)"
+    }
+  },
+  "ChangePassword": {
+    "title": "Change password",
+    "subtitle": "For security, you must set your own password before continuing.",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "requirements": "Requirements",
+    "rules": {
+      "length": "Minimum 8 characters",
+      "upper": "One uppercase",
+      "lower": "One lowercase",
+      "number": "One number",
+      "special": "One special character"
+    },
+    "submit": "Set password",
+    "errorMismatch": "Passwords don't match.",
+    "errorUnauthorized": "Unauthorized.",
+    "error": "Error changing password."
   },
   "Dashboard": {
     "technical": {
@@ -454,7 +499,26 @@
       },
       "confirmDelete": "Are you sure you want to delete this absence record?",
       "errorSave": "Error saving absence record",
-      "errorDelete": "Error deleting absence"
+      "errorDelete": "Error deleting absence",
+      "subtitleStaff": "Request days off or absences. The administrator must approve them.",
+      "newStaff": "Request absence",
+      "formTitleNewStaff": "Request absence",
+      "statusPending": "Pending",
+      "statusApproved": "Approved",
+      "statusRejected": "Rejected",
+      "tabBlocks": "Active blocks",
+      "tabPending": "Pending requests",
+      "noPending": "No pending requests",
+      "noPendingSubtitle": "All up to date",
+      "colStaff": "Professional",
+      "colReason": "Reason",
+      "colFrom": "From",
+      "colTo": "To",
+      "colActions": "Actions",
+      "colStatus": "Status",
+      "approve": "Approve",
+      "reject": "Reject",
+      "noBlocksStaff": "You have no requests registered yet."
     },
     "clients": {
       "title": "Client Directory",
@@ -635,7 +699,8 @@
     "header": {
       "searchPlaceholder": "Search appointments, clients...",
       "superAdmin": "Super admin",
-      "admin": "Admin"
+      "admin": "Admin",
+      "staff": "Staff"
     },
     "home": {
       "title": "Admin dashboard",

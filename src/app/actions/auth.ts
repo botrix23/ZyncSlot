@@ -30,11 +30,11 @@ function generateSlug(name: string): string {
  * Valida la complejidad de la contraseña según estándares.
  */
 function validatePasswordComplexity(password: string) {
-  if (password.length < 8) return { success: false, error: "Mínimo 8 caracteres." };
-  if (!/[A-Z]/.test(password)) return { success: false, error: "Debe incluir una Mayúscula." };
-  if (!/[a-z]/.test(password)) return { success: false, error: "Debe incluir una Minúscula." };
-  if (!/[0-9]/.test(password)) return { success: false, error: "Debe incluir un Número." };
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return { success: false, error: "Debe incluir un Carácter Especial (!@#$%)." };
+  if (password.length < 8) return { success: false };
+  if (!/[A-Z]/.test(password)) return { success: false };
+  if (!/[a-z]/.test(password)) return { success: false };
+  if (!/[0-9]/.test(password)) return { success: false };
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return { success: false };
   return { success: true };
 }
 
@@ -55,37 +55,47 @@ const rememberMe = formData.get("rememberMe") === 'true';
   });
 
   if (!user) {
-    return { success: false, error: "Credenciales inválidas" };
+    return { success: false, errorCode: 'errorInvalid' };
   }
 
   // 2. Verificar que la cuenta esté activa
   if (!user.isActive) {
-    return { success: false, error: "Tu acceso ha sido desactivado. Contacta al administrador." };
+    return { success: false, errorCode: 'errorDisabled' };
   }
 
   // 3. Verificar que el Tenant no esté suspendido o expirado
   if (user.role === 'ADMIN' && user.tenant) {
     if (user.tenant.status === 'SUSPENDED') {
-      return { success: false, error: "Tu cuenta de negocio está suspendida. Contacta a soporte." };
+      return { success: false, errorCode: 'errorSuspended' };
     }
     if (user.tenant.status === 'TRIAL' && user.tenant.subscriptionExpiresAt) {
       const now = new Date();
       if (now > user.tenant.subscriptionExpiresAt) {
-        return { success: false, error: "Tu período de prueba ha expirado. Por favor, realiza el pago para continuar." };
+        return { success: false, errorCode: 'errorTrialExpired' };
       }
     }
   }
 
-  // 4. Comparar contraseñas hasheadas
+  // 4. Verificar expiración de contraseña temporal (solo si aún no se ha cambiado)
+  if (user.mustChangePassword && user.tempPasswordExpiresAt) {
+    if (new Date() > user.tempPasswordExpiresAt) {
+      await db.update(users).set({ isActive: false }).where(eq(users.id, user.id));
+      return { success: false, errorCode: 'errorTempExpired' };
+    }
+  }
+
+  // 5. Comparar contraseñas hasheadas
   const isMatch = await bcrypt.compare(password, user.password);
 
   if (isMatch) {
     cookies().set("zync_session", JSON.stringify({
       email: user.email,
+      name: user.name,
       role: user.role,
       userId: user.id,
       tenantId: user.tenantId,
       staffId: user.staffId ?? null,
+      mustChangePassword: user.mustChangePassword ?? false,
     }), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -93,11 +103,11 @@ const rememberMe = formData.get("rememberMe") === 'true';
       path: "/",
     });
     await logAuditEvent({ action: 'LOGIN_SUCCESS', userId: user.id, tenantId: user.tenantId, details: { email: user.email } });
-    return { success: true, role: user.role };
+    return { success: true, role: user.role, mustChangePassword: user.mustChangePassword ?? false };
   }
 
   await logAuditEvent({ action: 'LOGIN_FAILED', details: { email } });
-  return { success: false, error: "Credenciales inválidas" };
+  return { success: false, errorCode: 'errorInvalid' };
 }
 
 /**
@@ -112,7 +122,7 @@ export async function registerTenantAction(formData: FormData, locale: string) {
   // 0. Validaciones de Seguridad (Estándares de la Industria)
   const passwordResult = validatePasswordComplexity(password);
   if (!passwordResult.success) {
-    return { success: false, error: passwordResult.error };
+    return { success: false, error: "PASSWORD_COMPLEXITY" };
   }
 
   try {
@@ -158,7 +168,7 @@ export async function registerTenantAction(formData: FormData, locale: string) {
     return { success: true, slug };
   } catch (err) {
     console.error(err);
-    return { success: false, error: "Error al registrar el negocio. ¿El correo ya existe?" };
+    return { success: false, error: "REGISTER_ERROR" };
   }
 }
 
@@ -215,12 +225,12 @@ export async function resetPasswordAction(token: string, newPassword: string) {
     });
 
     if (!user || !user.resetPasswordExpiresAt || user.resetPasswordExpiresAt < new Date()) {
-      return { success: false, error: "Token inválido o expirado." };
+      return { success: false, error: "INVALID_TOKEN" };
     }
 
     // Validar complejidad
     const complexity = validatePasswordComplexity(newPassword);
-    if (!complexity.success) return { success: false, error: complexity.error };
+    if (!complexity.success) return { success: false, error: "PASSWORD_COMPLEXITY" };
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -235,6 +245,6 @@ export async function resetPasswordAction(token: string, newPassword: string) {
     return { success: true };
   } catch (error) {
     console.error(error);
-    return { success: false, error: "Error al resetear la contraseña." };
+    return { success: false, error: "RESET_ERROR" };
   }
 }

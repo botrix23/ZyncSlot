@@ -7,26 +7,25 @@ import { LangToggle } from '@/components/LangToggle';
 import { useTranslations } from 'next-intl';
 import { registerTenantAction } from '@/app/actions/auth';
 
-// ── Estándares NIST 800-63B + OWASP ─────────────────────────────────────────
-const PASSWORD_RULES = [
-  { id: 'length',    label: 'Mínimo 8 caracteres',                   test: (p: string) => p.length >= 8 },
-  { id: 'upper',     label: 'Al menos una mayúscula (A-Z)',           test: (p: string) => /[A-Z]/.test(p) },
-  { id: 'lower',     label: 'Al menos una minúscula (a-z)',           test: (p: string) => /[a-z]/.test(p) },
-  { id: 'number',    label: 'Al menos un número (0-9)',               test: (p: string) => /[0-9]/.test(p) },
-  { id: 'special',   label: 'Al menos un carácter especial (!@#$...)',test: (p: string) => /[^a-zA-Z0-9]/.test(p) },
+const PASSWORD_RULE_TESTS = [
+  { id: 'length',  test: (p: string) => p.length >= 8 },
+  { id: 'upper',   test: (p: string) => /[A-Z]/.test(p) },
+  { id: 'lower',   test: (p: string) => /[a-z]/.test(p) },
+  { id: 'number',  test: (p: string) => /[0-9]/.test(p) },
+  { id: 'special', test: (p: string) => /[^a-zA-Z0-9]/.test(p) },
 ];
 
-type StrengthLevel = { label: string; color: string; bars: number };
+type StrengthLevel = { id: string; color: string; bars: number };
 const STRENGTH_LEVELS: StrengthLevel[] = [
-  { label: 'Muy débil',  color: 'bg-rose-500',   bars: 1 },
-  { label: 'Débil',      color: 'bg-orange-500',  bars: 2 },
-  { label: 'Regular',    color: 'bg-amber-400',   bars: 3 },
-  { label: 'Fuerte',     color: 'bg-emerald-500', bars: 4 },
-  { label: 'Muy fuerte', color: 'bg-emerald-400', bars: 5 },
+  { id: 'veryWeak',  color: 'bg-rose-500',   bars: 1 },
+  { id: 'weak',      color: 'bg-orange-500',  bars: 2 },
+  { id: 'fair',      color: 'bg-amber-400',   bars: 3 },
+  { id: 'strong',    color: 'bg-emerald-500', bars: 4 },
+  { id: 'veryStrong',color: 'bg-emerald-400', bars: 5 },
 ];
 
 function getStrength(password: string): StrengthLevel {
-  const passed = PASSWORD_RULES.filter(r => r.test(password)).length;
+  const passed = PASSWORD_RULE_TESTS.filter(r => r.test(password)).length;
   if (!password) return STRENGTH_LEVELS[0];
   const idx = Math.min(Math.max(passed - 1, 0), STRENGTH_LEVELS.length - 1);
   return STRENGTH_LEVELS[idx];
@@ -44,7 +43,7 @@ export default function RegisterPage() {
   const [error,        setError]        = useState('');
   const [touched,      setTouched]      = useState(false); // Mostrar errores de contraseña solo si ya escribió
 
-  const ruleResults  = useMemo(() => PASSWORD_RULES.map(r => ({ ...r, passed: r.test(password) })), [password]);
+  const ruleResults  = useMemo(() => PASSWORD_RULE_TESTS.map(r => ({ ...r, passed: r.test(password) })), [password]);
   const allPassed    = ruleResults.every(r => r.passed);
   const strength     = getStrength(password);
 
@@ -68,7 +67,7 @@ export default function RegisterPage() {
     if (result.success) {
       window.location.href = `/${locale}/admin`;
     } else {
-      setError(result.error || 'Error al registrar');
+      setError(t('errorRegister'));
       setIsLoading(false);
     }
   };
@@ -93,7 +92,7 @@ export default function RegisterPage() {
             <Calendar className="text-white w-8 h-8" />
           </div>
           <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">Zyncrox</h1>
-          <p className="text-slate-500 dark:text-zinc-500 font-medium mt-2">La nueva era de las reservas</p>
+          <p className="text-slate-500 dark:text-zinc-500 font-medium mt-2">{t('subtitle')}</p>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-3xl p-8 shadow-2xl">
@@ -166,7 +165,7 @@ export default function RegisterPage() {
                   onClick={() => setShowPass(p => !p)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors"
                   tabIndex={-1}
-                  aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-label={showPass ? t('hidePassword') : t('showPassword')}
                 >
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -187,7 +186,7 @@ export default function RegisterPage() {
                     ))}
                   </div>
                   <p className={`text-xs font-bold ${strength.bars >= 4 ? 'text-emerald-500' : strength.bars >= 3 ? 'text-amber-500' : 'text-rose-400'}`}>
-                    {strength.label}
+                    {t(`strength.${strength.id}` as any)}
                   </p>
 
                   {/* Checklist de requisitos */}
@@ -198,7 +197,7 @@ export default function RegisterPage() {
                           ? <Check className="w-3.5 h-3.5 shrink-0" />
                           : <X className="w-3.5 h-3.5 shrink-0 text-slate-300 dark:text-zinc-600" />
                         }
-                        {r.label}
+                        {t(`rules.${r.id}` as any)}
                       </div>
                     ))}
                   </div>

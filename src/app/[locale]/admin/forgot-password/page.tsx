@@ -107,9 +107,8 @@ export default function ForgotPasswordPage({ params: { locale } }: { params: { l
           </form>
         )}
 
-        {/* Footer */}
         <div className="text-center text-xs text-slate-400 font-medium">
-          &copy; {new Date().getFullYear()} Zyncrox · Seguridad de Grado Industrial
+          &copy; {new Date().getFullYear()} Zyncrox · {t('footer')}
         </div>
       </div>
     </div>

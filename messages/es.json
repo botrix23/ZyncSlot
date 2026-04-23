@@ -19,7 +19,9 @@
       "redirecting": "Redirigiendo al login...",
       "invalidToken": "Enlace inválido",
       "invalidTokenDesc": "Este enlace de recuperación no es válido o ya ha expirado.",
-      "requestNew": "Solicitar nuevo enlace"
+      "requestNew": "Solicitar nuevo enlace",
+      "errorInvalidToken": "Enlace inválido o expirado. Por favor solicita uno nuevo.",
+      "error": "Ocurrió un error. Por favor intenta de nuevo."
     }
   },
   "BookingWidget": {
@@ -132,11 +134,17 @@
     "emailPlaceholder": "Email",
     "passwordLabel": "Contraseña",
     "passwordPlaceholder": "Contraseña",
+    "rememberMe": "Recordarme",
     "submit": "Entrar al panel",
     "forgotPassword": "¿Olvidaste tu contraseña?",
     "recover": "Recuperar acceso",
     "noAccount": "¿No tienes cuenta?",
-    "register": "Regístrate ahora"
+    "register": "Regístrate ahora",
+    "errorInvalid": "Credenciales inválidas. Verifica tu correo y contraseña.",
+    "errorDisabled": "Tu acceso ha sido desactivado. Contacta al administrador.",
+    "errorSuspended": "Tu cuenta de negocio está suspendida. Contacta a soporte.",
+    "errorTrialExpired": "Tu período de prueba ha expirado. Por favor, realiza el pago para continuar.",
+    "errorTempExpired": "La contraseña temporal ha vencido. Pide al administrador que genere un nuevo acceso."
   },
   "ForgotPassword": {
     "title": "¿Olvidaste tu contraseña?",
@@ -145,19 +153,56 @@
     "submit": "Enviar instrucciones",
     "backToLogin": "Volver al inicio de sesión",
     "successMessage": "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña en unos minutos.",
-    "errorMessage": "Ocurrió un error. Inténtalo de nuevo."
+    "errorMessage": "Ocurrió un error. Inténtalo de nuevo.",
+    "footer": "Seguridad de Grado Industrial"
   },
   "Register": {
     "title": "Crea tu cuenta",
+    "subtitle": "La nueva era de las reservas",
     "businessName": "Nombre del negocio",
     "businessNamePlaceholder": "Nombre del negocio",
     "adminName": "Tu nombre",
     "adminNamePlaceholder": "Tu nombre",
     "email": "Email",
     "password": "Contraseña",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
     "submit": "Empezar ahora",
     "hasAccount": "¿Ya tienes cuenta?",
-    "login": "Inicia sesión"
+    "login": "Inicia sesión",
+    "errorRegister": "Error al registrar. ¿El correo ya existe?",
+    "strength": {
+      "veryWeak": "Muy débil",
+      "weak": "Débil",
+      "fair": "Regular",
+      "strong": "Fuerte",
+      "veryStrong": "Muy fuerte"
+    },
+    "rules": {
+      "length": "Mínimo 8 caracteres",
+      "upper": "Al menos una mayúscula (A-Z)",
+      "lower": "Al menos una minúscula (a-z)",
+      "number": "Al menos un número (0-9)",
+      "special": "Al menos un carácter especial (!@#$...)"
+    }
+  },
+  "ChangePassword": {
+    "title": "Cambiar contraseña",
+    "subtitle": "Por seguridad, debes establecer una contraseña propia antes de continuar.",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "requirements": "Requisitos",
+    "rules": {
+      "length": "Mínimo 8 caracteres",
+      "upper": "Una mayúscula",
+      "lower": "Una minúscula",
+      "number": "Un número",
+      "special": "Un carácter especial"
+    },
+    "submit": "Establecer contraseña",
+    "errorMismatch": "Las contraseñas no coinciden.",
+    "errorUnauthorized": "No autorizado.",
+    "error": "Error al cambiar la contraseña."
   },
   "Dashboard": {
     "technical": {
@@ -454,7 +499,26 @@
       },
       "confirmDelete": "¿Estás seguro de eliminar el registro de ausencia?",
       "errorSave": "Error al guardar el registro de ausencia",
-      "errorDelete": "Error al eliminar la ausencia"
+      "errorDelete": "Error al eliminar la ausencia",
+      "subtitleStaff": "Solicita días libres o ausencias. El administrador deberá aprobarlas.",
+      "newStaff": "Solicitar ausencia",
+      "formTitleNewStaff": "Solicitar ausencia",
+      "statusPending": "Pendiente",
+      "statusApproved": "Aprobada",
+      "statusRejected": "Rechazada",
+      "tabBlocks": "Bloqueos activos",
+      "tabPending": "Solicitudes pendientes",
+      "noPending": "Sin solicitudes pendientes",
+      "noPendingSubtitle": "Todo está al día",
+      "colStaff": "Profesional",
+      "colReason": "Motivo",
+      "colFrom": "Desde",
+      "colTo": "Hasta",
+      "colActions": "Acciones",
+      "colStatus": "Estado",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "noBlocksStaff": "Aún no tienes solicitudes registradas."
     },
     "clients": {
       "title": "Directorio de clientes",
@@ -635,7 +699,8 @@
     "header": {
       "searchPlaceholder": "Buscar citas, clientes...",
       "superAdmin": "Súper admin",
-      "admin": "Admin"
+      "admin": "Admin",
+      "staff": "Staff"
     },
     "home": {
       "title": "Dashboard admin",
