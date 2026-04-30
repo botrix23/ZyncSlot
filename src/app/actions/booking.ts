@@ -6,6 +6,7 @@ import { eq, and, gte, lte, or, isNull, desc, not, lt, gt, ne } from "drizzle-or
 import { addMinutes, format, parseISO, startOfDay, endOfDay, isBefore, isAfter, max, min } from "date-fns";
 import { resend } from "@/lib/resend";
 import { BookingConfirmationEmail } from "@/components/emails/BookingConfirmationEmail";
+import { SurveyInviteEmail } from "@/components/emails/SurveyInviteEmail";
 import { es } from "date-fns/locale";
 import { getPlanFeatures } from "@/core/plans";
 import { v4 as uuidv4 } from "uuid";
@@ -829,6 +830,12 @@ export async function updateBookingAction(data: {
       })
       .where(and(eq(bookings.id, data.id), eq(bookings.tenantId, data.tenantId)));
 
+    if (data.status === 'FINALIZADA') {
+      Promise.resolve().then(() =>
+        sendPendingSurveyEmailsAction(data.tenantId)
+      );
+    }
+
     return { success: true };
   } catch (error) {
     console.error("Error updating booking:", error);
@@ -988,5 +995,54 @@ export async function releaseServiceSlotLockAction(sessionToken: string, service
   } catch (error) {
     console.error("releaseServiceSlotLockAction error:", error);
     return { success: false };
+  }
+}
+
+/**
+ * Envía el correo de encuesta de satisfacción a todas las citas FINALIZADA
+ * que aún no han recibido el email. Solo actúa si el tenant tiene reviewsEnabled=true.
+ */
+export async function sendPendingSurveyEmailsAction(tenantId: string) {
+  try {
+    const tenant = await db.query.tenants.findFirst({
+      where: eq(tenants.id, tenantId),
+    });
+    if (!tenant?.reviewsEnabled) return;
+
+    const pending = await db.query.bookings.findMany({
+      where: and(
+        eq(bookings.tenantId, tenantId),
+        eq(bookings.status, 'FINALIZADA'),
+        eq(bookings.surveyEmailSent, false),
+      ),
+      with: { service: true },
+    });
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+
+    for (const booking of pending) {
+      if (!booking.customerEmail) continue;
+      try {
+        const surveyUrl = `${baseUrl}/es/review/${booking.id}`;
+        await resend.emails.send({
+          from: 'Zyncrox <onboarding@resend.dev>',
+          to: booking.customerEmail,
+          subject: `¿Cómo fue tu experiencia? - ${tenant.name}`,
+          react: SurveyInviteEmail({
+            customerName: booking.customerName,
+            tenantName: tenant.name,
+            tenantLogo: tenant.logoUrl || undefined,
+            surveyUrl,
+          }),
+        });
+        await db.update(bookings)
+          .set({ surveyEmailSent: true })
+          .where(eq(bookings.id, booking.id));
+      } catch (e) {
+        console.error(`[Survey Email] Error enviando para booking ${booking.id}:`, e);
+      }
+    }
+  } catch (e) {
+    console.error('[Survey Email] sendPendingSurveyEmailsAction error:', e);
   }
 }

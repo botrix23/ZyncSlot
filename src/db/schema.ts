@@ -122,6 +122,7 @@ export const bookings = pgTable('bookings', {
   notes: text('notes'),
   isHomeService: boolean('is_home_service').notNull().default(false),
   sessionId: uuid('session_id').references(() => bookingSessions.id, { onDelete: 'set null' }),
+  surveyEmailSent: boolean('survey_email_sent').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
 

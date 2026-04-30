@@ -2,9 +2,10 @@ import React from 'react';
 import { db } from '@/db';
 import { getSession, getEffectiveTenantId } from '@/lib/auth-session';
 import { redirect } from 'next/navigation';
-import { eq, desc, and, lt } from 'drizzle-orm';
+import { eq, desc, and, lt, not } from 'drizzle-orm';
 import { bookings as bookingsTable, branches, coverageZones, tenants } from '@/db/schema';
 import BookingsClient from './BookingsClient';
+import { sendPendingSurveyEmailsAction } from '@/app/actions/booking';
 
 
 export default async function BookingsPage() {
@@ -17,16 +18,20 @@ export default async function BookingsPage() {
     redirect('/admin/login');
   }
 
-  // 1. Auto-finalizar citas pasadas (SOLO las que están CONFIRMED)
+  // 1. Auto-finalizar citas pasadas (CONFIRMED y PENDING, excluyendo CANCELLED y ya FINALIZADA)
   await db.update(bookingsTable)
     .set({ status: 'FINALIZADA' })
     .where(
       and(
         eq(bookingsTable.tenantId, tenantId),
-        eq(bookingsTable.status, 'CONFIRMED'),
+        not(eq(bookingsTable.status, 'CANCELLED')),
+        not(eq(bookingsTable.status, 'FINALIZADA')),
         lt(bookingsTable.endTime, new Date())
       )
     );
+
+  // 2. Enviar emails de encuesta pendientes (fire-and-forget, no bloquea la carga)
+  sendPendingSurveyEmailsAction(tenantId).catch(console.error);
 
   // Si el rol es STAFF, filtrar solo sus citas
   const staffId = session?.role === 'STAFF' ? session.staffId : null;
