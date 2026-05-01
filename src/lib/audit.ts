@@ -29,7 +29,8 @@ export type AuditAction =
   | 'STAFF_UPDATED'
   | 'STAFF_DELETED'
   | 'BOOKING_CREATED'
-  | 'BOOKING_STATUS_CHANGED';
+  | 'BOOKING_STATUS_CHANGED'
+  | 'WOMPI_CREDENTIALS_UPDATED';
 
 export interface AuditEventParams {
   action: AuditAction;
