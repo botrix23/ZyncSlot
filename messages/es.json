@@ -574,7 +574,8 @@
       "exiting": "Saliendo...",
       "logout": "Salir",
       "business": "Empresa",
-      "surveys": "Encuestas"
+      "surveys": "Encuestas",
+      "payments": "Pagos"
     },
     "portal": {
       "title": "Mi portal web",

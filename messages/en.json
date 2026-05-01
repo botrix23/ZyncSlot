@@ -574,7 +574,8 @@
       "exiting": "Exiting...",
       "logout": "Logout",
       "business": "Business",
-      "surveys": "Surveys"
+      "surveys": "Surveys",
+      "payments": "Payments"
     },
     "portal": {
       "title": "My web portal",

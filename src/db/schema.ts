@@ -47,6 +47,10 @@ export const tenants = pgTable('tenants', {
   showStaffSelection: boolean('show_staff_selection').default(true).notNull(),
   reviewsEnabled: boolean('reviews_enabled').default(false).notNull(),
   vipThreshold: integer('vip_threshold').notNull().default(5),
+  // Wompi payment gateway credentials (for tenant's own card payments)
+  wompiAppId: text('wompi_app_id'),
+  wompiApiSecret: text('wompi_api_secret'),
+  wompiIsProduction: boolean('wompi_is_production').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
