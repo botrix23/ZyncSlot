@@ -20,8 +20,7 @@ import {
   testWompiCredentialsAction,
 } from "@/app/actions/wompi";
 
-interface Tenant {
-  id: string;
+interface PlatformConfig {
   wompiAppId: string | null;
   wompiApiSecret: string | null;
   wompiIsProduction: boolean;
@@ -35,10 +34,10 @@ interface TestResult {
   error?: string;
 }
 
-export default function PaymentsClient({ tenant }: { tenant: Tenant }) {
-  const [appId, setAppId] = useState(tenant.wompiAppId ?? "");
-  const [apiSecret, setApiSecret] = useState(tenant.wompiApiSecret ?? "");
-  const [isProduction, setIsProduction] = useState(tenant.wompiIsProduction);
+export default function PaymentsClient({ config }: { config: PlatformConfig }) {
+  const [appId, setAppId] = useState(config.wompiAppId ?? "");
+  const [apiSecret, setApiSecret] = useState(config.wompiApiSecret ?? "");
+  const [isProduction, setIsProduction] = useState(config.wompiIsProduction);
   const [showSecret, setShowSecret] = useState(false);
 
   const [saving, setSaving] = useState(false);
@@ -46,7 +45,7 @@ export default function PaymentsClient({ tenant }: { tenant: Tenant }) {
   const [saveResult, setSaveResult] = useState<{ success: boolean; error?: string } | null>(null);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
 
-  const isConfigured = !!(tenant.wompiAppId && tenant.wompiApiSecret);
+  const isConfigured = !!(config.wompiAppId && config.wompiApiSecret);
 
   // ── Test connection ────────────────────────────────────────────────────────
   async function handleTest() {
@@ -62,12 +61,11 @@ export default function PaymentsClient({ tenant }: { tenant: Tenant }) {
     setTesting(false);
   }
 
-  // ── Save credentials ────────────────────────────────────────────────────────
+  // ── Save credentials ───────────────────────────────────────────────────────
   async function handleSave() {
     setSaving(true);
     setSaveResult(null);
     const result = await saveWompiCredentialsAction({
-      tenantId: tenant.id,
       wompiAppId: appId,
       wompiApiSecret: apiSecret,
       wompiIsProduction: isProduction,
@@ -80,72 +78,76 @@ export default function PaymentsClient({ tenant }: { tenant: Tenant }) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-10 px-4 space-y-8">
+    <div className="max-w-2xl space-y-8">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-3 mb-1">
-          <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-            <CreditCard className="w-5 h-5 text-white" />
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 bg-purple-500/20 border border-purple-500/30 rounded-xl flex items-center justify-center">
+            <CreditCard className="w-5 h-5 text-purple-400" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Pagos con tarjeta
-          </h1>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Pagos — Wompi</h1>
+            <p className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">
+              Configuración de plataforma
+            </p>
+          </div>
         </div>
-        <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1 ml-13">
-          Conecta tu cuenta de{" "}
+        <p className="text-zinc-400 text-sm mt-3 leading-relaxed">
+          Configura las credenciales de{" "}
           <a
             href="https://wompi.sv"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-purple-600 hover:underline inline-flex items-center gap-1"
+            className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-1"
           >
             Wompi El Salvador <ExternalLink className="w-3 h-3" />
           </a>{" "}
-          para aceptar pagos con tarjeta de crédito y débito desde tu portal.
+          para recibir pagos de suscripción de las empresas que usen Zyncrox.
+          Estas credenciales son globales de la plataforma, no pertenecen a ninguna empresa en particular.
         </p>
       </div>
 
       {/* Status banner */}
       {isConfigured ? (
-        <div className="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl">
-          <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+        <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           <div>
-            <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+            <p className="text-sm font-semibold text-emerald-400">
               Wompi conectado
             </p>
-            <p className="text-xs text-emerald-600 dark:text-emerald-500">
+            <p className="text-xs text-emerald-500">
               Modo:{" "}
               <span className="font-bold">
-                {tenant.wompiIsProduction ? "Producción" : "Pruebas"}
+                {config.wompiIsProduction ? "Producción" : "Pruebas (Sandbox)"}
               </span>
             </p>
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl">
-          <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
-          <p className="text-sm text-amber-700 dark:text-amber-400">
-            Aún no has configurado tus credenciales de Wompi.
+        <div className="flex items-center gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+          <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
+          <p className="text-sm text-amber-400">
+            Aún no has configurado las credenciales de Wompi para la plataforma.
           </p>
         </div>
       )}
 
       {/* Credentials form */}
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-5">
+      <div className="bg-black/30 border border-white/10 rounded-2xl p-6 space-y-5">
         <div className="flex items-center gap-2 mb-1">
-          <KeyRound className="w-4 h-4 text-slate-400" />
-          <h2 className="text-sm font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wide">
-            Credenciales de tu cuenta Wompi
+          <KeyRound className="w-4 h-4 text-zinc-400" />
+          <h2 className="text-sm font-bold text-zinc-300 uppercase tracking-wide">
+            Credenciales de Wompi
           </h2>
         </div>
 
-        <p className="text-xs text-slate-500 dark:text-zinc-500">
+        <p className="text-xs text-zinc-500">
           Obtén tu App ID y API Secret desde el{" "}
           <a
             href="https://panel.wompi.sv"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-purple-600 hover:underline"
+            className="text-purple-400 hover:text-purple-300"
           >
             panel de Wompi
           </a>{" "}
@@ -153,14 +155,14 @@ export default function PaymentsClient({ tenant }: { tenant: Tenant }) {
         </p>
 
         {/* Environment toggle */}
-        <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-xl">
+        <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl">
           <button
             type="button"
             onClick={() => setIsProduction(false)}
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
               !isProduction
                 ? "bg-purple-600 text-white shadow-md"
-                : "text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10"
+                : "text-zinc-400 hover:bg-white/10"
             }`}
           >
             <FlaskConical className="w-4 h-4" />
@@ -172,7 +174,7 @@ export default function PaymentsClient({ tenant }: { tenant: Tenant }) {
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
               isProduction
                 ? "bg-purple-600 text-white shadow-md"
-                : "text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10"
+                : "text-zinc-400 hover:bg-white/10"
             }`}
           >
             <Zap className="w-4 h-4" />
@@ -182,21 +184,21 @@ export default function PaymentsClient({ tenant }: { tenant: Tenant }) {
 
         {/* App ID */}
         <div className="space-y-1.5">
-          <label className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+          <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">
             App ID
           </label>
           <input
             type="text"
             value={appId}
             onChange={(e) => setAppId(e.target.value)}
-            placeholder="Ej: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            className="w-full px-4 py-3 rounded-xl border border-white/10 bg-zinc-900 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
           />
         </div>
 
         {/* API Secret */}
         <div className="space-y-1.5">
-          <label className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+          <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">
             API Secret
           </label>
           <div className="relative">
@@ -205,19 +207,19 @@ export default function PaymentsClient({ tenant }: { tenant: Tenant }) {
               value={apiSecret}
               onChange={(e) => setApiSecret(e.target.value)}
               placeholder="Tu clave secreta de Wompi"
-              className="w-full px-4 py-3 pr-12 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+              className="w-full px-4 py-3 pr-12 rounded-xl border border-white/10 bg-zinc-900 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
             />
             <button
               type="button"
               onClick={() => setShowSecret(!showSecret)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200 transition"
             >
               {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-          <p className="text-xs text-slate-400 dark:text-zinc-600 flex items-center gap-1">
+          <p className="text-xs text-zinc-600 flex items-center gap-1">
             <ShieldCheck className="w-3 h-3" />
-            Tus credenciales se almacenan de forma segura y nunca se comparten.
+            Las credenciales se almacenan de forma segura en la base de datos.
           </p>
         </div>
 
@@ -226,27 +228,30 @@ export default function PaymentsClient({ tenant }: { tenant: Tenant }) {
           <div
             className={`p-4 rounded-xl border text-sm ${
               testResult.success
-                ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20"
-                : "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20"
+                ? "bg-emerald-500/10 border-emerald-500/20"
+                : "bg-red-500/10 border-red-500/20"
             }`}
           >
             {testResult.success ? (
               <div className="space-y-1">
-                <div className="flex items-center gap-2 font-semibold text-emerald-700 dark:text-emerald-400">
+                <div className="flex items-center gap-2 font-semibold text-emerald-400">
                   <CheckCircle2 className="w-4 h-4" />
                   Conexión exitosa
                 </div>
-                <p className="text-emerald-600 dark:text-emerald-500">
+                <p className="text-emerald-500">
                   Cuenta: <strong>{testResult.accountName}</strong>
                 </p>
-                <p className="text-emerald-600 dark:text-emerald-500">
-                  Email: {testResult.email}
-                </p>
+                <p className="text-emerald-500">Email: {testResult.email}</p>
                 {testResult.businesses && testResult.businesses.length > 0 && (
                   <div className="mt-2 space-y-1">
-                    <p className="text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase">Negocios encontrados:</p>
+                    <p className="text-xs font-bold text-emerald-500 uppercase">
+                      Negocios encontrados:
+                    </p>
                     {testResult.businesses.map((b) => (
-                      <div key={b.id} className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-500">
+                      <div
+                        key={b.id}
+                        className="flex items-center gap-2 text-xs text-emerald-500"
+                      >
                         <Building2 className="w-3 h-3" />
                         {b.name} — {b.isProduction ? "Producción" : "Pruebas"}
                       </div>
@@ -255,7 +260,7 @@ export default function PaymentsClient({ tenant }: { tenant: Tenant }) {
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+              <div className="flex items-center gap-2 text-red-400">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 {testResult.error}
               </div>
@@ -268,8 +273,8 @@ export default function PaymentsClient({ tenant }: { tenant: Tenant }) {
           <div
             className={`p-3 rounded-xl text-sm flex items-center gap-2 ${
               saveResult.success
-                ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                : "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400"
+                ? "bg-emerald-500/10 text-emerald-400"
+                : "bg-red-500/10 text-red-400"
             }`}
           >
             {saveResult.success ? (
@@ -292,7 +297,7 @@ export default function PaymentsClient({ tenant }: { tenant: Tenant }) {
             type="button"
             onClick={handleTest}
             disabled={!appId || !apiSecret || testing}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-700 dark:text-zinc-300 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/5 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 text-zinc-300 text-sm font-semibold hover:bg-white/5 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {testing ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -319,35 +324,44 @@ export default function PaymentsClient({ tenant }: { tenant: Tenant }) {
       </div>
 
       {/* Info card */}
-      <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-3">
-        <h3 className="text-sm font-bold text-slate-700 dark:text-zinc-300">
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
+        <h3 className="text-sm font-bold text-zinc-300">
           ¿Cómo obtener tus credenciales?
         </h3>
-        <ol className="space-y-2 text-sm text-slate-600 dark:text-zinc-400">
+        <ol className="space-y-2 text-sm text-zinc-400">
           <li className="flex gap-2">
-            <span className="w-5 h-5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-600 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+            <span className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+              1
+            </span>
             Ingresa a{" "}
             <a
               href="https://panel.wompi.sv"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-purple-600 hover:underline"
+              className="text-purple-400 hover:text-purple-300"
             >
               panel.wompi.sv
             </a>{" "}
             con tu cuenta.
           </li>
           <li className="flex gap-2">
-            <span className="w-5 h-5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-600 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
-            Ve a <strong>Configuraciones generales</strong> y selecciona tu negocio.
+            <span className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+              2
+            </span>
+            Ve a <strong className="text-zinc-200">Configuraciones generales</strong> y selecciona tu negocio.
           </li>
           <li className="flex gap-2">
-            <span className="w-5 h-5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-600 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-            Copia el <strong>App ID</strong> y el <strong>API Secret</strong> que aparecen ahí.
+            <span className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+              3
+            </span>
+            Copia el <strong className="text-zinc-200">App ID</strong> y el{" "}
+            <strong className="text-zinc-200">API Secret</strong> que aparecen ahí.
           </li>
           <li className="flex gap-2">
-            <span className="w-5 h-5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-600 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
-            Pégalos arriba, prueba la conexión, y guarda. ¡Listo!
+            <span className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+              4
+            </span>
+            Pégalos arriba, prueba la conexión y guarda. ¡Listo!
           </li>
         </ol>
       </div>

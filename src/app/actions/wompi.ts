@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { tenants } from "@/db/schema";
+import { platformConfig } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth-session";
@@ -9,34 +9,42 @@ import { logAuditEvent } from "@/lib/audit";
 import { verifyWompiCredentials } from "@/lib/wompi";
 
 // ---------------------------------------------------------------------------
-// Save Wompi credentials for a tenant
+// Save Wompi credentials — super admin only, stored in platform_config
 // ---------------------------------------------------------------------------
 export async function saveWompiCredentialsAction(data: {
-  tenantId: string;
   wompiAppId: string;
   wompiApiSecret: string;
   wompiIsProduction: boolean;
 }) {
   try {
     const session = await getSession();
-    if (!session?.tenantId || session.tenantId !== data.tenantId) {
+    if (!session || session.role !== "SUPER_ADMIN") {
       return { success: false, error: "No autorizado" };
     }
 
+    // Upsert the singleton row (id = 1)
     await db
-      .update(tenants)
-      .set({
+      .insert(platformConfig)
+      .values({
+        id: 1,
         wompiAppId: data.wompiAppId.trim() || null,
         wompiApiSecret: data.wompiApiSecret.trim() || null,
         wompiIsProduction: data.wompiIsProduction,
         updatedAt: new Date(),
       })
-      .where(eq(tenants.id, data.tenantId));
+      .onConflictDoUpdate({
+        target: platformConfig.id,
+        set: {
+          wompiAppId: data.wompiAppId.trim() || null,
+          wompiApiSecret: data.wompiApiSecret.trim() || null,
+          wompiIsProduction: data.wompiIsProduction,
+          updatedAt: new Date(),
+        },
+      });
 
     await logAuditEvent({
       action: "WOMPI_CREDENTIALS_UPDATED",
       userId: session.userId,
-      tenantId: data.tenantId,
       details: { isProduction: data.wompiIsProduction },
     });
 
@@ -49,7 +57,7 @@ export async function saveWompiCredentialsAction(data: {
 }
 
 // ---------------------------------------------------------------------------
-// Test Wompi credentials — calls GET /Cuenta
+// Test Wompi credentials — calls GET /Cuenta (no DB write, anyone can test)
 // ---------------------------------------------------------------------------
 export async function testWompiCredentialsAction(data: {
   wompiAppId: string;

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth-session';
 import Link from 'next/link';
-import { ShieldCheck, Users, BarChart2, FileText, LogOut } from 'lucide-react';
+import { ShieldCheck, Users, BarChart2, FileText, LogOut, CreditCard } from 'lucide-react';
 
 export default async function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -13,6 +13,7 @@ export default async function SuperAdminLayout({ children }: { children: React.R
   const navItems = [
     { href: '/es/admin/super', label: 'Dashboard', icon: BarChart2 },
     { href: '/es/admin/super/tenants', label: 'Empresas', icon: Users },
+    { href: '/es/admin/super/payments', label: 'Pagos Wompi', icon: CreditCard },
     { href: '/es/admin/super/logs', label: 'Logs de Auditoría', icon: FileText },
   ];
 

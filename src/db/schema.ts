@@ -398,6 +398,16 @@ export const staffToCategoriessRelations = relations(staffToCategories, ({ one }
   category: one(serviceCategories, { fields: [staffToCategories.categoryId], references: [serviceCategories.id] }),
 }));
 
+// ── Platform-level singleton config (super admin settings) ─────────────────
+// Row with id=1 is always the one record. Created by migration 0008.
+export const platformConfig = pgTable('platform_config', {
+  id: integer('id').primaryKey().default(1),
+  wompiAppId: text('wompi_app_id'),
+  wompiApiSecret: text('wompi_api_secret'),
+  wompiIsProduction: boolean('wompi_is_production').notNull().default(false),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+});
+
 export const absenceRequestsRelations = relations(absenceRequests, ({ one }) => ({
   tenant: one(tenants, { fields: [absenceRequests.tenantId], references: [tenants.id] }),
   staff: one(staff, { fields: [absenceRequests.staffId], references: [staff.id] }),
