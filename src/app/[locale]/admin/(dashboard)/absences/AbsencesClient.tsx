@@ -200,7 +200,53 @@ export default function AbsencesClient({
               <p className="text-sm text-slate-400 mt-1">{t('noPendingSubtitle')}</p>
             </div>
           ) : (
-            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] shadow-sm overflow-hidden">
+            <>
+            {/* Mobile cards — solicitudes pendientes */}
+            <div className="md:hidden space-y-3">
+              {localPending.map((req) => {
+                const member = staff.find(s => s.id === req.staffId);
+                return (
+                  <div key={req.id} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-4 shadow-sm space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-purple-100 dark:bg-purple-500/10 rounded-xl flex items-center justify-center shrink-0">
+                        <User className="w-4 h-4 text-purple-500" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{member?.name || 'Desconocido'}</p>
+                        {req.reason && <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">{req.reason}</p>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-2.5">
+                        <p className="text-slate-400 font-black tracking-widest uppercase text-[10px] mb-0.5">{t('colFrom')}</p>
+                        <p className="font-bold text-slate-900 dark:text-white">{format(new Date(req.startTime), "dd MMM, HH:mm")}</p>
+                      </div>
+                      <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-2.5">
+                        <p className="text-slate-400 font-black tracking-widest uppercase text-[10px] mb-0.5">{t('colTo')}</p>
+                        <p className="font-bold text-slate-900 dark:text-white">{format(new Date(req.endTime), "dd MMM, HH:mm")}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleApprove(req.id)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-xs font-bold transition-all"
+                      >
+                        <Check className="w-3.5 h-3.5" /> {t('approve')}
+                      </button>
+                      <button
+                        onClick={() => handleReject(req.id)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-slate-100 dark:bg-white/10 hover:bg-rose-500 hover:text-white text-slate-600 dark:text-zinc-300 rounded-xl text-xs font-bold transition-all"
+                      >
+                        <Ban className="w-3.5 h-3.5" /> {t('reject')}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop table — solicitudes pendientes */}
+            <div className="hidden md:block bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -251,6 +297,7 @@ export default function AbsencesClient({
                 </table>
               </div>
             </div>
+            </>
           )
         )}
 
@@ -264,7 +311,80 @@ export default function AbsencesClient({
             <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">{isStaffRole ? t('noBlocksStaff') : t('noBlocks')}</h3>
           </div>
         ) : (
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] shadow-sm overflow-hidden">
+          <>
+          {/* Mobile cards — bloqueos */}
+          <div className="md:hidden space-y-3">
+            {initialBlocks.map((block) => {
+              const branch = branches.find(b => b.id === block.branchId);
+              const staffMember = staff.find(s => s.id === block.staffId);
+              const affectedText = staffMember ? staffMember.name : (branch ? t('types.branchAffected', { name: branch.name }) : t('types.global'));
+              const statusStyles: Record<string, string> = {
+                PENDING: 'bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400',
+                APPROVED: 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                REJECTED: 'bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400',
+              };
+              const statusLabels: Record<string, string> = {
+                PENDING: t('statusPending'),
+                APPROVED: t('statusApproved'),
+                REJECTED: t('statusRejected'),
+              };
+              return (
+                <div
+                  key={block.id}
+                  onClick={!isStaffRole ? () => handleEdit(block) : undefined}
+                  className={`bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-4 shadow-sm space-y-3 ${!isStaffRole ? 'cursor-pointer hover:border-rose-500/40 transition-all' : ''}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-rose-50 dark:bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-500 shrink-0">
+                      <CalendarOff className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-slate-900 dark:text-white leading-tight">{block.reason || t('types.defaultReason')}</p>
+                      {isStaffRole ? (
+                        <span className={`inline-flex mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-black ${statusStyles[block.status] || statusStyles['PENDING']}`}>
+                          {statusLabels[block.status] || 'Pendiente'}
+                        </span>
+                      ) : (
+                        <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                          {staffMember ? <User className="w-3.5 h-3.5 shrink-0" /> : <MapPin className="w-3.5 h-3.5 shrink-0" />}
+                          <span className="truncate">{affectedText}</span>
+                        </div>
+                      )}
+                    </div>
+                    {!isStaffRole && (
+                      <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleEdit(block)}
+                          className="p-2 text-slate-400 hover:text-white hover:bg-amber-500 rounded-xl transition-all"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(block.id)}
+                          className="p-2 text-slate-400 hover:text-white hover:bg-rose-500 rounded-xl transition-all"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-2.5">
+                      <p className="text-slate-400 font-black tracking-widest uppercase text-[10px] mb-0.5">{t('table.start')}</p>
+                      <p className="font-bold text-slate-900 dark:text-white">{format(new Date(block.startTime), "dd MMM, HH:mm")}</p>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-2.5">
+                      <p className="text-slate-400 font-black tracking-widest uppercase text-[10px] mb-0.5">{t('table.end')}</p>
+                      <p className="font-bold text-slate-900 dark:text-white">{format(new Date(block.endTime), "dd MMM, HH:mm")}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop table — bloqueos */}
+          <div className="hidden md:block bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] shadow-sm overflow-hidden">
              <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                    <thead>
@@ -345,6 +465,7 @@ export default function AbsencesClient({
                 </table>
              </div>
           </div>
+          </>
         ))}
       </div>
 

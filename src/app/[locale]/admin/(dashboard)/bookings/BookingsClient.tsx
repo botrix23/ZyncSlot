@@ -711,15 +711,28 @@ export default function BookingsClient({
 
       {/* Filters & Search - Only in List Mode */}
       {viewMode === 'list' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          <div className="lg:col-span-8 flex items-center gap-4 overflow-x-auto no-scrollbar py-4 -my-4 px-4 -mx-4">
+        <div className="flex flex-col gap-3 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-center">
+          {/* Mobile: dropdown selector */}
+          <div className="lg:hidden">
+            <select
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value)}
+              className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-purple-500/50 transition-all shadow-sm"
+            >
               {['Todas', 'Pendientes', 'Confirmadas', 'Finalizadas', 'Canceladas'].map((tab) => (
-                  <button 
-                    key={tab} 
+                <option key={tab} value={tab}>{t(`tabs.${tab}`)}</option>
+              ))}
+            </select>
+          </div>
+          {/* Desktop: pill tabs */}
+          <div className="hidden lg:flex lg:col-span-8 items-center gap-4 overflow-x-auto no-scrollbar py-4 -my-4 px-4 -mx-4">
+              {['Todas', 'Pendientes', 'Confirmadas', 'Finalizadas', 'Canceladas'].map((tab) => (
+                  <button
+                    key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`text-sm font-bold whitespace-nowrap px-6 py-3 rounded-2xl transition-all ${
-                      activeTab === tab 
-                      ? 'bg-purple-600 text-white shadow-xl shadow-purple-500/20 scale-105' 
+                      activeTab === tab
+                      ? 'bg-purple-600 text-white shadow-xl shadow-purple-500/20 scale-105'
                       : 'bg-white dark:bg-zinc-900 text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/5'
                   }`}>
                       {t(`tabs.${tab}`)}
@@ -728,9 +741,9 @@ export default function BookingsClient({
           </div>
           <div className="lg:col-span-4 relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input 
-                  type="text" 
-                  placeholder={t('searchPlaceholder')} 
+              <input
+                  type="text"
+                  placeholder={t('searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm text-slate-900 dark:text-white outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-400 shadow-sm"
@@ -757,11 +770,11 @@ export default function BookingsClient({
                            <div>
                               <div className="flex items-center gap-2">
                                 <h3 className="font-black text-slate-900 dark:text-white text-lg leading-tight">{booking.customerName}</h3>
-                                {booking.notes && (
-                                  <div className="group relative">
+                                {bookingHasClientNotes(booking) && (
+                                  <div className="group relative hidden lg:block">
                                     <FileText className="w-4 h-4 text-purple-500 cursor-help" />
                                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-900 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl border border-white/10">
-                                      {booking.notes}
+                                      {parseBookingNotes(booking.notes).clientNotes || booking.notes}
                                     </div>
                                   </div>
                                 )}
@@ -858,9 +871,9 @@ export default function BookingsClient({
       ) : (
         <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden flex flex-col min-h-[700px] shadow-sm animate-in fade-in zoom-in-95 duration-500">
           {/* Calendar Header */}
-          <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 flex items-center justify-between gap-4">
-            {/* Fecha — fija a la izquierda */}
-            <h2 className="text-xl font-black text-slate-900 dark:text-white first-letter:uppercase min-w-0 truncate">
+          <div className="px-4 lg:px-6 py-3 lg:py-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            {/* Fecha */}
+            <h2 className="text-base lg:text-xl font-black text-slate-900 dark:text-white first-letter:uppercase">
               {calendarView === 'week'
                 ? (() => {
                     const ws = startOfWeek(calendarDate, { weekStartsOn: 1 });
@@ -871,8 +884,8 @@ export default function BookingsClient({
               }
             </h2>
 
-            {/* Controles — fijos a la derecha */}
-            <div className="flex items-center gap-2 shrink-0">
+            {/* Controles */}
+            <div className="flex items-center gap-2">
               {/* Toggle Día / Semana */}
               <div className="flex bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl p-1">
                 <button

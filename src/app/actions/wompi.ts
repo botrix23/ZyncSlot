@@ -83,12 +83,14 @@ export async function testWompiCredentialsAction(data: {
         })) ?? [],
       };
     } else {
+      console.error("[Wompi] test failed — status:", result.status, "body:", JSON.stringify(result.data));
       return {
         success: false,
-        error: "Credenciales inválidas. Verifica tu App ID y API Secret.",
+        error: `Credenciales inválidas (HTTP ${result.status}). Verifica tu App ID y API Secret.`,
       };
     }
-  } catch {
+  } catch (err) {
+    console.error("[Wompi] connection error:", err);
     return {
       success: false,
       error: "No se pudo conectar con Wompi. Intenta de nuevo.",

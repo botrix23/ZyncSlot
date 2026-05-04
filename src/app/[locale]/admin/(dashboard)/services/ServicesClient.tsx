@@ -372,8 +372,112 @@ export default function ServicesClient({
         </div>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden shadow-sm">
-        <table className="w-full text-left">
+      {/* Mobile cards — solo en pantallas pequeñas */}
+      <div className="md:hidden space-y-3">
+        {filteredServices.map((service, idx) => (
+          <div
+            key={service.id}
+            onClick={() => handleOpenModal(service)}
+            className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-4 shadow-sm hover:border-purple-500/50 transition-all cursor-pointer"
+          >
+            <div className="flex items-start gap-3">
+              {/* Reorder + icono */}
+              <div className="flex flex-col items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
+                <button
+                  onClick={e => { e.stopPropagation(); handleReorder(service.id, 'up'); }}
+                  disabled={idx === 0}
+                  className="p-1 text-slate-400 hover:text-purple-500 disabled:opacity-20 transition-colors"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </button>
+                <div className="w-9 h-9 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-600">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <button
+                  onClick={e => { e.stopPropagation(); handleReorder(service.id, 'down'); }}
+                  disabled={idx === filteredServices.length - 1}
+                  className="p-1 text-slate-400 hover:text-purple-500 disabled:opacity-20 transition-colors"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Contenido */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="font-bold text-slate-900 dark:text-white leading-tight">{service.name}</span>
+                  <div className="flex items-center gap-0.5 font-bold text-slate-900 dark:text-white shrink-0 text-sm">
+                    <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
+                    {service.price}
+                  </div>
+                </div>
+                <span className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
+                  <Clock className="w-3 h-3 text-slate-400" /> {service.durationMinutes} min
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                  {service.allowsHomeService && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-bold rounded-md uppercase tracking-wider border border-purple-500/20">
+                      <Sparkles className="w-2.5 h-2.5" /> {t('form.badgeHomeService')}
+                    </span>
+                  )}
+                  {service.allowSimultaneous && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded-md uppercase tracking-widest border border-emerald-500/10">
+                      <Users className="w-2.5 h-2.5" /> {t('form.badgeSimultaneous')}
+                    </span>
+                  )}
+                  {service.isExclusive ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold rounded-md uppercase tracking-widest border border-amber-500/10">
+                      {t('form.badgeExclusive')}
+                    </span>
+                  ) : (service.branches || []).length === 0 ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold rounded-md uppercase tracking-widest border border-blue-500/10">
+                      {t('form.badgeGlobal')}
+                    </span>
+                  ) : null}
+                  {(service.categories || []).map((sc: any) => (
+                    <span
+                      key={sc.categoryId}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-md uppercase tracking-wider"
+                      style={{ backgroundColor: sc.category?.color + '22', color: sc.category?.color }}
+                    >
+                      <Tag className="w-2 h-2" /> {sc.category?.name}
+                    </span>
+                  ))}
+                </div>
+                {/* Inclusiones / exclusiones */}
+                {((service.includes?.length > 0) || (service.excludes?.length > 0)) && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {(service.includes || []).map((inc: string, i: number) => (
+                      <span key={i} className="text-[10px] font-bold bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <CheckCircle2 className="w-2.5 h-2.5" /> {inc}
+                      </span>
+                    ))}
+                    {(service.excludes || []).map((exc: string, i: number) => (
+                      <span key={i} className="text-[10px] font-bold bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <XCircle className="w-2.5 h-2.5" /> {exc}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Eliminar */}
+              <button
+                onClick={e => { e.stopPropagation(); handleDelete(service.id); }}
+                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-500/5 rounded-xl transition-all shrink-0"
+                title={t('confirmDelete')}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table — oculta en móvil */}
+      <div className="hidden md:block bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-left min-w-[600px]">
           <thead className="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
             <tr>
               <th className="px-6 py-5 text-xs font-bold text-slate-500 tracking-widest w-12">{t('table.order')}</th>
@@ -385,28 +489,22 @@ export default function ServicesClient({
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-slate-600 dark:text-zinc-300">
             {filteredServices.map((service, idx) => (
-              <tr 
-                key={service.id} 
+              <tr
+                key={service.id}
                 onClick={() => handleOpenModal(service)}
                 className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group cursor-pointer"
               >
                 <td className="px-6 py-6" onClick={(e) => e.stopPropagation()}>
                   <div className="flex flex-col items-center gap-1">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleReorder(service.id, 'up');
-                      }}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleReorder(service.id, 'up'); }}
                       disabled={idx === 0}
                       className="p-1 hover:text-purple-500 disabled:opacity-30 transition-colors"
                     >
                       <ChevronUp className="w-4 h-4" />
                     </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleReorder(service.id, 'down');
-                      }}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleReorder(service.id, 'down'); }}
                       disabled={idx === filteredServices.length - 1}
                       className="p-1 hover:text-purple-500 disabled:opacity-30 transition-colors"
                     >
@@ -487,11 +585,8 @@ export default function ServicesClient({
                 </td>
                 <td className="px-6 py-6" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-center">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(service.id);
-                      }}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(service.id); }}
                       className="p-3 text-slate-400 hover:text-rose-600 hover:bg-rose-500/5 rounded-xl transition-all"
                       title={t('confirmDelete')}
                     >
@@ -503,6 +598,7 @@ export default function ServicesClient({
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {isModalOpen && (

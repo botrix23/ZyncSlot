@@ -9,7 +9,8 @@ import {
   UserCircle,
   Check,
   Ban,
-  X
+  X,
+  Menu,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LangToggle } from '@/components/LangToggle';
@@ -93,8 +94,21 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   return (
-    <header className="h-20 border-b border-slate-200 dark:border-white/5 px-8 flex items-center justify-between bg-white/50 dark:bg-black/50 backdrop-blur-xl shrink-0 z-10 sticky top-0">
-      <div className="flex items-center gap-4 bg-slate-100 dark:bg-white/5 px-4 py-2 rounded-xl border border-transparent focus-within:border-purple-500/50 transition-all w-96">
+    <header className="h-16 lg:h-20 border-b border-slate-200 dark:border-white/5 px-4 lg:px-8 flex items-center justify-between bg-white/50 dark:bg-black/50 backdrop-blur-xl shrink-0 z-10 sticky top-0">
+      {/* Mobile: hamburger + logo */}
+      <div className="flex items-center gap-3 lg:hidden">
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('toggle-mobile-menu'))}
+          className="p-2 text-slate-500 dark:text-zinc-400 hover:text-purple-500 transition-colors"
+          aria-label="Abrir menú"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+        <span className="text-lg font-bold tracking-tight">Zyncrox</span>
+      </div>
+
+      {/* Desktop: search bar */}
+      <div className="hidden lg:flex items-center gap-4 bg-slate-100 dark:bg-white/5 px-4 py-2 rounded-xl border border-transparent focus-within:border-purple-500/50 transition-all w-96">
         <Search className="w-4 h-4 text-slate-400" />
         <input
           type="text"
@@ -103,8 +117,8 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
         />
       </div>
 
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10">
+      <div className="flex items-center gap-2 lg:gap-6">
+        <div className="flex items-center gap-1 lg:gap-2 bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10">
           <ThemeToggle />
           <LangToggle />
         </div>
@@ -125,7 +139,7 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
           </button>
 
           {bellOpen && (
-            <div className="absolute right-0 top-12 w-96 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[24px] shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="fixed lg:absolute right-4 lg:right-0 top-20 lg:top-12 w-[calc(100vw-2rem)] max-w-sm lg:w-96 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[24px] shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-white/5">
                 <p className="text-sm font-black text-slate-900 dark:text-white">Notificaciones</p>
                 <div className="flex items-center gap-1">
@@ -200,10 +214,11 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
           )}
         </div>
 
-        <div className="h-8 w-[1px] bg-slate-200 dark:border-white/10" />
+        <div className="hidden lg:block h-8 w-[1px] bg-slate-200 dark:border-white/10" />
 
-        <div className="flex items-center gap-3 group">
-          <div className="text-right">
+        <div className="flex items-center gap-2 lg:gap-3 group">
+          {/* Name + role — hidden on mobile */}
+          <div className="hidden lg:block text-right">
             <p className="text-sm font-bold text-slate-900 dark:text-white leading-none">
               {displayName}
             </p>
@@ -226,7 +241,7 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
               )}
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform border border-white/10 overflow-hidden">
+          <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform border border-white/10 overflow-hidden">
             {isSuperAdmin ? (
               <ShieldCheck className="text-white w-6 h-6" />
             ) : (

@@ -113,7 +113,7 @@ export default function PaymentsClient({ config }: { config: PlatformConfig }) {
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           <div>
             <p className="text-sm font-semibold text-emerald-400">
-              Wompi conectado
+              Credenciales de Wompi guardadas
             </p>
             <p className="text-xs text-emerald-500">
               Modo:{" "}

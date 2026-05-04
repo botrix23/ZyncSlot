@@ -275,9 +275,12 @@ export default function StaffClient({
     }
     const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
     if (rect) {
-      setMenuPos({ 
-        top: rect.bottom + window.scrollY + 4, 
-        left: rect.right - 176,
+      const menuWidth = 192; // w-48
+      const leftPos = rect.right - menuWidth;
+      setMenuPos({
+        top: rect.bottom + window.scrollY + 4,
+        // Clamp to viewport so it doesn't go off-screen on mobile
+        left: Math.max(8, Math.min(leftPos, window.innerWidth - menuWidth - 8)),
       });
     }
     setOpenMenu(memberId);

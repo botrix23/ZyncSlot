@@ -2,7 +2,6 @@
 
 import {
   LayoutDashboard,
-  Settings,
   Calendar,
   Users,
   Sparkles,
@@ -15,20 +14,54 @@ import {
   Contact,
   Palette,
   ClipboardList,
+  ChevronLeft,
+  ChevronRight,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { logoutAction } from '@/app/actions/auth';
 import { endImpersonationAction } from '@/app/actions/superAdmin';
 import { SessionUser } from '@/lib/auth-session';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+
+const COLLAPSED_KEY = 'sidebar-collapsed';
 
 export function AdminSidebar({ user, locale, tenantName }: { user: SessionUser | null, locale: string, tenantName?: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations('Dashboard.sidebar');
   const [endingImpersonation, setEndingImpersonation] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(COLLAPSED_KEY);
+    if (stored === 'true') setCollapsed(true);
+    setMounted(true);
+  }, []);
+
+  // Listen for hamburger button in AdminHeader
+  useEffect(() => {
+    const handler = () => setMobileOpen(prev => !prev);
+    window.addEventListener('toggle-mobile-menu', handler);
+    return () => window.removeEventListener('toggle-mobile-menu', handler);
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  const toggle = () => {
+    setCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem(COLLAPSED_KEY, String(next));
+      return next;
+    });
+  };
 
   const isImpersonating = user?.role === 'SUPER_ADMIN' && !!user?.impersonatedTenantId;
   const isStaff = user?.role === 'STAFF';
@@ -55,80 +88,152 @@ export function AdminSidebar({ user, locale, tenantName }: { user: SessionUser |
     router.refresh();
   };
 
-  return (
-    <aside className="w-72 bg-white dark:bg-zinc-900 border-r border-slate-200 dark:border-white/5 hidden lg:flex flex-col h-screen sticky top-0 shrink-0 z-20">
-      
-      {/* Banner de impersonación — visible cuando el Super Admin está dentro de una empresa */}
+  // Shared sidebar content (used in both desktop and mobile)
+  const SidebarContent = ({ forMobile = false }: { forMobile?: boolean }) => (
+    <>
+      {/* Impersonation banner */}
       {isImpersonating && (
         <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-3">
-          <div className="flex items-start gap-2 mb-2">
-            <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-            <div className="min-w-0">
-              <p className="text-[13px] font-black text-amber-500 uppercase tracking-wide">{t('supportMode')}</p>
-              <p className="text-xs text-amber-400/90 truncate font-medium mt-0.5">
-                {t('viewing')}: <strong className="text-amber-300 font-bold">{user.impersonatedTenantName}</strong>
-              </p>
-              <p className="text-xs text-amber-400/70 truncate mt-0.5">{t('as')}: {user.email}</p>
+          {collapsed && !forMobile ? (
+            <div className="flex justify-center">
+              <ShieldAlert className="w-5 h-5 text-amber-500" />
             </div>
+          ) : (
+            <>
+              <div className="flex items-start gap-2 mb-2">
+                <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className="text-[13px] font-black text-amber-500 uppercase tracking-wide">{t('supportMode')}</p>
+                  <p className="text-xs text-amber-400/90 truncate font-medium mt-0.5">
+                    {t('viewing')}: <strong className="text-amber-300 font-bold">{user.impersonatedTenantName}</strong>
+                  </p>
+                  <p className="text-xs text-amber-400/70 truncate mt-0.5">{t('as')}: {user.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={handleEndImpersonation}
+                disabled={endingImpersonation}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold rounded-xl transition-all disabled:opacity-60"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                {endingImpersonation ? t('exiting') : t('exitSupport')}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Logo row */}
+      <div className={`flex items-center ${collapsed && !forMobile ? 'justify-center px-4 py-6' : 'justify-between px-6 py-6'}`}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20 shrink-0">
+            <Calendar className="text-white w-6 h-6" />
           </div>
+          {(!collapsed || forMobile) && <span className="text-xl font-bold tracking-tight">Zyncrox</span>}
+        </div>
+        {forMobile ? (
           <button
-            onClick={handleEndImpersonation}
-            disabled={endingImpersonation}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold rounded-xl transition-all disabled:opacity-60"
+            onClick={() => setMobileOpen(false)}
+            className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            {endingImpersonation ? t('exiting') : t('exitSupport')}
+            <X className="w-4 h-4" />
+          </button>
+        ) : !collapsed ? (
+          <button
+            onClick={toggle}
+            className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all"
+            title="Colapsar menú"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        ) : null}
+      </div>
+
+      {/* Expand button when collapsed (desktop only) */}
+      {collapsed && !forMobile && (
+        <div className="flex justify-center px-4 pb-2">
+          <button
+            onClick={toggle}
+            className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all"
+            title="Expandir menú"
+          >
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      <div className="p-8">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-            <Calendar className="text-white w-6 h-6" />
-          </div>
-          <span className="text-xl font-bold tracking-tight">Zyncrox</span>
-        </div>
-      </div>
-
-      <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto custom-scrollbar">
+      {/* Nav items */}
+      <nav className={`flex-1 ${collapsed && !forMobile ? 'px-2' : 'px-4'} space-y-1 mt-2 overflow-y-auto custom-scrollbar`}>
         {baseItems.map((item) => (
-          <Link 
-            key={item.name} 
-            href={item.href} 
-            className={`flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 group ${
-              item.active 
-                ? 'bg-purple-600 text-white shadow-xl shadow-purple-500/20' 
+          <Link
+            key={item.name}
+            href={item.href}
+            title={collapsed && !forMobile ? item.name : undefined}
+            className={`flex items-center ${collapsed && !forMobile ? 'justify-center px-0 py-3' : 'justify-between px-4 py-3.5'} rounded-2xl transition-all duration-200 group ${
+              item.active
+                ? 'bg-purple-600 text-white shadow-xl shadow-purple-500/20'
                 : 'text-slate-500 dark:text-zinc-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <div className="flex items-center gap-3">
-              <item.icon className={`w-5 h-5 ${item.active ? 'text-white' : 'group-hover:text-purple-500 transition-colors'}`} />
-              <span className="font-semibold text-sm">{item.name}</span>
+            <div className={`flex items-center ${collapsed && !forMobile ? 'justify-center' : 'gap-3'}`}>
+              <item.icon className={`w-5 h-5 shrink-0 ${item.active ? 'text-white' : 'group-hover:text-purple-500 transition-colors'}`} />
+              {(!collapsed || forMobile) && <span className="font-semibold text-sm whitespace-nowrap">{item.name}</span>}
             </div>
           </Link>
         ))}
       </nav>
 
-      <div className="p-6 border-t border-slate-200 dark:border-white/5 space-y-4">
-        {/* Company Name Badge */}
-        {tenantName && (
-          <div className="px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl animate-in fade-in slide-in-from-bottom-2 duration-500">
+      {/* Footer */}
+      <div className={`${collapsed && !forMobile ? 'px-2' : 'px-6'} py-4 border-t border-slate-200 dark:border-white/5 space-y-3`}>
+        {tenantName && (!collapsed || forMobile) && (
+          <div className="px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl">
             <p className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 mb-1 uppercase tracking-wider">{t('business') || 'Empresa'}</p>
             <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{tenantName}</p>
           </div>
         )}
-
         {!isImpersonating && (
-          <button 
+          <button
             onClick={() => logoutAction(locale)}
-            className="flex items-center gap-3 px-4 py-3 w-full text-rose-500 font-semibold hover:bg-rose-500/5 rounded-2xl transition-all group"
+            title={collapsed && !forMobile ? t('logout') : undefined}
+            className={`flex items-center ${collapsed && !forMobile ? 'justify-center w-full py-3 px-0' : 'gap-3 px-4 py-3 w-full'} text-rose-500 font-semibold hover:bg-rose-500/5 rounded-2xl transition-all group`}
           >
-            <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            {t('logout')}
+            <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform shrink-0" />
+            {(!collapsed || forMobile) && t('logout')}
           </button>
         )}
       </div>
-    </aside>
+    </>
+  );
+
+  if (!mounted) return (
+    <aside className="w-72 bg-white dark:bg-zinc-900 border-r border-slate-200 dark:border-white/5 hidden lg:flex flex-col h-screen sticky top-0 shrink-0 z-20" />
+  );
+
+  return (
+    <>
+      {/* Mobile overlay backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <div
+        className={`fixed top-0 left-0 h-full w-72 bg-white dark:bg-zinc-900 flex flex-col z-40 shadow-2xl transition-transform duration-300 ease-in-out lg:hidden ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <SidebarContent forMobile />
+      </div>
+
+      {/* Desktop sidebar */}
+      <aside
+        className={`${collapsed ? 'w-20' : 'w-72'} bg-white dark:bg-zinc-900 border-r border-slate-200 dark:border-white/5 hidden lg:flex flex-col h-screen sticky top-0 shrink-0 z-20 transition-all duration-300 ease-in-out`}
+      >
+        <SidebarContent />
+      </aside>
+    </>
   );
 }

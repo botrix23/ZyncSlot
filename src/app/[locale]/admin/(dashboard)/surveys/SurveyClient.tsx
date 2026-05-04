@@ -223,10 +223,10 @@ export default function SurveyClient({
           </div>
 
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] p-8 shadow-sm space-y-8">
-            <div className="flex items-center justify-between gap-6">
-              <div className="space-y-1">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1 min-w-0">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
                   {t('enableToggle')}
                 </h3>
                 <p className="text-slate-500 dark:text-zinc-400 text-sm font-medium">
@@ -236,7 +236,7 @@ export default function SurveyClient({
               <button
                 onClick={handleToggleSurvey}
                 disabled={isUpdatingSettings}
-                className={`relative inline-flex h-7 w-14 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${isEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-zinc-800'}`}
+                className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 mt-1 ${isEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-zinc-800'}`}
               >
                 <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-all duration-300 shadow-md ${isEnabled ? 'translate-x-8' : 'translate-x-1'}`} />
               </button>
@@ -280,19 +280,19 @@ export default function SurveyClient({
                   </div>
                 ) : (
                   questions.map((q, index) => (
-                    <div 
+                    <div
                       key={q.id}
-                      className={`group bg-slate-50 dark:bg-white/5 rounded-[24px] p-5 border border-transparent hover:border-purple-500/30 transition-all flex items-center gap-6 ${!q.isActive ? 'opacity-50 grayscale' : ''}`}
+                      className={`group bg-slate-50 dark:bg-white/5 rounded-[24px] p-4 border border-transparent hover:border-purple-500/30 transition-all flex items-start gap-3 ${!q.isActive ? 'opacity-50 grayscale' : ''}`}
                     >
-                      <div className="flex flex-col gap-1">
-                        <button 
+                      <div className="flex flex-col gap-1 shrink-0 pt-0.5">
+                        <button
                           onClick={() => handleMove(index, 'up')}
                           disabled={index === 0}
                           className="p-1 hover:bg-white dark:hover:bg-zinc-800 rounded-md transition-all disabled:opacity-0"
                         >
                           <ChevronUp className="w-4 h-4" />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleMove(index, 'down')}
                           disabled={index === questions.length - 1}
                           className="p-1 hover:bg-white dark:hover:bg-zinc-800 rounded-md transition-all disabled:opacity-0"
@@ -301,39 +301,39 @@ export default function SurveyClient({
                         </button>
                       </div>
 
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-black text-slate-800 dark:text-white leading-tight">{q.questionText}</p>
-                        <div className="flex items-center gap-3 text-[11px] font-black tracking-widest text-slate-400">
-                          <span className="flex items-center gap-1.5">
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <p className="text-sm font-black text-slate-800 dark:text-white leading-tight break-words">{q.questionText}</p>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-black tracking-widest text-slate-400">
+                          <span className="flex items-center gap-1 shrink-0">
                             {q.questionType === 'STARS' && <Star className="w-3 h-3 text-yellow-500" />}
                             {q.questionType === 'YES_NO' && <CheckCircle2 className="w-3 h-3 text-sky-500" />}
                             {q.questionType === 'TEXT' && <MessageSquare className="w-3 h-3 text-purple-500" />}
                             {q.questionType === 'NPS' && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
-                            {t(`types.${q.questionType}`)}
+                            <span className="truncate">{t(`types.${q.questionType}`)}</span>
                           </span>
-                          <span className="text-slate-300 dark:text-zinc-700">•</span>
-                          <span className={`px-2 py-0.5 rounded-md ${q.category === 'STAFF' ? 'bg-purple-500/10 text-purple-600' : 'bg-blue-500/10 text-blue-600'}`}>
+                          <span className="text-slate-300 dark:text-zinc-700 shrink-0">•</span>
+                          <span className={`px-2 py-0.5 rounded-md shrink-0 ${q.category === 'STAFF' ? 'bg-purple-500/10 text-purple-600' : 'bg-blue-500/10 text-blue-600'}`}>
                             {t(`categories.${q.category}`)}
                           </span>
                           {q.isRequired && (
-                            <span className="text-slate-300 dark:text-zinc-700">•</span>
-                          )}
-                          {q.isRequired && (
-                            <span className="text-slate-500">{t('isRequired')}</span>
+                            <>
+                              <span className="text-slate-300 dark:text-zinc-700 shrink-0">•</span>
+                              <span className="text-slate-500 shrink-0">{t('isRequired')}</span>
+                            </>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                        <button 
+                      <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-all">
+                        <button
                           onClick={() => handleOpenModal(q)}
-                          className="p-3 bg-white dark:bg-zinc-800 hover:bg-purple-600 hover:text-white rounded-xl shadow-sm transition-all border border-slate-100 dark:border-white/5"
+                          className="p-2.5 bg-white dark:bg-zinc-800 hover:bg-purple-600 hover:text-white rounded-xl shadow-sm transition-all border border-slate-100 dark:border-white/5"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDeleteQuestion(q.id)}
-                          className="p-3 bg-white dark:bg-zinc-800 hover:bg-rose-500 hover:text-white rounded-xl shadow-sm transition-all border border-slate-100 dark:border-white/5"
+                          className="p-2.5 bg-white dark:bg-zinc-800 hover:bg-rose-500 hover:text-white rounded-xl shadow-sm transition-all border border-slate-100 dark:border-white/5"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -420,7 +420,7 @@ export default function SurveyClient({
                                <p className="text-[11px] font-bold text-slate-400 truncate">{r.booking?.service?.name || t('audit.table.serviceFallback')}</p>
                              </div>
                           </td>
-                          <td className="py-5 px-4 min-w-[300px]">
+                          <td className="py-5 px-4 min-w-[200px] max-w-[300px]">
                              <div className="space-y-2">
                                {r.comment && (
                                  <p className="text-sm text-slate-700 dark:text-zinc-300 font-medium italic">"{r.comment}"</p>

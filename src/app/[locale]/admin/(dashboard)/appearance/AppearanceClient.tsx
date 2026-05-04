@@ -244,7 +244,7 @@ try {
     <div className="flex flex-col xl:flex-row h-[calc(100vh-8rem)] gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
       {/* LEFT COLUMN - CONTROLS */}
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-12 flex flex-col gap-6 min-w-[320px]">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-12 flex flex-col gap-6 min-w-0">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{tPortal('title')}</h1>
           <p className="text-slate-500 dark:text-zinc-400 mt-1">{tPortal('subtitle')}</p>
@@ -450,7 +450,7 @@ try {
                 </div>
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white">{tPortal('sections.theme')}</h2>
               </div>
-              <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-black/20 p-2 rounded-2xl border border-slate-200 dark:border-white/5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-black/20 p-2 rounded-2xl border border-slate-200 dark:border-white/5">
                 <button type="button" onClick={() => setTheme('light')} className={`py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${theme === 'light' ? 'bg-white dark:bg-zinc-800 text-purple-600 shadow-md transform scale-[1.02]' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'}`}>
                   <Sun className="w-5 h-5" /> {tPortal('theme.light')}
                 </button>
@@ -569,7 +569,7 @@ try {
 
                          {isAddingZone && (
                            <div className="p-5 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 border border-purple-500/20 rounded-3xl space-y-4 animate-in zoom-in-95 duration-200 shadow-sm">
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                  <div className="col-span-2 sm:col-span-1">
                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1 block">{tPortal('form.newZoneName')}</label>
                                    <input 

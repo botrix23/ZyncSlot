@@ -127,7 +127,7 @@ export default function ClientsClient({
       ) : (
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-[32px] shadow-sm overflow-hidden animate-in slide-in-from-top-2 duration-300">
              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[600px]">
                    <thead>
                       <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
                          <th className="p-6 text-[11px] font-black tracking-widest text-slate-400 uppercase">{t('table.client')}</th>

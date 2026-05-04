@@ -38,7 +38,11 @@
       "Bash(git push *)",
       "Bash(git -C /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox checkout -b staging)",
       "Bash(git -C /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox push origin staging)",
-      "Bash(git -C /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox checkout main)"
+      "Bash(git -C /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox checkout main)",
+      "Bash(psql --version)",
+      "Bash(grep -E \"^pg$|^postgres$\")",
+      "Bash(grep -E \"\\\\.\\(tsx|ts|jsx|js\\)$\")",
+      "Bash(git -C \"/Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox\" remote -v)"
     ]
   }
 }
