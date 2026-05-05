@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getAllTenantsAction, updateTenantStatusAction, deleteTenantAction, impersonateTenantAction } from '@/app/actions/superAdmin';
-import { CheckCircle, Clock, XCircle, Trash2, ShieldCheck, MoreVertical } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, Trash2, ShieldCheck, MoreVertical, AlertTriangle } from 'lucide-react';
 
 type Tenant = Awaited<ReturnType<typeof getAllTenantsAction>>[number];
 
@@ -12,11 +12,42 @@ const statusConfig = {
   SUSPENDED: { label: 'Suspendida', icon: XCircle,      color: 'text-rose-400 bg-rose-400/10' },
 };
 
+function DeleteConfirmModal({ name, onConfirm, onCancel }: { name: string; onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative bg-zinc-900 border border-white/10 rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-center w-12 h-12 bg-rose-500/10 rounded-2xl mb-4 mx-auto">
+          <AlertTriangle className="w-6 h-6 text-rose-400" />
+        </div>
+        <h3 className="text-lg font-black text-white text-center">¿Eliminar empresa?</h3>
+        <p className="text-sm text-zinc-400 text-center mt-2">
+          Vas a eliminar permanentemente <span className="font-bold text-white">"{name}"</span> y todos sus datos. Esta acción no se puede deshacer.
+        </p>
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 font-bold text-sm transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-bold text-sm transition-colors"
+          >
+            Sí, eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TenantsTable({ tenants: initialTenants }: { tenants: Tenant[] }) {
   const [tenants, setTenants] = useState(initialTenants);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-  // Posición fixed del dropdown para escapar del overflow del padre
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -58,12 +89,18 @@ export default function TenantsTable({ tenants: initialTenants }: { tenants: Ten
     setTenants(prev => prev.map(t => t.id === id ? { ...t, status } : t));
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`¿Eliminar permanentemente la empresa "${name}" y todos sus datos?`)) return;
-    setLoadingId(id);
+  const handleDelete = (id: string, name: string) => {
     setOpenMenu(null);
-    await deleteTenantAction(id);
-    setTenants(prev => prev.filter(t => t.id !== id));
+    setMenuPos(null);
+    setDeleteTarget({ id, name });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setLoadingId(deleteTarget.id);
+    setDeleteTarget(null);
+    await deleteTenantAction(deleteTarget.id);
+    setTenants(prev => prev.filter(t => t.id !== deleteTarget.id));
     setLoadingId(null);
   };
 
@@ -81,6 +118,13 @@ export default function TenantsTable({ tenants: initialTenants }: { tenants: Ten
 
   return (
     <>
+      {deleteTarget && (
+        <DeleteConfirmModal
+          name={deleteTarget.name}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
       <div className="bg-white/5 border border-white/5 rounded-3xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -104,6 +148,9 @@ export default function TenantsTable({ tenants: initialTenants }: { tenants: Ten
                     <td className="px-6 py-4">
                       <p className="font-bold text-white">{tenant.name}</p>
                       <p className="text-xs text-zinc-500">{tenant.adminCount} admin(s) · {tenant.branchCount} sucursal(es)</p>
+                      {tenant.users?.find(u => u.role === 'ADMIN')?.email && (
+                        <p className="text-xs text-purple-400 mt-0.5">{tenant.users.find(u => u.role === 'ADMIN')?.email}</p>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <code className="text-xs text-purple-400 bg-purple-500/10 px-2 py-1 rounded-lg">{tenant.slug}</code>

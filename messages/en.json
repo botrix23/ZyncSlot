@@ -170,7 +170,8 @@
     "submit": "Start now",
     "hasAccount": "Already have an account?",
     "login": "Login",
-    "errorRegister": "Error registering. Does the email already exist?",
+    "errorRegister": "Error registering. Please try again.",
+    "errorEmailExists": "This email address is already registered.",
     "strength": {
       "veryWeak": "Very weak",
       "weak": "Weak",

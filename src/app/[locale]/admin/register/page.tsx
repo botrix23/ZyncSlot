@@ -67,7 +67,11 @@ export default function RegisterPage() {
     if (result.success) {
       window.location.href = `/${locale}/admin`;
     } else {
-      setError(t('errorRegister'));
+      if ((result as any).error === 'EMAIL_EXISTS') {
+        setError(t('errorEmailExists'));
+      } else {
+        setError(t('errorRegister'));
+      }
       setIsLoading(false);
     }
   };

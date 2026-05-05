@@ -119,46 +119,49 @@ export async function registerTenantAction(formData: FormData, locale: string) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
-  // 0. Validaciones de Seguridad (Estándares de la Industria)
   const passwordResult = validatePasswordComplexity(password);
   if (!passwordResult.success) {
     return { success: false, error: "PASSWORD_COMPLEXITY" };
   }
 
+  // Verificar email duplicado antes de crear nada
+  const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
+  if (existing) {
+    return { success: false, error: "EMAIL_EXISTS" };
+  }
+
   try {
-    // 1. Hash de la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 2. Generar slug único para la URL pública del booking
     const slug = generateSlug(businessName);
-
-    // 3. Crear el Tenant en modo TRIAL (14 días)
     const expiration = new Date();
     expiration.setDate(expiration.getDate() + 14);
 
-    const [newTenant] = await db.insert(tenants).values({
-      name: businessName,
-      slug,
-      timezone: 'America/El_Salvador',
-      status: 'TRIAL',
-      subscriptionExpiresAt: expiration,
-    }).returning();
+    // Transacción: si el usuario falla, el tenant se revierte
+    const { newTenant, newAdmin } = await db.transaction(async (tx) => {
+      const [newTenant] = await tx.insert(tenants).values({
+        name: businessName,
+        slug,
+        timezone: 'America/El_Salvador',
+        status: 'TRIAL',
+        subscriptionExpiresAt: expiration,
+      }).returning();
 
-    // 4. Crear el Usuario Admin vinculado al Tenant
-    const [newAdmin] = await db.insert(users).values({
-      tenantId: newTenant.id,
-      name: adminName,
+      const [newAdmin] = await tx.insert(users).values({
+        tenantId: newTenant.id,
+        name: adminName,
+        email,
+        password: hashedPassword,
+        role: 'ADMIN',
+      }).returning();
+
+      return { newTenant, newAdmin };
+    });
+
+    cookies().set("zync_session", JSON.stringify({
       email,
-      password: hashedPassword,
-      role: 'ADMIN',
-    }).returning();
-
-    // 5. Establecer sesión
-    cookies().set("zync_session", JSON.stringify({ 
-      email, 
       role: 'ADMIN',
       userId: newAdmin.id,
-      tenantId: newTenant.id 
+      tenantId: newTenant.id
     }), {
       httpOnly: true,
       maxAge: 60 * 60 * 24,
