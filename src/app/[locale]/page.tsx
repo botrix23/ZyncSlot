@@ -13,6 +13,9 @@ export default async function LandingPage({ params: { locale } }: { params: { lo
   const session = await getSession();
 
   if (session) {
+    if (session.role === 'SUPER_ADMIN') {
+      redirect(`/${locale}/admin/super`);
+    }
     redirect(`/${locale}/admin`);
   }
 

@@ -22,6 +22,8 @@ export default function LoginPage() {
       setEmail(savedEmail);
       setRememberMe(true);
     }
+    // Limpiar contraseñas guardadas incorrectamente en versiones anteriores
+    localStorage.removeItem('login-remembered-password');
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -95,6 +97,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder={t('emailPlaceholder')}
+                  autoComplete="email"
                   className="w-full bg-slate-100 dark:bg-white/5 border border-transparent focus:border-purple-500/50 rounded-2xl py-4 pl-12 pr-4 text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                   required
                 />
@@ -110,6 +113,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder={t('passwordPlaceholder')}
+                  autoComplete="current-password"
                   className="w-full bg-slate-100 dark:bg-white/5 border border-transparent focus:border-purple-500/50 rounded-2xl py-4 pl-12 pr-12 text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                   required
                 />

@@ -38,7 +38,7 @@ export default async function AdminDashboard({ params: { locale } }: { params: {
       tenantId = session.impersonatedTenantId;
     } else {
       // Super Admin sin tenant impersonado — redirigir a su panel
-      redirect('/admin/super');
+      redirect(`/${locale}/admin/super`);
     }
   } else if (session?.tenantId) {
     tenantId = session.tenantId;

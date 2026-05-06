@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ShieldCheck, Users, BarChart2, FileText, LogOut, CreditCard, Menu, X } from 'lucide-react';
+import { logoutAction } from '@/app/actions/auth';
 
 const navItems = [
   { href: '/es/admin/super', label: 'Dashboard', icon: BarChart2 },
@@ -12,7 +13,7 @@ const navItems = [
   { href: '/es/admin/super/logs', label: 'Logs de Auditoría', icon: FileText },
 ];
 
-export function SuperAdminLayoutClient({ children, email }: { children: React.ReactNode; email: string }) {
+export function SuperAdminLayoutClient({ children, email, locale }: { children: React.ReactNode; email: string; locale: string }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
@@ -59,7 +60,7 @@ export function SuperAdminLayoutClient({ children, email }: { children: React.Re
       <div className="border-t border-white/5 pt-4 mt-4">
         <p className="text-xs text-zinc-500 mb-1">Sesión activa</p>
         <p className="text-sm font-semibold text-white truncate">{email}</p>
-        <form action="/es/admin/login">
+        <form action={logoutAction.bind(null, locale)}>
           <button type="submit" className="mt-3 flex items-center gap-2 text-xs text-zinc-500 hover:text-rose-400 transition-colors">
             <LogOut className="w-3 h-3" />
             Cerrar sesión
