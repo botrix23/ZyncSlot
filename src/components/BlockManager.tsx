@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Calendar as CalendarIcon, Clock, User, Trash2, Plus, Loader2, AlertCircle, Edit2 } from "lucide-react";
-import { createBlockAction, getBlocksAction, deleteBlockAction, updateBlockAction } from "@/app/actions/blocks";
+import { createBlockAction, getBlocksAction, cancelBlockAction, updateBlockAction } from "@/app/actions/blocks";
 import { format, parseISO, isAfter } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -127,7 +127,7 @@ export default function BlockManager({ branchId, branchName, tenantId, staff, on
   };
 
   const handleDeleteBlock = async (id: string) => {
-    const result = await deleteBlockAction(id, tenantId);
+    const result = await cancelBlockAction(id, tenantId);
     if (result.success) {
       fetchBlocks();
     }
