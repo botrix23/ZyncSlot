@@ -19,7 +19,8 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export default function AppearanceClient({
   tenant,
-  initialZones
+  initialZones,
+  initialTab = 'design'
 }: {
 tenant: {
 id: string;
@@ -49,12 +50,13 @@ bookingSettings?: {
 };
 },
 initialZones: any[];
+initialTab?: 'design' | 'rules';
 }) {
   const t = useTranslations('Dashboard');
   const tPortal = useTranslations('Dashboard.portal');
   
   // Tabs
-  const [activeTab, setActiveTab] = useState<'design' | 'rules'>('design');
+  const [activeTab, setActiveTab] = useState<'design' | 'rules'>(initialTab);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -462,41 +464,41 @@ try {
             </div>
 
             {/* Tema del Portal */}
-            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-6">
-              <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-white/10">
-                <div className="p-2 bg-purple-500/10 rounded-lg">
-                  <Monitor className="w-5 h-5 text-purple-600" />
+            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-4 shadow-sm space-y-3">
+              <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-white/10">
+                <div className="p-1.5 bg-purple-500/10 rounded-lg">
+                  <Monitor className="w-4 h-4 text-purple-600" />
                 </div>
-                <h2 className="text-lg font-bold text-slate-800 dark:text-white">{tPortal('sections.theme')}</h2>
+                <h2 className="text-base font-bold text-slate-800 dark:text-white">{tPortal('sections.theme')}</h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-black/20 p-2 rounded-2xl border border-slate-200 dark:border-white/5">
-                <button type="button" onClick={() => setTheme('light')} className={`py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${theme === 'light' ? 'bg-white dark:bg-zinc-800 text-purple-600 shadow-md transform scale-[1.02]' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'}`}>
-                  <Sun className="w-5 h-5" /> {tPortal('theme.light')}
+              <div className="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-black/20 p-1.5 rounded-xl border border-slate-200 dark:border-white/5">
+                <button type="button" onClick={() => setTheme('light')} className={`py-2.5 px-4 rounded-lg font-bold flex items-center justify-center gap-2 transition-all text-sm ${theme === 'light' ? 'bg-white dark:bg-zinc-800 text-purple-600 shadow-md transform scale-[1.02]' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'}`}>
+                  <Sun className="w-4 h-4" /> {tPortal('theme.light')}
                 </button>
-                <button type="button" onClick={() => setTheme('dark')} className={`py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${theme === 'dark' ? 'bg-zinc-800 text-purple-400 shadow-md transform scale-[1.02] border border-white/10' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'}`}>
-                  <Moon className="w-5 h-5" /> {tPortal('theme.dark')}
+                <button type="button" onClick={() => setTheme('dark')} className={`py-2.5 px-4 rounded-lg font-bold flex items-center justify-center gap-2 transition-all text-sm ${theme === 'dark' ? 'bg-zinc-800 text-purple-400 shadow-md transform scale-[1.02] border border-white/10' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'}`}>
+                  <Moon className="w-4 h-4" /> {tPortal('theme.dark')}
                 </button>
               </div>
             </div>
 
             {/* Color Primario */}
-            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-6">
-              <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-white/10">
-                <div className="p-2 bg-purple-500/10 rounded-lg"><Palette className="w-5 h-5 text-purple-600" /></div>
-                <h2 className="text-lg font-bold text-slate-800 dark:text-white">{tPortal('sections.color')}</h2>
+            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-4 shadow-sm space-y-3">
+              <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-white/10">
+                <div className="p-1.5 bg-purple-500/10 rounded-lg"><Palette className="w-4 h-4 text-purple-600" /></div>
+                <h2 className="text-base font-bold text-slate-800 dark:text-white">{tPortal('sections.color')}</h2>
               </div>
-              <div className="flex flex-wrap gap-4 mb-4">
+              <div className="flex flex-wrap items-center gap-3">
                 {PRESET_COLORS.map(c => (
-                  <button 
+                  <button
                     key={c.value} type="button" onClick={() => setPrimaryColor(c.value)}
-                    className={`w-10 h-10 rounded-full border-[3px] transition-all hover:scale-110 shadow-sm ${primaryColor.toLowerCase() === c.value ? 'border-slate-800 dark:border-white scale-110 shadow-md' : 'border-transparent'}`}
+                    className={`w-7 h-7 rounded-full border-[2px] transition-all hover:scale-110 shadow-sm shrink-0 ${primaryColor.toLowerCase() === c.value ? 'border-slate-800 dark:border-white scale-110 shadow-md' : 'border-transparent'}`}
                     style={{ backgroundColor: c.value }} title={c.name}
                   />
                 ))}
-              </div>
-              <div className="flex items-center gap-4">
-                <input type="color" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} className="w-14 h-14 rounded-xl cursor-pointer border-0 p-0 bg-transparent" />
-                <input type="text" value={primaryColor} onChange={e => setPrimaryColor(e.target.value.toUpperCase())} className="flex-1 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all font-mono font-bold uppercase" />
+                <div className="flex items-center gap-2 flex-1 min-w-[160px]">
+                  <input type="color" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} className="w-9 h-9 rounded-lg cursor-pointer border-0 p-0 bg-transparent shrink-0" />
+                  <input type="text" value={primaryColor} onChange={e => setPrimaryColor(e.target.value.toUpperCase())} className="flex-1 py-2 px-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all font-mono font-bold uppercase text-sm" />
+                </div>
               </div>
             </div>
           </div>

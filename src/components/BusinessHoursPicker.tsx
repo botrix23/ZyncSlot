@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, Plus, Trash2, Copy, Calendar as CalendarIcon, X } from "lucide-react";
+import { Plus, Trash2, Copy, Calendar as CalendarIcon, X } from "lucide-react";
 
 const DAYS = [
   { id: 'monday', name: 'Lunes' },
@@ -201,7 +201,8 @@ export default function BusinessHoursPicker({ value, onChange }: BusinessHoursPi
                         title="Copiar horario a todos los días"
                       >
                         <Copy className="w-3 h-3 shrink-0" />
-                        <span>Copiar a todos</span>
+                        <span className="sm:hidden">Copiar</span>
+                        <span className="hidden sm:inline">Copiar a todos</span>
                       </button>
                       <label className="relative inline-flex items-center cursor-pointer shrink-0">
                         <input
@@ -372,12 +373,6 @@ export default function BusinessHoursPicker({ value, onChange }: BusinessHoursPi
         )}
       </div>
       
-      <div className="p-4 bg-slate-100 dark:bg-white/5 border-t border-slate-200 dark:border-white/5">
-        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">
-            <Clock className="w-3 h-3" />
-            Configuración guardada automáticamente
-        </div>
-      </div>
     </div>
   );
 }

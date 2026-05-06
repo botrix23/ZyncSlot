@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { tenants, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { logAuditEvent } from "@/lib/audit";
+import { resend } from "@/lib/resend";
 
 /**
  * Genera un slug URL-safe a partir de un nombre de negocio.
@@ -208,10 +209,24 @@ export async function forgotPasswordAction(email: string) {
       })
       .where(eq(users.id, user.id));
 
-    // MOCK: En un sistema real aquí se enviaría el email con el link
-    console.log(`[PASS_RESET] Token para ${email}: ${token}`);
-    
-    return { success: true, token }; // Solo devolvemos el token para pruebas (luego quitar)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://zyncrox.com';
+    const resetLink = `${appUrl}/es/admin/reset-password?token=${token}`;
+
+    await resend.emails.send({
+      from: 'Zyncrox <onboarding@resend.dev>',
+      to: email,
+      subject: 'Recupera tu contraseña - Zyncrox',
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0a0a0a;color:#fff;border-radius:16px;">
+          <h1 style="font-size:24px;font-weight:900;margin-bottom:8px;">Recupera tu contraseña</h1>
+          <p style="color:#a1a1aa;margin-bottom:24px;">Haz clic en el botón para restablecer tu contraseña. Este enlace expira en 1 hora.</p>
+          <a href="${resetLink}" style="display:inline-block;background:#fff;color:#000;font-weight:700;padding:14px 28px;border-radius:12px;text-decoration:none;font-size:14px;">Restablecer contraseña</a>
+          <p style="color:#52525b;font-size:12px;margin-top:24px;">Si no solicitaste esto, ignora este correo.</p>
+        </div>
+      `,
+    });
+
+    return { success: true };
   } catch (error) {
     console.error(error);
     return { success: false, error: "Error al procesar la solicitud." };

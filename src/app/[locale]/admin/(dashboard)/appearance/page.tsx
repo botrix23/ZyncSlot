@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import AppearanceClient from "./AppearanceClient";
 
-export default async function AppearancePage({ params }: { params: { locale: string } }) {
+export default async function AppearancePage({ params, searchParams }: { params: { locale: string }, searchParams?: { tab?: string } }) {
   const session = await getSession();
   if (!session || !session.tenantId) {
     redirect(`/${params.locale}/admin/login`);
@@ -26,7 +26,8 @@ export default async function AppearancePage({ params }: { params: { locale: str
   });
 
   return (
-    <AppearanceClient 
+    <AppearanceClient
+      initialTab={searchParams?.tab === 'rules' ? 'rules' : 'design'}
       tenant={{
         id: tenantData.id,
         name: tenantData.name,

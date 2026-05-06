@@ -9,8 +9,7 @@ import {
 import { useTranslations } from "next-intl";
 import { format } from "date-fns";
 import { es, enUS } from "date-fns/locale";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 interface BookingDetail {
   id: string;
@@ -34,6 +33,7 @@ export default function ClientsClient({
   const t = useTranslations('Dashboard.clients');
   const params = useParams();
   const locale = params.locale as string;
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<any | null>(null);
 
@@ -320,16 +320,35 @@ export default function ClientsClient({
                    </div>
                 </div>
 
-                {/* Service History Table */}
+                {/* Service History */}
                 <div className="space-y-3">
                    <div className="flex items-center gap-2">
                       <History className="w-4 h-4 text-indigo-600" />
                       <h3 className="text-base font-bold text-slate-900 dark:text-white">{t('history.title')}</h3>
                    </div>
-                   
-                   <div className="border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden bg-white dark:bg-zinc-800/50">
-                      <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse min-w-[480px]">
+
+                   {/* Mobile: card list (no horizontal scroll) */}
+                   <div className="sm:hidden space-y-2">
+                      {selectedClient.history.map((h: any, idx: number) => (
+                         <div key={idx} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl p-3">
+                            <div className="flex items-start justify-between gap-2 mb-1.5">
+                               <span className="font-bold text-purple-600 dark:text-purple-400 text-sm leading-tight">{h.service.name}</span>
+                               <span className="font-black text-slate-900 dark:text-white text-sm shrink-0">${parseFloat(h.service.price).toFixed(2)}</span>
+                            </div>
+                            <p className="text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
+                               {format(h.startTime, "dd MMM yyyy", { locale: locale === 'es' ? es : enUS })} · {format(h.startTime, "HH:mm")}
+                            </p>
+                            <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                               <span className="flex items-center gap-1"><User className="w-2.5 h-2.5" />{h.staff.name}</span>
+                               <span className="flex items-center gap-1"><MapPin className="w-2.5 h-2.5" />{h.branch.name}</span>
+                            </div>
+                         </div>
+                      ))}
+                   </div>
+
+                   {/* Desktop: table */}
+                   <div className="hidden sm:block border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden bg-white dark:bg-zinc-800/50">
+                      <table className="w-full text-left border-collapse">
                          <thead className="bg-slate-100/50 dark:bg-white/5">
                             <tr>
                                <th className="p-3 text-xs font-black text-slate-400 uppercase tracking-widest">{t('history.date')}</th>
@@ -367,7 +386,6 @@ export default function ClientsClient({
                             ))}
                          </tbody>
                       </table>
-                      </div>
                    </div>
                 </div>
 
@@ -378,12 +396,12 @@ export default function ClientsClient({
                           <Award className="w-4 h-4" />
                           <h4 className="text-xs font-black uppercase tracking-widest">{t('loyaltyPotential')}</h4>
                        </div>
-                       <Link 
-                          href={`/${locale}/admin/appearance`}
+                       <button
+                          onClick={(e) => { e.stopPropagation(); router.push(`/${locale}/admin/appearance?tab=rules`); }}
                           className="flex items-center gap-1 text-xs font-black text-indigo-500 hover:text-indigo-600 uppercase tracking-widest border border-indigo-200 dark:border-indigo-500/30 px-2 py-1 rounded-lg transition-all"
                        >
                           <Settings2 className="w-2.5 h-2.5" /> {t('adjustThreshold')}
-                       </Link>
+                       </button>
                    </div>
                    <p className="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed font-medium">
                       {selectedClient.totalAppointments >= vipThreshold 
@@ -394,7 +412,7 @@ export default function ClientsClient({
               </div>
 
               {/* Footer Modal - Refined */}
-              <div className="px-6 py-4 bg-slate-50 dark:bg-white/2 border-t border-slate-100 dark:border-white/5 flex justify-end">
+              <div className="px-6 py-4 bg-slate-50 dark:bg-zinc-900 border-t border-slate-100 dark:border-white/5 flex justify-end">
                  <button 
                    onClick={() => setSelectedClient(null)}
                    className="px-6 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black text-[13px] tracking-tight hover:opacity-90 transition-all shadow-lg active:scale-95"
