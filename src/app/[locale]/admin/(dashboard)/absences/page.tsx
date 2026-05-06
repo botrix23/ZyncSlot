@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { blocks, staff, branches, absenceRequests } from "@/db/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, ne } from "drizzle-orm";
 import { getSession } from "@/lib/auth-session";
 import { redirect } from "next/navigation";
 import AbsencesClient from "./AbsencesClient";
@@ -44,7 +44,7 @@ export default async function AbsencesPage({
   } else {
     // ADMIN: ver todos los bloqueos + solicitudes pendientes
     [initialBlocks, pendingRequests] = await Promise.all([
-      db.select().from(blocks).where(eq(blocks.tenantId, tenantId)).orderBy(desc(blocks.startTime)),
+      db.select().from(blocks).where(and(eq(blocks.tenantId, tenantId), ne(blocks.status, 'CANCELLED'))).orderBy(desc(blocks.startTime)),
       db.select().from(absenceRequests).where(
         and(
           eq(absenceRequests.tenantId, tenantId),
