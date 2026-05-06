@@ -27,14 +27,10 @@ export default function ForgotPasswordPage({ params: { locale } }: { params: { l
     const result = await forgotPasswordAction(email);
 
     if (result.success) {
-      setMessage({ 
-        type: 'success', 
-        text: t('successMessage') 
+      setMessage({
+        type: 'success',
+        text: t('successMessage')
       });
-      // MOCK: Para propósitos de desarrollo (borrar luego)
-      if (result.token) {
-        console.log("DEBUG TOKEN:", result.token);
-      }
     } else {
       setMessage({ type: 'error', text: t('errorMessage') });
     }
