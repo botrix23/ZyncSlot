@@ -47,7 +47,24 @@
       "Bash(gh run *)",
       "Bash(vercel ls *)",
       "Bash(gh api *)",
-      "Bash(PGPASSWORD=zyncslot_password psql -U zyncslot_user -d zyncslot_db -h localhost -c \"UPDATE tenants SET plan = 'ENTERPRISE', status = 'ACTIVE', \\\\\"subscriptionExpiresAt\\\\\" = NULL WHERE id = \\(SELECT t.id FROM tenants t JOIN users u ON u.\\\\\"tenantId\\\\\" = t.id WHERE u.email = 'boris90alejandro@gmail.com' LIMIT 1\\) RETURNING id, name, plan, status;\")"
+      "Bash(PGPASSWORD=zyncslot_password psql -U zyncslot_user -d zyncslot_db -h localhost -c \"UPDATE tenants SET plan = 'ENTERPRISE', status = 'ACTIVE', \\\\\"subscriptionExpiresAt\\\\\" = NULL WHERE id = \\(SELECT t.id FROM tenants t JOIN users u ON u.\\\\\"tenantId\\\\\" = t.id WHERE u.email = 'boris90alejandro@gmail.com' LIMIT 1\\) RETURNING id, name, plan, status;\")",
+      "Bash(git -C /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox diff src/app/actions/auth.ts)",
+      "Bash(git -C /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox add src/app/actions/auth.ts)",
+      "Bash(git -C /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox commit -m ' *)",
+      "Bash(git -C /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox push origin main)",
+      "Bash(gh deployment *)",
+      "Bash(npm install *)",
+      "Bash(sudo npm *)",
+      "Bash(git -C /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox add src/app/[locale]/admin/forgot-password/page.tsx)",
+      "Bash(git commit -m 'fix: actualizar BlockManager para usar cancelBlockAction en lugar de deleteBlockAction *)",
+      "Bash(pg_isready -h localhost -p 5432)",
+      "Bash(npx drizzle-kit *)",
+      "Bash(curl -s http://localhost:3000/es/admin/staff)",
+      "Bash(docker exec *)",
+      "Bash(curl -s \"http://localhost:3000/es/zyncsalon-spa\")",
+      "Bash(curl -s \"http://localhost:3000/api/booking/slots\")",
+      "Bash(curl -s \"http://localhost:3000/es/test\" -o /dev/null -w \"%{http_code}\")",
+      "Bash(curl -s \"http://localhost:3000/es/zyncsalon-spa\" -o /dev/null -w \"%{http_code}\")"
     ]
   }
 }
