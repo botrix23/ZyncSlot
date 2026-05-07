@@ -149,6 +149,29 @@ bookingSettings: {
     setIsLoading(false);
   };
 
+// Convierte cualquier imagen a WebP usando Canvas (sin librerías externas)
+async function convertToWebP(file: File, quality = 0.85): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { URL.revokeObjectURL(url); reject(new Error('Canvas error')); return; }
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob((blob) => {
+        URL.revokeObjectURL(url);
+        if (!blob) { reject(new Error('Conversion failed')); return; }
+        resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), { type: 'image/webp' }));
+      }, 'image/webp', quality);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Load error')); };
+    img.src = url;
+  });
+}
+
 const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 const file = e.target.files?.[0];
 if (!file) return;
@@ -167,8 +190,9 @@ if (file.size > 2 * 1024 * 1024) {
 
 setIsUploadingCover(true);
 try {
+  const webpFile = await convertToWebP(file, 0.85);
   const form = new FormData();
-  form.append('file', file);
+  form.append('file', webpFile);
   form.append('type', 'cover');
 
   const res = await fetch('/api/upload-asset', { method: 'POST', body: form });
@@ -203,8 +227,9 @@ if (file.size > 1 * 1024 * 1024) {
 }
 
 try {
+  const webpFile = await convertToWebP(file, 0.90);
   const form = new FormData();
-  form.append('file', file);
+  form.append('file', webpFile);
   form.append('type', 'logo');
 
   const res = await fetch('/api/upload-asset', { method: 'POST', body: form });
