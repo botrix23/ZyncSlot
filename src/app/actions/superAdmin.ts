@@ -102,7 +102,9 @@ export async function deleteTenantAction(tenantId: string) {
 
   const prevTenant = await db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) });
 
-  // Los cascade deletes del schema se encargan del resto
+  // Eliminar usuarios explícitamente (el CASCADE en Supabase puede no estar activo)
+  await db.delete(users).where(eq(users.tenantId, tenantId));
+
   await db.delete(tenants).where(eq(tenants.id, tenantId));
 
   await logAuditEvent({
