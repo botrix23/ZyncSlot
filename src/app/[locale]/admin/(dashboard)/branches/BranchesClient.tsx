@@ -105,7 +105,7 @@ export default function BranchesClient({
       setIsModalOpen(false);
       router.refresh();
     } else if (result.error === 'PLAN_LIMIT_EXCEEDED') {
-      alert(`Límite del plan ${plan ?? 'FREE'} alcanzado (${result.current}/${result.limit} sucursales). Actualiza tu plan para agregar más.`);
+      alert(`Límite del plan ${plan ?? 'BASIC'} alcanzado (${result.current}/${result.limit} sucursales). Actualiza tu plan para agregar más.`);
     } else {
       alert(t('errorSave'));
     }
@@ -183,7 +183,7 @@ export default function BranchesClient({
                   ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
                   : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-zinc-400'
             }`}>
-              {initialBranches.length} / {limit} sucursales · {plan ?? 'FREE'}
+              {initialBranches.length} / {limit} sucursales · {plan ?? 'BASIC'}
             </span>
           )}
           <button

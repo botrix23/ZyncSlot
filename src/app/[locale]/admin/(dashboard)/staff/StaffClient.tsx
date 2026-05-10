@@ -35,6 +35,8 @@ import { useTranslations } from "next-intl";
 import { Portal } from "@/components/Portal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import PhoneInput from "@/components/PhoneInput";
+import { PlanGate, PlanGateSection } from "@/components/PlanGate";
+import { canUseFeature } from "@/core/plans";
 
 export default function StaffClient({
   initialStaff,
@@ -236,7 +238,7 @@ export default function StaffClient({
       setIsModalOpen(false);
       router.refresh();
     } else if (result.error === 'PLAN_LIMIT_EXCEEDED') {
-      alert(`Límite del plan ${plan ?? 'FREE'} alcanzado (${result.current}/${result.limit} empleados). Actualiza tu plan para agregar más.`);
+      alert(`Límite del plan ${plan ?? 'BASIC'} alcanzado (${result.current}/${result.limit} empleados). Actualiza tu plan para agregar más.`);
     } else {
       alert(t('errorSave'));
     }
@@ -291,6 +293,10 @@ export default function StaffClient({
   }, [openMenu]);
 
   const handleCreateAccess = async (member: any) => {
+    if (!canUseFeature(plan, 'staffAccess')) {
+      alert('El acceso de staff al sistema está disponible desde el plan Professional.');
+      return;
+    }
     if (!member.email) {
       alert('Este profesional no tiene email registrado. Agrégalo primero para crear acceso.');
       return;
@@ -364,7 +370,7 @@ export default function StaffClient({
                   ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
                   : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-zinc-400'
             }`}>
-              {initialStaff.length} / {limit} empleados · {plan ?? 'FREE'}
+              {initialStaff.length} / {limit} empleados · {plan ?? 'BASIC'}
             </span>
           )}
           <button
@@ -511,44 +517,51 @@ export default function StaffClient({
 
               {/* Acceso al sistema */}
               <div className="w-full pt-3 mt-1 border-t border-slate-100 dark:border-white/5" onClick={e => e.stopPropagation()}>
-                {member.user ? (
-                  member.user.isActive ? (
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        Acceso activo
-                      </span>
-                      <button
-                        onClick={() => handleRevokeAccess(member)}
-                        className="flex items-center gap-1 text-[10px] font-black text-slate-400 hover:text-rose-500 px-2.5 py-1.5 rounded-xl hover:bg-rose-500/5 transition-all"
-                      >
-                        <ShieldOff className="w-3 h-3" />
-                        Revocar
-                      </button>
-                    </div>
+                {canUseFeature(plan, 'staffAccess') ? (
+                  member.user ? (
+                    member.user.isActive ? (
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          Acceso activo
+                        </span>
+                        <button
+                          onClick={() => handleRevokeAccess(member)}
+                          className="flex items-center gap-1 text-[10px] font-black text-slate-400 hover:text-rose-500 px-2.5 py-1.5 rounded-xl hover:bg-rose-500/5 transition-all"
+                        >
+                          <ShieldOff className="w-3 h-3" />
+                          Revocar
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400">
+                          <ShieldOff className="w-3.5 h-3.5" />
+                          Acceso inactivo
+                        </span>
+                        <button
+                          onClick={() => handleReactivateAccess(member)}
+                          className="flex items-center gap-1 text-[10px] font-black text-slate-400 hover:text-emerald-500 px-2.5 py-1.5 rounded-xl hover:bg-emerald-500/5 transition-all"
+                        >
+                          <ShieldCheck className="w-3 h-3" />
+                          Reactivar
+                        </button>
+                      </div>
+                    )
                   ) : (
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400">
-                        <ShieldOff className="w-3.5 h-3.5" />
-                        Acceso inactivo
-                      </span>
-                      <button
-                        onClick={() => handleReactivateAccess(member)}
-                        className="flex items-center gap-1 text-[10px] font-black text-slate-400 hover:text-emerald-500 px-2.5 py-1.5 rounded-xl hover:bg-emerald-500/5 transition-all"
-                      >
-                        <ShieldCheck className="w-3 h-3" />
-                        Reactivar
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleCreateAccess(member)}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 text-[10px] font-black text-purple-600 dark:text-purple-400 bg-purple-500/5 hover:bg-purple-500/10 rounded-xl transition-all border border-purple-500/10"
+                    >
+                      <KeyRound className="w-3 h-3" />
+                      Crear acceso al portal
+                    </button>
                   )
                 ) : (
-                  <button
-                    onClick={() => handleCreateAccess(member)}
-                    className="w-full flex items-center justify-center gap-1.5 py-2 text-[10px] font-black text-purple-600 dark:text-purple-400 bg-purple-500/5 hover:bg-purple-500/10 rounded-xl transition-all border border-purple-500/10"
-                  >
-                    <KeyRound className="w-3 h-3" />
-                    Crear acceso al portal
-                  </button>
+                  <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400">
+                    <ShieldOff className="w-3.5 h-3.5" />
+                    Acceso no disponible en tu plan
+                  </div>
                 )}
               </div>
             </div>
@@ -673,6 +686,7 @@ export default function StaffClient({
                 </div>
 
                 {categories.length > 0 && (
+                  <PlanGateSection plan={plan} feature="staffCategories" upgradeMessage="Las categorías de especialidad por staff están disponibles desde el plan Professional.">
                   <div className="space-y-4 p-5 bg-slate-50 dark:bg-white/5 rounded-[24px] border border-slate-200 dark:border-white/10">
                     <div className="flex items-center gap-2">
                       <Tag className="w-4 h-4 text-purple-500" />
@@ -702,6 +716,7 @@ export default function StaffClient({
                       })}
                     </div>
                   </div>
+                  </PlanGateSection>
                 )}
 
                 <div className="space-y-6">

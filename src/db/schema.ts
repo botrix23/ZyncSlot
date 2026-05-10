@@ -19,7 +19,7 @@ export const tenants = pgTable('tenants', {
   whatsappNumber: varchar('whatsapp_number', { length: 30 }), // Número WA del negocio (ej. 50370000000)
   waMessageTemplate: text('wa_message_template'),              // Template personalizado del mensaje WA a domicilio
   timezone: varchar('timezone', { length: 100 }).notNull().default('UTC'),
-  plan: varchar('plan', { length: 50 }).notNull().default('FREE'), // 'FREE' | 'PRO' | 'ENTERPRISE'
+  plan: varchar('plan', { length: 50 }).notNull().default('BASIC'), // 'BASIC' | 'PROFESSIONAL' | 'ENTERPRISE'
   status: varchar('status', { length: 50 }).notNull().default('TRIAL'), // 'ACTIVE' | 'TRIAL' | 'SUSPENDED'
   subscriptionExpiresAt: timestamp('subscription_expires_at', { withTimezone: true, mode: 'date' }),
   homeServiceTerms: text('home_service_terms'),

@@ -1,11 +1,12 @@
 "use server";
 
 import { db } from "@/db";
-import { staff, users } from "@/db/schema";
+import { staff, users, tenants } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth-session";
 import bcrypt from "bcryptjs";
+import { canUseFeature } from "@/core/plans";
 
 function generateTempPassword(): string {
   const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -37,6 +38,12 @@ export async function createStaffAccessAction(staffId: string, tenantId: string)
     const session = await getSession();
     if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.role)) {
       return { success: false, error: "No autorizado" };
+    }
+
+    // Plan guard: verificar que el plan permite acceso de staff
+    const tenant = await db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) });
+    if (!canUseFeature(tenant?.plan, 'staffAccess')) {
+      return { success: false, error: "El acceso de staff no está disponible en tu plan actual." };
     }
 
     const member = await db.query.staff.findFirst({

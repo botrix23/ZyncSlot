@@ -1,77 +1,162 @@
 // src/core/plans.ts
 
-export type PlanType = 'FREE' | 'PRO' | 'ENTERPRISE';
+export type PlanType = 'BASIC' | 'PROFESSIONAL' | 'ENTERPRISE';
 
 export interface PlanFeatures {
+  // Capacidad
   maxBranches: number;
   maxStaff: number;
   maxServices: number;
-  multiServiceBooking: boolean;   // Reserva de más de 1 servicio a la vez
-  separateServiceScheduling: boolean; // Agendar servicios en días/horas distintos
-  homeService: boolean;
-  customBranding: boolean;
-  analyticsAdvanced: boolean;
-  staffRotations: boolean;
+
+  // Reservas y agenda
+  multiServiceBooking: boolean;        // Multi-servicio en una sesión
+  separateServiceScheduling: boolean;  // Agendamiento separado por servicio
+
+  // Branding y personalización
+  customTheme: boolean;                // Tema claro / oscuro
+  customHero: boolean;                 // Hero personalizable (título y subtítulo)
+  customWidgetSteps: boolean;          // Configuración de pasos del widget
+  customEmailTemplate: boolean;        // Template de email personalizado
+
+  // Servicios
+  simultaneousServices: boolean;       // Servicio simultáneo / exclusivo
+  serviceCategories: boolean;          // Categorías de especialidad
+  servicesPerBranch: boolean;          // Asignar servicios por sucursal
+
+  // Staff
+  staffAccess: boolean;                // Acceso al sistema con rol STAFF
+  staffCategories: boolean;            // Categorías de especialidad por staff
+  staffRotations: boolean;             // Rotaciones de staff multi-sucursal
+
+  // Encuestas
+  surveys: boolean;                    // Encuestas básicas + envío automático + preguntas personalizadas
+  nps: boolean;                        // NPS (Net Promoter Score) — solo Enterprise
+
+  // Dashboard y analítica
+  weeklyMonthlyStats: boolean;         // Estadísticas semanales, mensuales y gráficos
+  advancedAnalytics: boolean;          // Analítica avanzada — solo Enterprise
+
+  // Soporte
   prioritySupport: boolean;
-  advancedSurveys: boolean;
+
+  // Enterprise exclusivo
+  auditLogsAdmin: boolean;             // Audit logs visibles al admin
 }
 
 export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
-  FREE: {
+  BASIC: {
     maxBranches: 1,
-    maxStaff: 3,
-    maxServices: 5,
+    maxStaff: 1,
+    maxServices: 10,
+
     multiServiceBooking: false,
     separateServiceScheduling: false,
-    homeService: false,
-    customBranding: false,
-    analyticsAdvanced: false,
+
+    customTheme: false,
+    customHero: false,
+    customWidgetSteps: false,
+    customEmailTemplate: false,
+
+    simultaneousServices: false,
+    serviceCategories: false,
+    servicesPerBranch: false,
+
+    staffAccess: false,
+    staffCategories: false,
     staffRotations: false,
+
+    surveys: false,
+    nps: false,
+
+    weeklyMonthlyStats: false,
+    advancedAnalytics: false,
+
     prioritySupport: false,
-    advancedSurveys: false,
+    auditLogsAdmin: false,
   },
-  PRO: {
+  PROFESSIONAL: {
     maxBranches: 3,
     maxStaff: 15,
     maxServices: 30,
+
     multiServiceBooking: true,
     separateServiceScheduling: true,
-    homeService: true,
-    customBranding: true,
-    analyticsAdvanced: false,
+
+    customTheme: true,
+    customHero: true,
+    customWidgetSteps: true,
+    customEmailTemplate: true,
+
+    simultaneousServices: true,
+    serviceCategories: true,
+    servicesPerBranch: true,
+
+    staffAccess: true,
+    staffCategories: true,
     staffRotations: true,
+
+    surveys: true,
+    nps: false,
+
+    weeklyMonthlyStats: true,
+    advancedAnalytics: false,
+
     prioritySupport: true,
-    advancedSurveys: true,
+    auditLogsAdmin: false,
   },
   ENTERPRISE: {
-    maxBranches: 999,
-    maxStaff: 999,
-    maxServices: 999,
+    maxBranches: 9999,
+    maxStaff: 9999,
+    maxServices: 9999,
+
     multiServiceBooking: true,
     separateServiceScheduling: true,
-    homeService: true,
-    customBranding: true,
-    analyticsAdvanced: true,
+
+    customTheme: true,
+    customHero: true,
+    customWidgetSteps: true,
+    customEmailTemplate: true,
+
+    simultaneousServices: true,
+    serviceCategories: true,
+    servicesPerBranch: true,
+
+    staffAccess: true,
+    staffCategories: true,
     staffRotations: true,
+
+    surveys: true,
+    nps: true,
+
+    weeklyMonthlyStats: true,
+    advancedAnalytics: true,
+
     prioritySupport: true,
-    advancedSurveys: true,
+    auditLogsAdmin: true,
   },
 };
 
-/**
- * Retorna las características del plan especificado.
- * Si el plan no existe, retorna el plan FREE por defecto.
- */
+/** Retorna las características del plan. Backward-compatible con FREE/PRO. */
 export function getPlanFeatures(plan?: string | null): PlanFeatures {
-  const p = (plan || 'FREE') as PlanType;
-  return PLAN_FEATURES[p] || PLAN_FEATURES.FREE;
+  const normalized = plan === 'FREE' ? 'BASIC' : plan === 'PRO' ? 'PROFESSIONAL' : plan;
+  const p = (normalized || 'BASIC') as PlanType;
+  return PLAN_FEATURES[p] || PLAN_FEATURES.BASIC;
 }
 
-/**
- * Verifica si un plan tiene una característica específica habilitada.
- */
+/** Verifica si un plan tiene una característica específica habilitada. */
 export function canUseFeature(plan: string | null | undefined, feature: keyof PlanFeatures): boolean {
   const features = getPlanFeatures(plan);
   const value = features[feature];
   return typeof value === 'boolean' ? value : false;
+}
+
+/** Nombre legible del plan. */
+export function getPlanDisplayName(plan?: string | null): string {
+  const normalized = plan === 'FREE' ? 'BASIC' : plan === 'PRO' ? 'PROFESSIONAL' : plan;
+  const names: Record<string, string> = {
+    BASIC: 'Basic',
+    PROFESSIONAL: 'Professional',
+    ENTERPRISE: 'Enterprise',
+  };
+  return names[normalized || 'BASIC'] || 'Basic';
 }

@@ -51,7 +51,7 @@ export async function getAllTenantsAction() {
 // ─── Cambiar plan de un tenant ───────────────────────────────────────────────
 export async function updateTenantPlanAction(
   tenantId: string,
-  plan: 'FREE' | 'PRO' | 'ENTERPRISE'
+  plan: 'BASIC' | 'PROFESSIONAL' | 'ENTERPRISE'
 ) {
   const session = await assertSuperAdmin();
 

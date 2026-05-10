@@ -16,12 +16,15 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import PhoneInput from "@/components/PhoneInput";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { PlanGateSection } from "@/components/PlanGate";
 
 export default function AppearanceClient({
   tenant,
   initialZones,
-  initialTab = 'design'
+  initialTab = 'design',
+  plan,
 }: {
+plan?: string | null;
 tenant: {
 id: string;
 name: string;
@@ -439,6 +442,7 @@ try {
                 </div>
 
                 {/* Subtitle */}
+                <PlanGateSection plan={plan} feature="customHero" upgradeMessage="El subtítulo personalizado del hero está disponible desde el plan Professional.">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.heroSubtitle')}</label>
                   <input
@@ -450,6 +454,7 @@ try {
                   />
                   <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">{tPortal('form.heroSubtitleHint')}</p>
                 </div>
+                </PlanGateSection>
 
                 {/* Widget Footer */}
                 <div>
@@ -551,6 +556,7 @@ try {
             </div>
 
             {/* Tema del Portal */}
+            <PlanGateSection plan={plan} feature="customTheme" upgradeMessage="La selección de tema claro/oscuro está disponible desde el plan Professional.">
             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-4 shadow-sm space-y-3">
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-white/10">
                 <div className="p-1.5 bg-purple-500/10 rounded-lg">
@@ -567,6 +573,7 @@ try {
                 </button>
               </div>
             </div>
+            </PlanGateSection>
 
             {/* Color Primario */}
             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-4 shadow-sm space-y-3">
@@ -765,6 +772,7 @@ try {
             </div>
 
 {/* Email de Confirmación */}
+<PlanGateSection plan={plan} feature="customEmailTemplate" upgradeMessage="El template de email personalizado está disponible desde el plan Professional.">
 <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-6">
 <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-white/5">
 <div className="p-2 bg-blue-500/10 rounded-lg">
@@ -775,11 +783,11 @@ try {
 <div className="space-y-4">
 <div className="space-y-2">
 <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">{tPortal('form.emailTitle')}</label>
-<textarea 
-value={emailBodyTemplate} 
-onChange={e => setEmailBodyTemplate(e.target.value)} 
-placeholder={tPortal('form.emailPlaceholder')} 
-className="w-full min-h-[150px] p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all resize-none text-sm" 
+<textarea
+value={emailBodyTemplate}
+onChange={e => setEmailBodyTemplate(e.target.value)}
+placeholder={tPortal('form.emailPlaceholder')}
+className="w-full min-h-[150px] p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all resize-none text-sm"
 />
 </div>
 <div className="bg-blue-500/5 p-4 rounded-2xl border border-blue-500/10">
@@ -792,6 +800,7 @@ className="w-full min-h-[150px] p-4 bg-slate-50 dark:bg-white/5 border border-sl
 </div>
 </div>
 </div>
+</PlanGateSection>
 
             {/* Configuración de Fidelización */}
             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-6">

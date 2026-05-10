@@ -15,12 +15,12 @@ const statusConfig = {
 };
 
 const planConfig = {
-  FREE:       { color: 'text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-white/10' },
-  PRO:        { color: 'text-purple-600 dark:text-purple-400 bg-purple-500/10' },
+  BASIC:        { color: 'text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-white/10' },
+  PROFESSIONAL: { color: 'text-purple-600 dark:text-purple-400 bg-purple-500/10' },
   ENTERPRISE: { color: 'text-amber-600 dark:text-amber-400 bg-amber-500/10' },
 };
 
-type PlanType = 'FREE' | 'PRO' | 'ENTERPRISE';
+type PlanType = 'BASIC' | 'PROFESSIONAL' | 'ENTERPRISE';
 
 function PlanChangeModal({
   tenant,
@@ -36,8 +36,8 @@ function PlanChangeModal({
   const t = useTranslations('SuperAdmin.tenantsPage');
   const [selected, setSelected] = useState<PlanType>(tenant.plan as PlanType);
   const plans: { value: PlanType; label: string; desc: string }[] = [
-    { value: 'FREE',       label: 'Free',       desc: t('planFreeDesc') },
-    { value: 'PRO',        label: 'Pro',         desc: t('planProDesc') },
+    { value: 'BASIC',        label: 'Basic',        desc: t('planFreeDesc') },
+    { value: 'PROFESSIONAL', label: 'Professional', desc: t('planProDesc') },
     { value: 'ENTERPRISE', label: 'Enterprise',  desc: t('planEnterpriseDesc') },
   ];
 
@@ -216,7 +216,7 @@ export default function TenantsTable({ tenants: initialTenants, locale }: { tena
             <tbody>
               {tenants.map(tenant => {
                 const cfg = statusConfig[tenant.status as keyof typeof statusConfig] || statusConfig.SUSPENDED;
-                const planCfg = planConfig[tenant.plan as keyof typeof planConfig] || planConfig.FREE;
+                const planCfg = planConfig[tenant.plan as keyof typeof planConfig] || planConfig.BASIC;
                 const isLoading = loadingId === tenant.id;
                 return (
                   <tr key={tenant.id} className="border-b border-zinc-100 dark:border-white/5 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors last:border-0">
@@ -282,7 +282,7 @@ export default function TenantsTable({ tenants: initialTenants, locale }: { tena
       <div className="space-y-3 md:hidden">
         {tenants.map(tenant => {
           const cfg = statusConfig[tenant.status as keyof typeof statusConfig] || statusConfig.SUSPENDED;
-          const planCfg = planConfig[tenant.plan as keyof typeof planConfig] || planConfig.FREE;
+          const planCfg = planConfig[tenant.plan as keyof typeof planConfig] || planConfig.BASIC;
           const isLoading = loadingId === tenant.id;
           return (
             <div key={tenant.id} className="bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/5 rounded-2xl p-4 space-y-3">

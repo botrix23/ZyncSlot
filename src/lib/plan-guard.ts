@@ -15,7 +15,7 @@ export async function checkPlanLimit(
     columns: { plan: true },
   });
 
-  const plan = tenant?.plan || "FREE";
+  const plan = tenant?.plan || "BASIC";
   const features = getPlanFeatures(plan);
 
   let current = 0;

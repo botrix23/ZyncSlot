@@ -178,6 +178,8 @@ export default function ServicesClient({
         branchIds: [],
         categoryIds: []
       });
+      setNewInclude("");
+      setNewExclude("");
       setAvailabilityType("all");
     }
     setIsModalOpen(true);
@@ -212,7 +214,7 @@ export default function ServicesClient({
       setIsModalOpen(false);
       router.refresh();
     } else if ((result as any).error === 'PLAN_LIMIT_EXCEEDED') {
-      alert(`Límite del plan ${plan ?? 'FREE'} alcanzado (${(result as any).current}/${(result as any).limit} servicios). Actualiza tu plan para agregar más.`);
+      alert(`Límite del plan ${plan ?? 'BASIC'} alcanzado (${(result as any).current}/${(result as any).limit} servicios). Actualiza tu plan para agregar más.`);
     } else {
       alert(t('errorSave'));
     }
@@ -309,7 +311,7 @@ export default function ServicesClient({
                   ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
                   : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-zinc-400'
             }`}>
-              {initialServices.length} / {limit} servicios · {plan ?? 'FREE'}
+              {initialServices.length} / {limit} servicios · {plan ?? 'BASIC'}
             </span>
           )}
           <button

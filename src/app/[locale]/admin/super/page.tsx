@@ -20,9 +20,9 @@ const statusConfig = {
 };
 
 const planColor: Record<string, string> = {
-  FREE:       'text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-white/5',
-  PRO:        'text-purple-600 dark:text-purple-300 bg-purple-50 dark:bg-purple-500/10',
-  ENTERPRISE: 'text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10',
+  BASIC:        'text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-white/5',
+  PROFESSIONAL: 'text-purple-600 dark:text-purple-300 bg-purple-50 dark:bg-purple-500/10',
+  ENTERPRISE:   'text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10',
 };
 
 const auditActionConfig: Record<string, { color: string; label: string }> = {
@@ -492,7 +492,7 @@ export default async function SuperAdminDashboard({ params }: { params: { locale
           {/* Distribución de planes */}
           <div className={`${card} p-5`}>
             <p className="text-xs text-zinc-600 dark:text-zinc-400 uppercase tracking-widest font-semibold mb-3">{t('plans.title')}</p>
-            {(['FREE', 'PRO', 'ENTERPRISE'] as const).map(plan => {
+            {(['BASIC', 'PROFESSIONAL', 'ENTERPRISE'] as const).map(plan => {
               const cnt = data.tenantActivity.filter(ten => ten.plan === plan).length;
               const pct = totalTenants > 0 ? Math.round((cnt / totalTenants) * 100) : 0;
               return (
@@ -503,7 +503,7 @@ export default async function SuperAdminDashboard({ params }: { params: { locale
                   </div>
                   <div className="w-full bg-zinc-100 dark:bg-white/5 rounded-full h-1.5">
                     <div
-                      className={`h-1.5 rounded-full ${plan === 'ENTERPRISE' ? 'bg-amber-500' : plan === 'PRO' ? 'bg-purple-500' : 'bg-zinc-400'}`}
+                      className={`h-1.5 rounded-full ${plan === 'ENTERPRISE' ? 'bg-amber-500' : plan === 'PROFESSIONAL' ? 'bg-purple-500' : 'bg-zinc-400'}`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>

@@ -27,6 +27,7 @@ export default async function AppearancePage({ params, searchParams }: { params:
 
   return (
     <AppearanceClient
+      plan={tenantData.plan}
       initialTab={searchParams?.tab === 'rules' ? 'rules' : 'design'}
       tenant={{
         id: tenantData.id,

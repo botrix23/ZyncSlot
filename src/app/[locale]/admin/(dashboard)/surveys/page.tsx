@@ -5,6 +5,7 @@ import { tenants, surveyQuestions, reviews as reviewsTable } from "@/db/schema";
 import { eq, asc, desc } from "drizzle-orm";
 import { getPlanFeatures } from "@/core/plans";
 import SurveyClient from "./SurveyClient";
+import { Lock } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 export default async function SurveysPage({ params: { locale } }: { params: { locale: string } }) {
@@ -44,7 +45,9 @@ export default async function SurveysPage({ params: { locale } }: { params: { lo
   ]);
 
   const planFeatures = getPlanFeatures(tenant.plan);
-  const canUseAdvanced = planFeatures.advancedSurveys;
+  const canUseSurveys = planFeatures.surveys;
+  // canUseAdvanced = can use NPS question type (Enterprise only)
+  const canUseAdvanced = planFeatures.nps;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
@@ -59,15 +62,32 @@ export default async function SurveysPage({ params: { locale } }: { params: { lo
         </div>
       </div>
 
-      <SurveyClient 
-        tenantId={tenantId}
-        initialEnabled={tenant.reviewsEnabled}
-        initialQuestions={questions}
-        initialReviews={reviews}
-        canUseAdvanced={canUseAdvanced}
-        locale={locale}
-        slug={tenant.slug}
-      />
+      {!canUseSurveys ? (
+        <div className="flex flex-col items-center justify-center gap-4 py-20 rounded-3xl border border-dashed border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.02]">
+          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-zinc-200 dark:bg-white/10">
+            <Lock className="w-7 h-7 text-zinc-500 dark:text-zinc-400" />
+          </div>
+          <div className="text-center max-w-sm">
+            <p className="font-bold text-slate-800 dark:text-white text-lg">Encuestas no disponibles</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+              Las encuestas están disponibles desde el plan Professional. Actualiza tu plan para acceder a esta función.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 px-3 py-1.5 rounded-full">
+            Plan actual: {tenant.plan || 'Basic'}
+          </span>
+        </div>
+      ) : (
+        <SurveyClient
+          tenantId={tenantId}
+          initialEnabled={tenant.reviewsEnabled}
+          initialQuestions={questions}
+          initialReviews={reviews}
+          canUseAdvanced={canUseAdvanced}
+          locale={locale}
+          slug={tenant.slug}
+        />
+      )}
     </div>
   );
 }

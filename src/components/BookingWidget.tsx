@@ -132,7 +132,7 @@ export default function BookingWidget({
   const locale = useLocale();
   const dateFnsLocale = locale === 'en' ? enUS : es;
   const [step, setStep] = useState(1);
-  const currentPlan = tenantPlan || 'FREE';
+  const currentPlan = tenantPlan || 'BASIC';
 
   const [modality, setModality] = useState<'local' | 'domicilio' | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
