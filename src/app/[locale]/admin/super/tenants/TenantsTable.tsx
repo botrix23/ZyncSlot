@@ -223,9 +223,9 @@ export default function TenantsTable({ tenants: initialTenants, locale }: { tena
                     <td className="px-6 py-4">
                       <p className="font-bold text-zinc-900 dark:text-white">{tenant.name}</p>
                       <p className="text-xs text-zinc-500">{tenant.adminCount} admin(s) · {tenant.branchCount} sucursal(es)</p>
-                      {tenant.users?.find(u => u.role === 'ADMIN')?.email && (
-                        <p className="text-xs text-purple-500 dark:text-purple-400 mt-0.5">{tenant.users.find(u => u.role === 'ADMIN')?.email}</p>
-                      )}
+                      {tenant.users?.filter(u => u.role === 'ADMIN').map(u => (
+                        <p key={u.id} className="text-xs text-purple-500 dark:text-purple-400 mt-0.5">{u.email}</p>
+                      ))}
                     </td>
                     <td className="px-6 py-4">
                       <code className="text-xs text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-1 rounded-lg">{tenant.slug}</code>
@@ -290,9 +290,9 @@ export default function TenantsTable({ tenants: initialTenants, locale }: { tena
                 <div className="min-w-0">
                   <p className="font-bold text-zinc-900 dark:text-white truncate">{tenant.name}</p>
                   <code className="text-xs text-purple-600 dark:text-purple-400">{tenant.slug}</code>
-                  {tenant.users?.find(u => u.role === 'ADMIN')?.email && (
-                    <p className="text-xs text-zinc-500 mt-0.5 truncate">{tenant.users.find(u => u.role === 'ADMIN')?.email}</p>
-                  )}
+                  {tenant.users?.filter(u => u.role === 'ADMIN').map(u => (
+                    <p key={u.id} className="text-xs text-zinc-500 mt-0.5 truncate">{u.email}</p>
+                  ))}
                 </div>
                 <div className="flex gap-1.5 shrink-0">
                   <button
