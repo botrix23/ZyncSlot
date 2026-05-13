@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Users, X, Plus, Trash2, ToggleLeft, ToggleRight, Copy, Check, AlertCircle, ShieldCheck } from 'lucide-react';
-import { getTenantAdminsAction, createTenantAdminAction, toggleTenantAdminAction, deleteTenantAdminAction } from '@/app/actions/superAdmin';
+import { Users, X, Plus, Trash2, ToggleLeft, ToggleRight, Copy, Check, AlertCircle, ShieldCheck, LifeBuoy } from 'lucide-react';
+import { getTenantAdminsAction, createTenantAdminAction, toggleTenantAdminAction, deleteTenantAdminAction, restoreAccessAction } from '@/app/actions/superAdmin';
 
 type Admin = Awaited<ReturnType<typeof getTenantAdminsAction>>[number];
 
@@ -22,11 +22,13 @@ export default function TenantAdminsModal({
   tenantId,
   tenantName,
   plan,
+  recoveryEmail,
   onClose,
 }: {
   tenantId: string;
   tenantName: string;
   plan: string;
+  recoveryEmail?: string | null;
   onClose: () => void;
 }) {
   const [admins, setAdmins] = useState<Admin[] | null>(null);
@@ -38,7 +40,9 @@ export default function TenantAdminsModal({
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [tempEmail, setTempEmail] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [restoringAccess, setRestoringAccess] = useState(false);
 
   const limit = ADMIN_LIMITS[plan] ?? 1;
   const activeCount = admins?.filter(a => a.isActive).length ?? 0;
@@ -77,6 +81,20 @@ export default function TenantAdminsModal({
       setError('No puedes eliminar el único admin del tenant.');
     }
     setActionId(null);
+  };
+
+  const handleRestoreAccess = async () => {
+    setRestoringAccess(true);
+    setError('');
+    const res = await restoreAccessAction(tenantId);
+    if (res.success) {
+      setTempPassword(res.tempPassword ?? null);
+      setTempEmail(res.recoveryEmail ?? null);
+      await reload();
+    } else if (res.error === 'NO_RECOVERY_EMAIL') {
+      setError('Este tenant no tiene un email de recuperación configurado.');
+    }
+    setRestoringAccess(false);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -136,7 +154,7 @@ export default function TenantAdminsModal({
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 space-y-2">
               <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
                 <ShieldCheck className="w-4 h-4" />
-                Admin creado — contraseña temporal (expira en 7 días)
+                Acceso listo{tempEmail ? ` para ${tempEmail}` : ''} — contraseña temporal (expira en 7 días)
               </div>
               <div className="flex items-center gap-2 bg-white dark:bg-black/30 rounded-xl px-3 py-2">
                 <code className="flex-1 text-sm font-mono text-zinc-800 dark:text-zinc-200 select-all">{tempPassword}</code>
@@ -144,7 +162,25 @@ export default function TenantAdminsModal({
                   {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                 </button>
               </div>
-              <p className="text-xs text-emerald-600 dark:text-emerald-500">Comparte esta contraseña con el nuevo admin. Al ingresar deberá cambiarla.</p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-500">Comparte esta contraseña. Al ingresar deberá cambiarla.</p>
+            </div>
+          )}
+
+          {/* Restaurar acceso via recovery email */}
+          {recoveryEmail && (
+            <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 space-y-2">
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-sm">
+                <LifeBuoy className="w-4 h-4" />
+                Email de recuperación configurado
+              </div>
+              <p className="text-xs text-zinc-500">{recoveryEmail}</p>
+              <button
+                onClick={handleRestoreAccess}
+                disabled={restoringAccess}
+                className="w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2"
+              >
+                {restoringAccess ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Restaurar acceso con este email'}
+              </button>
             </div>
           )}
 

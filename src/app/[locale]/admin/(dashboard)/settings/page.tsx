@@ -18,7 +18,10 @@ export default async function SettingsPage({ params }: { params: { locale: strin
   if (!tenantId) redirect(`/${locale}/admin`);
 
   const [tenant, admins] = await Promise.all([
-    db.query.tenants.findFirst({ where: eq(tenants.id, tenantId), columns: { plan: true, name: true } }),
+    db.query.tenants.findFirst({
+      where: eq(tenants.id, tenantId),
+      columns: { plan: true, name: true, recoveryEmail: true },
+    }),
     getAdminsAction(),
   ]);
 
@@ -27,6 +30,7 @@ export default async function SettingsPage({ params }: { params: { locale: strin
       initialAdmins={admins}
       plan={tenant?.plan ?? 'BASIC'}
       currentUserId={session.userId ?? ''}
+      initialRecoveryEmail={tenant?.recoveryEmail ?? null}
     />
   );
 }

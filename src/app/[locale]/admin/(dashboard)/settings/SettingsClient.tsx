@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Users, Plus, Trash2, ToggleLeft, ToggleRight, Copy, Check, AlertCircle, ShieldCheck, UserCog } from 'lucide-react';
-import { getAdminsAction, createAdminAction, toggleAdminAction, deleteAdminAction } from '@/app/actions/adminUsers';
+import { Users, Plus, Trash2, ToggleLeft, ToggleRight, Copy, Check, AlertCircle, ShieldCheck, UserCog, LifeBuoy, Save } from 'lucide-react';
+import { getAdminsAction, createAdminAction, toggleAdminAction, deleteAdminAction, updateRecoveryEmailAction } from '@/app/actions/adminUsers';
 
 type Admin = Awaited<ReturnType<typeof getAdminsAction>>[number];
 
@@ -13,12 +13,17 @@ export default function SettingsClient({
   initialAdmins,
   plan,
   currentUserId,
+  initialRecoveryEmail,
 }: {
   initialAdmins: Admin[];
   plan: string;
   currentUserId: string;
+  initialRecoveryEmail: string | null;
 }) {
   const [admins, setAdmins] = useState(initialAdmins);
+  const [recoveryEmail, setRecoveryEmail] = useState(initialRecoveryEmail ?? '');
+  const [savingRecovery, setSavingRecovery] = useState(false);
+  const [recoverySaved, setRecoverySaved] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
@@ -31,6 +36,15 @@ export default function SettingsClient({
   const limit = ADMIN_LIMITS[plan] ?? 1;
   const activeCount = admins.filter(a => a.isActive).length;
   const canAdd = activeCount < limit;
+
+  const handleSaveRecovery = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingRecovery(true);
+    await updateRecoveryEmailAction(recoveryEmail);
+    setSavingRecovery(false);
+    setRecoverySaved(true);
+    setTimeout(() => setRecoverySaved(false), 2500);
+  };
 
   const reload = async () => {
     const data = await getAdminsAction();
@@ -242,6 +256,47 @@ export default function SettingsClient({
               {!canAdd && <span className="text-xs font-normal opacity-70">(límite del plan alcanzado)</span>}
             </button>
           )}
+        </div>
+      </div>
+      {/* Sección contacto de recuperación */}
+      <div className="bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/5 rounded-3xl overflow-hidden">
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-zinc-100 dark:border-white/5">
+          <div className="w-9 h-9 bg-amber-500/10 rounded-xl flex items-center justify-center">
+            <LifeBuoy className="w-4 h-4 text-amber-500" />
+          </div>
+          <div>
+            <h2 className="font-black text-zinc-900 dark:text-white text-sm">Contacto de recuperación</h2>
+            <p className="text-xs text-zinc-500">Email de respaldo en caso de perder acceso a tu cuenta.</p>
+          </div>
+        </div>
+        <div className="p-6">
+          <form onSubmit={handleSaveRecovery} className="space-y-3">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+              Si pierdes acceso a tu cuenta, el soporte de Zyncrox usará este email para restaurarte el acceso. Debe ser una dirección diferente a tu email de admin.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="email"
+                placeholder="email@ejemplo.com"
+                value={recoveryEmail}
+                onChange={e => setRecoveryEmail(e.target.value)}
+                className="flex-1 bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm text-zinc-900 dark:text-white outline-none focus:border-purple-500/50 transition-colors placeholder:text-zinc-400"
+              />
+              <button
+                type="submit"
+                disabled={savingRecovery}
+                className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-white font-bold text-sm transition-colors flex items-center gap-2 shrink-0"
+              >
+                {savingRecovery ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : recoverySaved ? (
+                  <><Check className="w-4 h-4" /> Guardado</>
+                ) : (
+                  <><Save className="w-4 h-4" /> Guardar</>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

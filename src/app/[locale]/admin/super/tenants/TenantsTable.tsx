@@ -193,6 +193,7 @@ export default function TenantsTable({ tenants: initialTenants, locale }: { tena
           tenantId={adminsTarget.id}
           tenantName={adminsTarget.name}
           plan={adminsTarget.plan}
+          recoveryEmail={(adminsTarget as any).recoveryEmail ?? null}
           onClose={() => setAdminsTarget(null)}
         />
       )}

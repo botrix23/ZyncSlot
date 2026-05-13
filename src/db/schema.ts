@@ -51,6 +51,7 @@ export const tenants = pgTable('tenants', {
   wompiAppId: text('wompi_app_id'),
   wompiApiSecret: text('wompi_api_secret'),
   wompiIsProduction: boolean('wompi_is_production').notNull().default(false),
+  recoveryEmail: varchar('recovery_email', { length: 255 }),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });

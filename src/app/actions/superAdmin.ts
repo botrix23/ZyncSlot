@@ -343,6 +343,53 @@ export async function getSuperAdminDashboardDataAction() {
   };
 }
 
+// ─── Restaurar acceso usando email de recuperación ───────────────────────────
+export async function restoreAccessAction(tenantId: string) {
+  const session = await assertSuperAdmin();
+
+  const tenant = await db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) });
+  if (!tenant?.recoveryEmail) {
+    return { success: false, error: 'NO_RECOVERY_EMAIL' };
+  }
+
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$';
+  const tempPassword = 'Tmp@' + Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  const hashed = await bcrypt.hash(tempPassword, 10);
+  const expires = new Date();
+  expires.setDate(expires.getDate() + 7);
+
+  const existing = await db.query.users.findFirst({ where: eq(users.email, tenant.recoveryEmail) });
+
+  if (existing) {
+    await db.update(users).set({
+      password: hashed,
+      isActive: true,
+      mustChangePassword: true,
+      tempPasswordExpiresAt: expires,
+    }).where(eq(users.id, existing.id));
+  } else {
+    await db.insert(users).values({
+      tenantId,
+      name: 'Admin (recuperación)',
+      email: tenant.recoveryEmail,
+      password: hashed,
+      role: 'ADMIN',
+      isActive: true,
+      mustChangePassword: true,
+      tempPasswordExpiresAt: expires,
+    });
+  }
+
+  await logAuditEvent({
+    action: 'ADMIN_CREATED',
+    userId: session.userId,
+    tenantId,
+    details: { recoveryEmail: tenant.recoveryEmail, tenantName: tenant.name },
+  });
+
+  return { success: true, recoveryEmail: tenant.recoveryEmail, tempPassword };
+}
+
 // ─── Límites de admins por plan ───────────────────────────────────────────────
 const ADMIN_LIMITS: Record<string, number> = {
   BASIC: 1,

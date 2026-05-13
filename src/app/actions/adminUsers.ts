@@ -130,3 +130,30 @@ export async function deleteAdminAction(userId: string) {
   revalidatePath('/[locale]/admin/settings', 'page');
   return { success: true };
 }
+
+export async function updateRecoveryEmailAction(recoveryEmail: string) {
+  const { session, tenantId } = await assertAdmin();
+
+  await db.update(tenants)
+    .set({ recoveryEmail: recoveryEmail || null, updatedAt: new Date() })
+    .where(eq(tenants.id, tenantId));
+
+  await logAuditEvent({
+    action: 'SETTINGS_UPDATED',
+    userId: session.userId,
+    tenantId,
+    details: { field: 'recoveryEmail' },
+  });
+
+  revalidatePath('/[locale]/admin/settings', 'page');
+  return { success: true };
+}
+
+export async function getRecoveryEmailAction() {
+  const { tenantId } = await assertAdmin();
+  const tenant = await db.query.tenants.findFirst({
+    where: eq(tenants.id, tenantId),
+    columns: { recoveryEmail: true },
+  });
+  return tenant?.recoveryEmail ?? null;
+}
