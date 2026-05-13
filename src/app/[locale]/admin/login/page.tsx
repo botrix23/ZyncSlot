@@ -37,26 +37,32 @@ export default function LoginPage() {
     formData.append('rememberMe', rememberMe.toString());
 
     const locale = window.location.pathname.split('/')[1] || 'es';
-    const result = await loginAction(formData, locale);
 
-    if (result.success) {
-      if (rememberMe) {
-        localStorage.setItem('login-remembered-email', email);
+    try {
+      const result = await loginAction(formData, locale);
+
+      if (result.success) {
+        if (rememberMe) {
+          localStorage.setItem('login-remembered-email', email);
+        } else {
+          localStorage.removeItem('login-remembered-email');
+        }
+        if (result.mustChangePassword) {
+          window.location.href = `/${locale}/admin/change-password`;
+        } else if (result.role === 'SUPER_ADMIN') {
+          window.location.href = `/${locale}/admin/super`;
+        } else if (result.role === 'STAFF') {
+          window.location.href = `/${locale}/admin/bookings`;
+        } else {
+          window.location.href = `/${locale}/admin`;
+        }
       } else {
-        localStorage.removeItem('login-remembered-email');
+        const code = (result as any).errorCode as string | undefined;
+        setError(code ? t(code as any) : t('errorInvalid'));
+        setIsLoading(false);
       }
-      if (result.mustChangePassword) {
-        window.location.href = `/${locale}/admin/change-password`;
-      } else if (result.role === 'SUPER_ADMIN') {
-        window.location.href = `/${locale}/admin/super`;
-      } else if (result.role === 'STAFF') {
-        window.location.href = `/${locale}/admin/bookings`;
-      } else {
-        window.location.href = `/${locale}/admin`;
-      }
-    } else {
-      const code = (result as any).errorCode as string | undefined;
-      setError(code ? t(code as any) : t('errorInvalid'));
+    } catch {
+      setError(t('errorInvalid'));
       setIsLoading(false);
     }
   };

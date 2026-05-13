@@ -43,72 +43,77 @@ function validatePasswordComplexity(password: string) {
  * Login: valida credenciales y establece cookie de sesión.
  */
 export async function loginAction(formData: FormData, locale: string) {
-const email = formData.get("email") as string;
-const password = formData.get("password") as string;
-const rememberMe = formData.get("rememberMe") === 'true';
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const rememberMe = formData.get("rememberMe") === 'true';
 
-  // 1. Buscar usuario en la base de datos (con join al tenant para ver status)
-  const user = await db.query.users.findFirst({
-    where: eq(users.email, email),
-    with: {
-      tenant: true
+  try {
+    // 1. Buscar usuario en la base de datos (con join al tenant para ver status)
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, email),
+      with: {
+        tenant: true
+      }
+    });
+
+    if (!user) {
+      return { success: false, errorCode: 'errorInvalid' };
     }
-  });
 
-  if (!user) {
-    return { success: false, errorCode: 'errorInvalid' };
-  }
-
-  // 2. Verificar que la cuenta esté activa
-  if (!user.isActive) {
-    return { success: false, errorCode: 'errorDisabled' };
-  }
-
-  // 3. Verificar que el Tenant no esté suspendido o expirado
-  if (user.role === 'ADMIN' && user.tenant) {
-    if (user.tenant.status === 'SUSPENDED') {
-      return { success: false, errorCode: 'errorSuspended' };
+    // 2. Verificar que la cuenta esté activa
+    if (!user.isActive) {
+      return { success: false, errorCode: 'errorDisabled' };
     }
-    if (user.tenant.status === 'TRIAL' && user.tenant.subscriptionExpiresAt) {
-      const now = new Date();
-      if (now > user.tenant.subscriptionExpiresAt) {
-        return { success: false, errorCode: 'errorTrialExpired' };
+
+    // 3. Verificar que el Tenant no esté suspendido o expirado
+    if (user.role === 'ADMIN' && user.tenant) {
+      if (user.tenant.status === 'SUSPENDED') {
+        return { success: false, errorCode: 'errorSuspended' };
+      }
+      if (user.tenant.status === 'TRIAL' && user.tenant.subscriptionExpiresAt) {
+        const now = new Date();
+        if (now > user.tenant.subscriptionExpiresAt) {
+          return { success: false, errorCode: 'errorTrialExpired' };
+        }
       }
     }
-  }
 
-  // 4. Verificar expiración de contraseña temporal (solo si aún no se ha cambiado)
-  if (user.mustChangePassword && user.tempPasswordExpiresAt) {
-    if (new Date() > user.tempPasswordExpiresAt) {
-      await db.update(users).set({ isActive: false }).where(eq(users.id, user.id));
-      return { success: false, errorCode: 'errorTempExpired' };
+    // 4. Verificar expiración de contraseña temporal (solo si aún no se ha cambiado)
+    if (user.mustChangePassword && user.tempPasswordExpiresAt) {
+      if (new Date() > user.tempPasswordExpiresAt) {
+        await db.update(users).set({ isActive: false }).where(eq(users.id, user.id));
+        return { success: false, errorCode: 'errorTempExpired' };
+      }
     }
+
+    // 5. Comparar contraseñas hasheadas
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (isMatch) {
+      cookies().set("zync_session", JSON.stringify({
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        userId: user.id,
+        tenantId: user.tenantId,
+        staffId: user.staffId ?? null,
+        mustChangePassword: user.mustChangePassword ?? false,
+      }), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24,
+        path: "/",
+      });
+      await logAuditEvent({ action: 'LOGIN_SUCCESS', userId: user.id, tenantId: user.tenantId, details: { email: user.email } });
+      return { success: true, role: user.role, mustChangePassword: user.mustChangePassword ?? false };
+    }
+
+    await logAuditEvent({ action: 'LOGIN_FAILED', details: { email } });
+    return { success: false, errorCode: 'errorInvalid' };
+  } catch (error) {
+    console.error("Login error:", error);
+    return { success: false, errorCode: 'errorInvalid' };
   }
-
-  // 5. Comparar contraseñas hasheadas
-  const isMatch = await bcrypt.compare(password, user.password);
-
-  if (isMatch) {
-    cookies().set("zync_session", JSON.stringify({
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      userId: user.id,
-      tenantId: user.tenantId,
-      staffId: user.staffId ?? null,
-      mustChangePassword: user.mustChangePassword ?? false,
-    }), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24,
-      path: "/",
-    });
-    await logAuditEvent({ action: 'LOGIN_SUCCESS', userId: user.id, tenantId: user.tenantId, details: { email: user.email } });
-    return { success: true, role: user.role, mustChangePassword: user.mustChangePassword ?? false };
-  }
-
-  await logAuditEvent({ action: 'LOGIN_FAILED', details: { email } });
-  return { success: false, errorCode: 'errorInvalid' };
 }
 
 /**
