@@ -6,6 +6,49 @@ import { eq, and, ne, gt, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { checkPlanLimit } from "@/lib/plan-guard";
 
+// Devuelve { startTime, endTime, daysOfWeek } a partir del JSON de businessHours de la sucursal,
+// soportando tanto el formato simple { open, close } como el complejo { regular: { day: { isOpen, slots } } }.
+function parseBranchHoursForInheritance(businessHours: string): { startTime: string; endTime: string; daysOfWeek: string[] } | null {
+  try {
+    const bh = JSON.parse(businessHours);
+
+    // Formato simple
+    if (bh.open && bh.close) {
+      return {
+        startTime: bh.open,
+        endTime: bh.close,
+        daysOfWeek: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+      };
+    }
+
+    // Formato complejo: { regular: { monday: { isOpen, slots: [{open, close}] } } }
+    if (bh.regular) {
+      let earliestOpen = "23:59";
+      let latestClose = "00:00";
+      const openDays: string[] = [];
+
+      for (const [day, schedule] of Object.entries(bh.regular)) {
+        const s = schedule as any;
+        if (s?.isOpen && Array.isArray(s.slots) && s.slots.length > 0) {
+          openDays.push(day);
+          for (const slot of s.slots) {
+            if (slot.open && slot.open < earliestOpen) earliestOpen = slot.open;
+            if (slot.close && slot.close > latestClose) latestClose = slot.close;
+          }
+        }
+      }
+
+      if (openDays.length > 0 && earliestOpen < latestClose) {
+        return { startTime: earliestOpen, endTime: latestClose, daysOfWeek: openDays };
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function createStaffAction(data: {
   tenantId: string;
   branchId: string; // Legacy/Primary branch
@@ -48,6 +91,7 @@ export async function createStaffAction(data: {
       emergencyContactName: data.emergencyContactName,
       emergencyContactPhone: data.emergencyContactPhone,
       allowsHomeService: data.allowsHomeService ?? true,
+      inheritBranchHours: data.inheritBranchHours ?? false,
     }).returning();
 
     // Lógica de Horarios: Si hereda de sucursal, ignorar assignments manuales para la base
@@ -55,22 +99,13 @@ export async function createStaffAction(data: {
 
     if (data.inheritBranchHours) {
       const [branchData] = await db.select().from(branches).where(eq(branches.id, data.branchId));
-      if (branchData && branchData.businessHours) {
-        const hours = JSON.parse(branchData.businessHours); // { open: "08:00", close: "18:00" }
-        
-        // Crear/Sobrescribir asignación permanente con las horas de la sucursal
-        const permAssignment = {
-          branchId: data.branchId,
-          startTime: hours.open || "09:00",
-          endTime: hours.close || "18:00",
-          daysOfWeek: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-          isPermanent: true
-        };
-
-        if (finalAssignments) {
-          finalAssignments = [permAssignment, ...finalAssignments.filter(a => !a.isPermanent)];
-        } else {
-          finalAssignments = [permAssignment];
+      if (branchData?.businessHours) {
+        const parsed = parseBranchHoursForInheritance(branchData.businessHours);
+        if (parsed) {
+          const permAssignment = { branchId: data.branchId, ...parsed, isPermanent: true };
+          finalAssignments = finalAssignments
+            ? [permAssignment, ...finalAssignments.filter(a => !a.isPermanent)]
+            : [permAssignment];
         }
       }
     }
@@ -153,6 +188,7 @@ export async function updateStaffAction(data: {
           emergencyContactName: data.emergencyContactName,
           emergencyContactPhone: data.emergencyContactPhone,
           allowsHomeService: data.allowsHomeService,
+          inheritBranchHours: data.inheritBranchHours,
           updatedAt: new Date(),
         })
         .where(and(eq(staff.id, data.id), eq(staff.tenantId, data.tenantId)));
@@ -169,20 +205,13 @@ export async function updateStaffAction(data: {
 
       if (data.inheritBranchHours && data.branchId) {
         const [branchData] = await db.select().from(branches).where(eq(branches.id, data.branchId));
-        if (branchData && branchData.businessHours) {
-          const hours = JSON.parse(branchData.businessHours);
-          const permAssignment = {
-            branchId: data.branchId,
-            startTime: hours.open || "09:00",
-            endTime: hours.close || "18:00",
-            daysOfWeek: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-            isPermanent: true
-          };
-
-          if (finalAssignments) {
-            finalAssignments = [permAssignment, ...finalAssignments.filter(a => !a.isPermanent)];
-          } else {
-            finalAssignments = [permAssignment];
+        if (branchData?.businessHours) {
+          const parsed = parseBranchHoursForInheritance(branchData.businessHours);
+          if (parsed) {
+            const permAssignment = { branchId: data.branchId, ...parsed, isPermanent: true };
+            finalAssignments = finalAssignments
+              ? [permAssignment, ...finalAssignments.filter(a => !a.isPermanent)]
+              : [permAssignment];
           }
         }
       }
