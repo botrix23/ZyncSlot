@@ -430,7 +430,7 @@ export default async function AdminDashboard({ params: { locale } }: { params: {
             ))}
           </div>
         ) : (
-          <div className="bg-slate-50 dark:bg-white/3 border border-slate-100 dark:border-white/5 rounded-2xl p-8 text-center">
+          <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-2xl p-8 text-center">
             <p className="text-sm text-slate-400 dark:text-zinc-500">No hay más citas programadas para hoy</p>
           </div>
         )}
@@ -559,7 +559,7 @@ export default async function AdminDashboard({ params: { locale } }: { params: {
                 </div>
               </div>
               {topServices.map((svc, i) => (
-                <div key={svc.name + i} className="flex items-center gap-3 bg-slate-50 dark:bg-white/3 rounded-xl px-4 py-3">
+                <div key={svc.name + i} className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 rounded-xl px-4 py-3">
                   <span className={`text-xs font-black w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
                     i === 0 ? 'bg-amber-400 text-white' :
                     i === 1 ? 'bg-slate-300 dark:bg-zinc-600 text-slate-700 dark:text-white' :
@@ -715,7 +715,7 @@ export default async function AdminDashboard({ params: { locale } }: { params: {
               </div>
               <p className="text-xs text-slate-400 dark:text-zinc-500 mt-2">calificación promedio del mes</p>
             </div>
-            <div className="mt-4 flex items-center justify-between bg-slate-50 dark:bg-white/3 rounded-xl px-4 py-3">
+            <div className="mt-4 flex items-center justify-between bg-slate-50 dark:bg-white/5 rounded-xl px-4 py-3">
               <span className="text-sm text-slate-600 dark:text-zinc-300">Encuestas respondidas</span>
               <span className="font-bold text-slate-900 dark:text-white tabular-nums">
                 {reviewsThisMonthRaw.length}
