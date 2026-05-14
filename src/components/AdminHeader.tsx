@@ -11,22 +11,38 @@ import {
   X,
   Menu,
   CalendarPlus,
+  CreditCard,
+  Settings,
+  KeyRound,
+  LogOut,
+  ChevronDown,
+  Calendar,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LangToggle } from '@/components/LangToggle';
 import { SessionUser } from '@/lib/auth-session';
 import { useTranslations } from "next-intl";
-import { getNotificationsAction, markNotificationsReadAction } from '@/app/actions/notifications';
+import { getNotificationsAction } from '@/app/actions/notifications';
 import { approveAbsenceRequestAction, rejectAbsenceRequestAction } from '@/app/actions/absenceRequests';
+import { logoutAction } from '@/app/actions/auth';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 const BELL_LAST_SEEN_KEY = 'bell-last-seen';
 const BELL_DISMISSED_KEY = 'bell-dismissed-ids';
 
-export function AdminHeader({ user }: { user: SessionUser | null }) {
+interface AdminHeaderProps {
+  user: SessionUser | null;
+  locale: string;
+  userEmail?: string | null;
+  nextBillingDate?: Date | null;
+}
+
+export function AdminHeader({ user, locale, userEmail, nextBillingDate }: AdminHeaderProps) {
   const t = useTranslations('Dashboard.header');
   const router = useRouter();
+
   const [bellOpen, setBellOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loadingBell, setLoadingBell] = useState(false);
@@ -35,18 +51,19 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
   const bellRef = useRef<HTMLDivElement>(null);
   const markReadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load persisted state from localStorage on mount
+  const [avatarOpen, setAvatarOpen] = useState(false);
+  const avatarRef = useRef<HTMLDivElement>(null);
+
+  const isUnread = (n: any) =>
+    !dismissedIds.has(n.id) && new Date(n.date).getTime() > lastSeen;
+  const hasUnread = notifications.some(isUnread);
+
   useEffect(() => {
     const stored = localStorage.getItem(BELL_LAST_SEEN_KEY);
     if (stored) setLastSeen(Number(stored));
     const ids = localStorage.getItem(BELL_DISMISSED_KEY);
     if (ids) setDismissedIds(new Set(JSON.parse(ids)));
   }, []);
-
-  const isUnread = (n: any) =>
-    !dismissedIds.has(n.id) && new Date(n.date).getTime() > lastSeen;
-
-  const hasUnread = notifications.some(isUnread);
 
   const fetchNotifications = async () => {
     setLoadingBell(true);
@@ -55,19 +72,14 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
     setLoadingBell(false);
   };
 
-  // Carga inicial + polling cada 30s + re-fetch al recuperar foco
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30_000);
     const onFocus = () => fetchNotifications();
     window.addEventListener('focus', onFocus);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('focus', onFocus);
-    };
+    return () => { clearInterval(interval); window.removeEventListener('focus', onFocus); };
   }, []);
 
-  // Al abrir la campanita, marcar todo como leído después de 2s
   useEffect(() => {
     if (bellOpen) {
       markReadTimer.current = setTimeout(() => {
@@ -78,12 +90,11 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
     } else {
       if (markReadTimer.current) clearTimeout(markReadTimer.current);
     }
-    return () => {
-      if (markReadTimer.current) clearTimeout(markReadTimer.current);
-    };
+    return () => { if (markReadTimer.current) clearTimeout(markReadTimer.current); };
   }, [bellOpen]);
 
   const handleBellClick = async () => {
+    if (avatarOpen) setAvatarOpen(false);
     if (!bellOpen) await fetchNotifications();
     setBellOpen(prev => !prev);
   };
@@ -101,7 +112,6 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
     const now = Date.now();
     setLastSeen(now);
     localStorage.setItem(BELL_LAST_SEEN_KEY, String(now));
-    // Dismiss all current notification IDs
     const ids = new Set(notifications.map(n => n.id));
     setDismissedIds(ids);
     localStorage.setItem(BELL_DISMISSED_KEY, JSON.stringify([...ids]));
@@ -123,22 +133,29 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
   };
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
-        setBellOpen(false);
-      }
+    const handler = (e: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false);
     };
-    if (bellOpen) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    if (bellOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, [bellOpen]);
 
-  const displayName = user?.name || user?.email?.split('@')[0] || 'Usuario';
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) setAvatarOpen(false);
+    };
+    if (avatarOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [avatarOpen]);
+
+  const displayName = user?.name || userEmail?.split('@')[0] || 'Usuario';
   const isStaff = user?.role === 'STAFF';
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const billingDateStr = nextBillingDate ? format(new Date(nextBillingDate), 'dd MMM yyyy') : null;
 
   return (
     <header className="h-16 lg:h-20 border-b border-slate-200 dark:border-white/5 px-4 lg:px-8 flex items-center justify-between bg-white/50 dark:bg-black/50 backdrop-blur-xl shrink-0 z-10 sticky top-0">
-      {/* Mobile: hamburger + logo */}
+      {/* Mobile hamburger */}
       <div className="flex items-center gap-3 lg:hidden">
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('toggle-mobile-menu'))}
@@ -151,6 +168,7 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
       </div>
 
       <div className="flex items-center gap-2 lg:gap-6 lg:ml-auto">
+        {/* Theme + Lang */}
         <div className="flex items-center gap-1 lg:gap-2 bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10">
           <ThemeToggle />
           <LangToggle />
@@ -158,10 +176,7 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
 
         {/* Bell */}
         <div ref={bellRef} className="relative">
-          <button
-            onClick={handleBellClick}
-            className="relative p-2 text-slate-500 dark:text-zinc-400 hover:text-purple-500 transition-colors"
-          >
+          <button onClick={handleBellClick} className="relative p-2 text-slate-500 dark:text-zinc-400 hover:text-purple-500 transition-colors">
             <Bell className="w-6 h-6" />
             {hasUnread && (
               <>
@@ -176,16 +191,11 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
               <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-white/5">
                 <div>
                   <p className="text-sm font-black text-slate-900 dark:text-white">Notificaciones</p>
-                  {hasUnread && (
-                    <p className="text-[10px] text-slate-400 mt-0.5">Se marcarán como leídas en 2s</p>
-                  )}
+                  {hasUnread && <p className="text-[10px] text-slate-400 mt-0.5">Se marcarán como leídas en 2s</p>}
                 </div>
                 <div className="flex items-center gap-1">
                   {notifications.length > 0 && (
-                    <button
-                      onClick={handleClearAll}
-                      className="text-[11px] font-bold text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
-                    >
+                    <button onClick={handleClearAll} className="text-[11px] font-bold text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
                       Limpiar todo
                     </button>
                   )}
@@ -194,7 +204,6 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
                   </button>
                 </div>
               </div>
-
               <div className="max-h-96 overflow-y-auto custom-scrollbar">
                 {loadingBell ? (
                   <div className="flex items-center justify-center py-10">
@@ -223,27 +232,17 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
                             <div className="min-w-0">
                               <p className="text-xs font-black text-slate-900 dark:text-white">{n.title}</p>
                               <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">{n.body}</p>
-                              {n.date && (
-                                <p className="text-[10px] text-slate-400 mt-1">{format(new Date(n.date), "dd MMM, HH:mm")}</p>
-                              )}
+                              {n.date && <p className="text-[10px] text-slate-400 mt-1">{format(new Date(n.date), "dd MMM, HH:mm")}</p>}
                             </div>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
                             {n.status && (
-                              <span className={`text-[9px] font-black px-2 py-1 rounded-full ${
-                                n.status === 'APPROVED' ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600' :
-                                n.status === 'REJECTED' ? 'bg-rose-100 dark:bg-rose-500/10 text-rose-600' :
-                                'bg-amber-100 dark:bg-amber-500/10 text-amber-600'
-                              }`}>
+                              <span className={`text-[9px] font-black px-2 py-1 rounded-full ${n.status === 'APPROVED' ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600' : n.status === 'REJECTED' ? 'bg-rose-100 dark:bg-rose-500/10 text-rose-600' : 'bg-amber-100 dark:bg-amber-500/10 text-amber-600'}`}>
                                 {n.status === 'APPROVED' ? 'Aprobada' : n.status === 'REJECTED' ? 'Rechazada' : 'Pendiente'}
                               </span>
                             )}
                             {!n.canAct && (
-                              <button
-                                onClick={() => handleDismiss(n.id)}
-                                className="p-1 text-slate-300 hover:text-slate-500 dark:text-zinc-600 dark:hover:text-zinc-400 rounded-lg transition-colors"
-                                title="Descartar"
-                              >
+                              <button onClick={() => handleDismiss(n.id)} className="p-1 text-slate-300 hover:text-slate-500 dark:text-zinc-600 dark:hover:text-zinc-400 rounded-lg transition-colors">
                                 <X className="w-3 h-3" />
                               </button>
                             )}
@@ -251,16 +250,10 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
                         </div>
                         {n.canAct && n.requestId && (
                           <div className="flex gap-2 pt-1">
-                            <button
-                              onClick={() => handleApprove(n.requestId)}
-                              className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-[11px] font-bold transition-all"
-                            >
+                            <button onClick={() => handleApprove(n.requestId)} className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-[11px] font-bold transition-all">
                               <Check className="w-3 h-3" /> Aprobar
                             </button>
-                            <button
-                              onClick={() => handleReject(n.requestId)}
-                              className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-slate-100 dark:bg-white/10 hover:bg-rose-500 hover:text-white text-slate-600 dark:text-zinc-300 rounded-xl text-[11px] font-bold transition-all"
-                            >
+                            <button onClick={() => handleReject(n.requestId)} className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-slate-100 dark:bg-white/10 hover:bg-rose-500 hover:text-white text-slate-600 dark:text-zinc-300 rounded-xl text-[11px] font-bold transition-all">
                               <Ban className="w-3 h-3" /> Rechazar
                             </button>
                           </div>
@@ -276,38 +269,128 @@ export function AdminHeader({ user }: { user: SessionUser | null }) {
 
         <div className="hidden lg:block h-8 w-[1px] bg-slate-200 dark:border-white/10" />
 
-        <div className="flex items-center gap-2 lg:gap-3 group">
-          {/* Name + role — hidden on mobile */}
-          <div className="hidden lg:block text-right">
-            <p className="text-sm font-bold text-slate-900 dark:text-white leading-none">
-              {displayName}
-            </p>
-            <div className="flex items-center justify-end gap-1 mt-1">
-              {isSuperAdmin ? (
-                <span className="text-[11px] font-bold bg-purple-600 text-white px-2 py-0.5 rounded flex items-center gap-1 tracking-tighter shadow-lg shadow-purple-500/20 uppercase">
-                  <ShieldCheck className="w-3 h-3" />
-                  {t('superAdmin')}
-                </span>
-              ) : isStaff ? (
-                <span className="text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded flex items-center gap-1 tracking-tighter uppercase">
-                  <UserCircle className="w-3 h-3" />
-                  {t('staff')}
-                </span>
-              ) : (
-                <span className="text-[11px] font-bold bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 px-2 py-0.5 rounded flex items-center gap-1 tracking-tighter uppercase">
-                  <UserCircle className="w-3 h-3" />
-                  {t('admin')}
-                </span>
-              )}
+        {/* Avatar + Dropdown */}
+        <div ref={avatarRef} className="relative">
+          <button
+            onClick={() => { setBellOpen(false); setAvatarOpen(prev => !prev); }}
+            className="flex items-center gap-2 lg:gap-3 group focus:outline-none"
+            aria-label="Menú de cuenta"
+          >
+            <div className="hidden lg:block text-right">
+              <p className="text-sm font-bold text-slate-900 dark:text-white leading-none">{displayName}</p>
+              <div className="flex items-center justify-end gap-1 mt-1">
+                {isSuperAdmin ? (
+                  <span className="text-[11px] font-bold bg-purple-600 text-white px-2 py-0.5 rounded flex items-center gap-1 tracking-tighter shadow-lg shadow-purple-500/20 uppercase">
+                    <ShieldCheck className="w-3 h-3" />{t('superAdmin')}
+                  </span>
+                ) : isStaff ? (
+                  <span className="text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded flex items-center gap-1 tracking-tighter uppercase">
+                    <UserCircle className="w-3 h-3" />{t('staff')}
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-bold bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 px-2 py-0.5 rounded flex items-center gap-1 tracking-tighter uppercase">
+                    <UserCircle className="w-3 h-3" />{t('admin')}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform border border-white/10 overflow-hidden">
-            {isSuperAdmin ? (
-              <ShieldCheck className="text-white w-6 h-6" />
-            ) : (
-              <User className="text-white w-6 h-6" />
-            )}
-          </div>
+            <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform border border-white/10">
+              {isSuperAdmin ? <ShieldCheck className="text-white w-6 h-6" /> : <User className="text-white w-6 h-6" />}
+            </div>
+            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 hidden lg:block ${avatarOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Dropdown panel */}
+          {avatarOpen && (
+            <div className="absolute right-0 top-[calc(100%+12px)] w-72 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+
+              {/* User info header */}
+              <div className="px-4 py-4 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-md border border-white/10 shrink-0">
+                    {isSuperAdmin ? <ShieldCheck className="text-white w-5 h-5" /> : <User className="text-white w-5 h-5" />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{displayName}</p>
+                    {userEmail && <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">{userEmail}</p>}
+                    <div className="mt-1">
+                      {isSuperAdmin ? (
+                        <span className="text-[10px] font-bold bg-purple-600 text-white px-1.5 py-0.5 rounded uppercase tracking-tighter">Super Admin</span>
+                      ) : isStaff ? (
+                        <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded uppercase tracking-tighter">Staff</span>
+                      ) : (
+                        <span className="text-[10px] font-bold bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-zinc-400 px-1.5 py-0.5 rounded uppercase tracking-tighter">Admin</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Next billing date (not shown to super admin) */}
+                {!isSuperAdmin && (
+                  <div className="mt-3 flex items-center gap-2 px-3 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
+                    <Calendar className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wide">{t('nextBilling')}</p>
+                      <p className="text-xs font-bold text-slate-700 dark:text-zinc-200">
+                        {billingDateStr ?? t('noBillingDate')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Links */}
+              <div className="py-1.5">
+                {!isStaff && (
+                  <Link
+                    href={`/${locale}/admin/billing`}
+                    onClick={() => setAvatarOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors group"
+                  >
+                    <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/5 group-hover:bg-purple-500/10 flex items-center justify-center transition-colors shrink-0">
+                      <CreditCard className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400 group-hover:text-purple-500 transition-colors" />
+                    </span>
+                    {t('billing')}
+                  </Link>
+                )}
+
+                <Link
+                  href={`/${locale}/admin/settings`}
+                  onClick={() => setAvatarOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors group"
+                >
+                  <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/5 group-hover:bg-purple-500/10 flex items-center justify-center transition-colors shrink-0">
+                    <Settings className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400 group-hover:text-purple-500 transition-colors" />
+                  </span>
+                  {t('settings')}
+                </Link>
+
+                <Link
+                  href={`/${locale}/admin/change-password`}
+                  onClick={() => setAvatarOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors group"
+                >
+                  <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/5 group-hover:bg-purple-500/10 flex items-center justify-center transition-colors shrink-0">
+                    <KeyRound className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400 group-hover:text-purple-500 transition-colors" />
+                  </span>
+                  {t('changePassword')}
+                </Link>
+              </div>
+
+              {/* Sign out */}
+              <div className="border-t border-slate-100 dark:border-white/5 py-1.5">
+                <button
+                  onClick={() => { setAvatarOpen(false); logoutAction(locale); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/5 transition-colors group"
+                >
+                  <span className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-500/10 group-hover:bg-rose-100 dark:group-hover:bg-rose-500/20 flex items-center justify-center transition-colors shrink-0">
+                    <LogOut className="w-3.5 h-3.5" />
+                  </span>
+                  {t('logout')}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

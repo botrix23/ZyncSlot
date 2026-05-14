@@ -751,7 +751,14 @@
       "searchPlaceholder": "Buscar citas, clientes...",
       "superAdmin": "Súper admin",
       "admin": "Admin",
-      "staff": "Staff"
+      "staff": "Staff",
+      "billing": "Facturación",
+      "settings": "Configuración",
+      "changePassword": "Cambiar contraseña",
+      "nextBilling": "Próx. facturación",
+      "logout": "Cerrar sesión",
+      "myAccount": "Mi cuenta",
+      "noBillingDate": "Sin fecha de cobro"
     },
     "home": {
       "title": "Dashboard admin",
@@ -1142,17 +1149,37 @@
       "BASIC": {
         "name": "Basic",
         "desc": "Ideal para negocios pequeños que están comenzando.",
-        "features": ["1 sucursal", "1 staff", "Hasta 10 servicios", "Widget de reservas", "Recordatorios automáticos"]
+        "features": [
+          "1 sucursal",
+          "1 staff",
+          "Hasta 10 servicios",
+          "Widget de reservas",
+          "Recordatorios automáticos"
+        ]
       },
       "PROFESSIONAL": {
         "name": "Professional",
         "desc": "Para negocios en crecimiento que necesitan más control.",
-        "features": ["3 sucursales", "15 staff", "Hasta 30 servicios", "Tema personalizado", "Encuestas y estadísticas", "Soporte prioritario"]
+        "features": [
+          "3 sucursales",
+          "15 staff",
+          "Hasta 30 servicios",
+          "Tema personalizado",
+          "Encuestas y estadísticas",
+          "Soporte prioritario"
+        ]
       },
       "ENTERPRISE": {
         "name": "Enterprise",
         "desc": "Sin límites para negocios de alto volumen.",
-        "features": ["Sucursales ilimitadas", "Staff ilimitado", "Servicios ilimitados", "Analítica avanzada", "NPS", "Soporte dedicado"]
+        "features": [
+          "Sucursales ilimitadas",
+          "Staff ilimitado",
+          "Servicios ilimitados",
+          "Analítica avanzada",
+          "NPS",
+          "Soporte dedicado"
+        ]
       }
     }
   },

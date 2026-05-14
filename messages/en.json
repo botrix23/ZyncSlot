@@ -751,7 +751,14 @@
       "searchPlaceholder": "Search appointments, clients...",
       "superAdmin": "Super admin",
       "admin": "Admin",
-      "staff": "Staff"
+      "staff": "Staff",
+      "billing": "Billing",
+      "settings": "Settings",
+      "changePassword": "Change password",
+      "nextBilling": "Next billing",
+      "logout": "Sign out",
+      "myAccount": "My account",
+      "noBillingDate": "No billing date"
     },
     "home": {
       "title": "Admin dashboard",
@@ -1142,17 +1149,37 @@
       "BASIC": {
         "name": "Basic",
         "desc": "Ideal for small businesses just getting started.",
-        "features": ["1 branch", "1 staff", "Up to 10 services", "Booking widget", "Automatic reminders"]
+        "features": [
+          "1 branch",
+          "1 staff",
+          "Up to 10 services",
+          "Booking widget",
+          "Automatic reminders"
+        ]
       },
       "PROFESSIONAL": {
         "name": "Professional",
         "desc": "For growing businesses that need more control.",
-        "features": ["3 branches", "15 staff", "Up to 30 services", "Custom theme", "Surveys & analytics", "Priority support"]
+        "features": [
+          "3 branches",
+          "15 staff",
+          "Up to 30 services",
+          "Custom theme",
+          "Surveys & analytics",
+          "Priority support"
+        ]
       },
       "ENTERPRISE": {
         "name": "Enterprise",
         "desc": "No limits for high-volume businesses.",
-        "features": ["Unlimited branches", "Unlimited staff", "Unlimited services", "Advanced analytics", "NPS", "Dedicated support"]
+        "features": [
+          "Unlimited branches",
+          "Unlimited staff",
+          "Unlimited services",
+          "Advanced analytics",
+          "NPS",
+          "Dedicated support"
+        ]
       }
     }
   },
