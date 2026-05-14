@@ -37,7 +37,8 @@ export type AuditAction =
   | 'ADMIN_STATUS_CHANGED'
   | 'ADMIN_DELETED'
   | 'TENANT_TRIAL_UPDATED'
-  | 'EMAIL_TEMPLATE_UPDATED';
+  | 'EMAIL_TEMPLATE_UPDATED'
+  | 'PLAN_PRICES_UPDATED';
 
 export interface AuditEventParams {
   action: AuditAction;

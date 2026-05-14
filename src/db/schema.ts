@@ -295,6 +295,10 @@ export const subscriptions = pgTable('subscriptions', {
   tenantId: uuid('tenant_id').notNull().unique().references(() => tenants.id, { onDelete: 'cascade' }),
   plan: varchar('plan', { length: 50 }).notNull(),
   status: varchar('status', { length: 50 }).notNull().default('ACTIVE'),
+  // N1CO IDs (se llenan al conectar con N1CO)
+  n1coSubscriptionId: varchar('n1co_subscription_id', { length: 100 }),
+  n1coPaymentMethodId: varchar('n1co_payment_method_id', { length: 100 }),
+  // Datos de tarjeta (solo últimos 4 dígitos y marca — nunca el número completo)
   cardToken: text('card_token'),
   cardLast4: varchar('card_last4', { length: 4 }),
   cardBrand: varchar('card_brand', { length: 20 }),
@@ -446,6 +450,10 @@ export const platformConfig = pgTable('platform_config', {
   emailTplReschedule: text('email_tpl_reschedule'),
   emailTplTrialWarning: text('email_tpl_trial_warning'),
   emailTplSurveyInvite: text('email_tpl_survey_invite'),
+  // Precios de planes (editables desde super admin, en USD)
+  planPriceBasic: decimal('plan_price_basic', { precision: 10, scale: 2 }).default('20.00'),
+  planPriceProfessional: decimal('plan_price_professional', { precision: 10, scale: 2 }).default('45.00'),
+  planPriceEnterprise: decimal('plan_price_enterprise', { precision: 10, scale: 2 }).default('99.00'),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
 

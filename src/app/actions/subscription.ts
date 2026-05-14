@@ -5,9 +5,18 @@ import { subscriptions, tenants } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { getSession } from '@/lib/auth-session'
-import { tokenizeCard, chargeWithToken, N1coCardData } from '@/lib/n1co'
+import {
+  createPaymentMethod,
+  createN1coSubscription,
+  cancelN1coSubscription,
+  N1coCardData,
+  N1CO_PLAN_IDS,
+} from '@/lib/n1co'
 import { getPlanPrice } from '@/core/plans'
 import { enforceDowngradeLimits } from '@/lib/billing'
+
+// Re-export so billing UI can import from here
+export type { N1coCardData }
 
 function addDays(date: Date, days: number): Date {
   const d = new Date(date)
@@ -21,6 +30,17 @@ function isDowngrade(currentPlan: string, newPlan: string): boolean {
   return (PLAN_ORDER[newPlan] ?? 0) < (PLAN_ORDER[currentPlan] ?? 0)
 }
 
+function n1coPlanId(plan: string): string {
+  const key = plan as keyof typeof N1CO_PLAN_IDS
+  return N1CO_PLAN_IDS[key] ?? ''
+}
+
+const LOCATION_CODE = process.env.N1CO_LOCATION_CODE ?? ''
+
+// ---------------------------------------------------------------------------
+// Read subscription
+// ---------------------------------------------------------------------------
+
 export async function getSubscriptionAction(tenantId: string) {
   const session = await getSession()
   if (!session) return null
@@ -31,6 +51,10 @@ export async function getSubscriptionAction(tenantId: string) {
   return sub ?? null
 }
 
+// ---------------------------------------------------------------------------
+// Activate (first payment — trial ended or new tenant)
+// ---------------------------------------------------------------------------
+
 export async function activateSubscriptionAction(
   tenantId: string,
   plan: string,
@@ -40,13 +64,21 @@ export async function activateSubscriptionAction(
   if (!session) return { success: false, error: 'Unauthorized' }
 
   try {
-    const tokenResult = await tokenizeCard(cardData)
-    const amount = getPlanPrice(plan)
-    const chargeResult = await chargeWithToken(tokenResult.token, amount, `Suscripción ${plan}`)
+    const tenant = await db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) })
+    if (!tenant) return { success: false, error: 'Tenant no encontrado' }
 
-    if (!chargeResult.success) {
-      return { success: false, error: chargeResult.errorMessage ?? 'Pago rechazado' }
-    }
+    // 1. Tokenize card → payment method
+    const pm = await createPaymentMethod(cardData)
+
+    // 2. Create N1CO subscription (N1CO handles recurring billing)
+    const n1coSub = await createN1coSubscription({
+      planId:          n1coPlanId(plan),
+      locationCode:    LOCATION_CODE,
+      paymentMethodId: pm.paymentMethodId,
+      customerId:      tenantId,
+      customerName:    tenant.name,
+      customerEmail:   tenant.contactEmail ?? '',
+    })
 
     const now = new Date()
     const periodEnd = addDays(now, 30)
@@ -55,32 +87,37 @@ export async function activateSubscriptionAction(
       tenantId,
       plan,
       status: 'ACTIVE',
-      cardToken: tokenResult.token,
-      cardLast4: tokenResult.last4,
-      cardBrand: tokenResult.brand,
-      cardExpMonth: tokenResult.expMonth,
-      cardExpYear: tokenResult.expYear,
+      // Card display info
+      cardLast4:    pm.last4,
+      cardBrand:    pm.brand,
+      cardExpMonth: pm.expMonth,
+      cardExpYear:  pm.expYear,
+      // N1CO references
+      n1coSubscriptionId:  n1coSub.subscriptionId,
+      n1coPaymentMethodId: pm.paymentMethodId,
+      // Period (informational — N1CO controls actual renewal)
       currentPeriodStart: now,
-      currentPeriodEnd: periodEnd,
-      lastPaymentAt: now,
-      lastPaymentAmount: String(amount),
+      currentPeriodEnd:   periodEnd,
+      lastPaymentAt:      now,
+      lastPaymentAmount:  String(getPlanPrice(plan)),
     }).onConflictDoUpdate({
       target: subscriptions.tenantId,
       set: {
         plan,
         status: 'ACTIVE',
-        cardToken: tokenResult.token,
-        cardLast4: tokenResult.last4,
-        cardBrand: tokenResult.brand,
-        cardExpMonth: tokenResult.expMonth,
-        cardExpYear: tokenResult.expYear,
-        currentPeriodStart: now,
-        currentPeriodEnd: periodEnd,
-        cancelledAt: null,
-        gracePeriodEndsAt: null,
-        lastPaymentAt: now,
-        lastPaymentAmount: String(amount),
-        updatedAt: now,
+        cardLast4:    pm.last4,
+        cardBrand:    pm.brand,
+        cardExpMonth: pm.expMonth,
+        cardExpYear:  pm.expYear,
+        n1coSubscriptionId:  n1coSub.subscriptionId,
+        n1coPaymentMethodId: pm.paymentMethodId,
+        currentPeriodStart:  now,
+        currentPeriodEnd:    periodEnd,
+        cancelledAt:         null,
+        gracePeriodEndsAt:   null,
+        lastPaymentAt:       now,
+        lastPaymentAmount:   String(getPlanPrice(plan)),
+        updatedAt:           now,
       },
     })
 
@@ -92,44 +129,64 @@ export async function activateSubscriptionAction(
     return { success: true }
   } catch (err) {
     console.error('activateSubscription error:', err)
-    return { success: false, error: 'Error al procesar el pago' }
+    return { success: false, error: err instanceof Error ? err.message : 'Error al procesar el pago' }
   }
 }
+
+// ---------------------------------------------------------------------------
+// Change plan
+// ---------------------------------------------------------------------------
 
 export async function changePlanAction(tenantId: string, newPlan: string) {
   const session = await getSession()
   if (!session) return { success: false, error: 'Unauthorized' }
 
   try {
-    const sub = await db.query.subscriptions.findFirst({
-      where: eq(subscriptions.tenantId, tenantId),
-    })
+    const [sub, tenant] = await Promise.all([
+      db.query.subscriptions.findFirst({ where: eq(subscriptions.tenantId, tenantId) }),
+      db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) }),
+    ])
 
-    if (!sub || !sub.cardToken) {
+    if (!sub || !sub.n1coPaymentMethodId) {
       return { success: false, error: 'No hay método de pago registrado' }
     }
+    if (!tenant) return { success: false, error: 'Tenant no encontrado' }
 
-    const amount = getPlanPrice(newPlan)
-    const chargeResult = await chargeWithToken(sub.cardToken, amount, `Cambio a plan ${newPlan}`)
-
-    if (!chargeResult.success) {
-      return { success: false, error: chargeResult.errorMessage ?? 'Pago rechazado' }
+    // Cancel existing N1CO subscription
+    if (sub.n1coSubscriptionId) {
+      try {
+        await cancelN1coSubscription(sub.n1coSubscriptionId, `Plan change to ${newPlan}`)
+      } catch (err) {
+        console.warn('Could not cancel old N1CO subscription:', err)
+      }
     }
+
+    // Create new N1CO subscription with new plan
+    const n1coSub = await createN1coSubscription({
+      planId:          n1coPlanId(newPlan),
+      locationCode:    LOCATION_CODE,
+      paymentMethodId: sub.n1coPaymentMethodId,
+      customerId:      tenantId,
+      customerName:    tenant.name,
+      customerEmail:   tenant.contactEmail ?? '',
+    })
 
     const now = new Date()
     const periodEnd = addDays(now, 30)
+    const currentPlan = sub.plan
 
     await db.update(subscriptions)
       .set({
-        plan: newPlan,
-        status: 'ACTIVE',
-        currentPeriodStart: now,
-        currentPeriodEnd: periodEnd,
-        cancelledAt: null,
-        gracePeriodEndsAt: null,
-        lastPaymentAt: now,
-        lastPaymentAmount: String(amount),
-        updatedAt: now,
+        plan:                newPlan,
+        status:              'ACTIVE',
+        n1coSubscriptionId:  n1coSub.subscriptionId,
+        currentPeriodStart:  now,
+        currentPeriodEnd:    periodEnd,
+        cancelledAt:         null,
+        gracePeriodEndsAt:   null,
+        lastPaymentAt:       now,
+        lastPaymentAmount:   String(getPlanPrice(newPlan)),
+        updatedAt:           now,
       })
       .where(eq(subscriptions.tenantId, tenantId))
 
@@ -137,16 +194,11 @@ export async function changePlanAction(tenantId: string, newPlan: string) {
       .set({ plan: newPlan, status: 'ACTIVE', updatedAt: now })
       .where(eq(tenants.id, tenantId))
 
-    const currentPlan = sub.plan
+    // Apply downgrade limits if needed
     if (isDowngrade(currentPlan, newPlan)) {
       if (newPlan === 'BASIC') {
         await db.update(tenants)
-          .set({
-            heroSubtitle: null,
-            theme: 'light',
-            emailBodyTemplate: null,
-            updatedAt: now,
-          })
+          .set({ heroSubtitle: null, theme: 'light', emailBodyTemplate: null, updatedAt: now })
           .where(eq(tenants.id, tenantId))
       }
       await enforceDowngradeLimits(tenantId, newPlan)
@@ -156,23 +208,35 @@ export async function changePlanAction(tenantId: string, newPlan: string) {
     return { success: true }
   } catch (err) {
     console.error('changePlan error:', err)
-    return { success: false, error: 'Error al cambiar el plan' }
+    return { success: false, error: err instanceof Error ? err.message : 'Error al cambiar el plan' }
   }
 }
+
+// ---------------------------------------------------------------------------
+// Cancel subscription
+// ---------------------------------------------------------------------------
 
 export async function cancelSubscriptionAction(tenantId: string) {
   const session = await getSession()
   if (!session) return { success: false, error: 'Unauthorized' }
 
   try {
-    const now = new Date()
+    const sub = await db.query.subscriptions.findFirst({
+      where: eq(subscriptions.tenantId, tenantId),
+    })
 
+    // Cancel in N1CO (subscription will remain active until period end)
+    if (sub?.n1coSubscriptionId) {
+      try {
+        await cancelN1coSubscription(sub.n1coSubscriptionId, 'Customer cancelled from admin panel')
+      } catch (err) {
+        console.warn('N1CO cancel failed (marking cancelled locally anyway):', err)
+      }
+    }
+
+    const now = new Date()
     await db.update(subscriptions)
-      .set({
-        status: 'CANCELLED',
-        cancelledAt: now,
-        updatedAt: now,
-      })
+      .set({ status: 'CANCELLED', cancelledAt: now, updatedAt: now })
       .where(eq(subscriptions.tenantId, tenantId))
 
     revalidatePath('/[locale]/admin/billing', 'page')
@@ -183,22 +247,54 @@ export async function cancelSubscriptionAction(tenantId: string) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Update card (creates new payment method, recreates subscription)
+// ---------------------------------------------------------------------------
+
 export async function updateCardAction(tenantId: string, cardData: N1coCardData) {
   const session = await getSession()
   if (!session) return { success: false, error: 'Unauthorized' }
 
   try {
-    const tokenResult = await tokenizeCard(cardData)
-    const now = new Date()
+    const [sub, tenant] = await Promise.all([
+      db.query.subscriptions.findFirst({ where: eq(subscriptions.tenantId, tenantId) }),
+      db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) }),
+    ])
 
+    if (!sub) return { success: false, error: 'No hay suscripción activa' }
+    if (!tenant) return { success: false, error: 'Tenant no encontrado' }
+
+    // Create new payment method with new card
+    const pm = await createPaymentMethod(cardData)
+
+    // Cancel old N1CO subscription and recreate with new payment method
+    if (sub.n1coSubscriptionId) {
+      try {
+        await cancelN1coSubscription(sub.n1coSubscriptionId, 'Card update')
+      } catch (err) {
+        console.warn('Could not cancel old N1CO subscription on card update:', err)
+      }
+    }
+
+    const n1coSub = await createN1coSubscription({
+      planId:          n1coPlanId(sub.plan),
+      locationCode:    LOCATION_CODE,
+      paymentMethodId: pm.paymentMethodId,
+      customerId:      tenantId,
+      customerName:    tenant.name,
+      customerEmail:   tenant.contactEmail ?? '',
+    })
+
+    const now = new Date()
     await db.update(subscriptions)
       .set({
-        cardToken: tokenResult.token,
-        cardLast4: tokenResult.last4,
-        cardBrand: tokenResult.brand,
-        cardExpMonth: tokenResult.expMonth,
-        cardExpYear: tokenResult.expYear,
-        updatedAt: now,
+        cardLast4:           pm.last4,
+        cardBrand:           pm.brand,
+        cardExpMonth:        pm.expMonth,
+        cardExpYear:         pm.expYear,
+        n1coPaymentMethodId: pm.paymentMethodId,
+        n1coSubscriptionId:  n1coSub.subscriptionId,
+        updatedAt:           now,
       })
       .where(eq(subscriptions.tenantId, tenantId))
 
@@ -206,9 +302,13 @@ export async function updateCardAction(tenantId: string, cardData: N1coCardData)
     return { success: true }
   } catch (err) {
     console.error('updateCard error:', err)
-    return { success: false, error: 'Error al actualizar la tarjeta' }
+    return { success: false, error: err instanceof Error ? err.message : 'Error al actualizar la tarjeta' }
   }
 }
+
+// ---------------------------------------------------------------------------
+// Reactivate (after cancellation)
+// ---------------------------------------------------------------------------
 
 export async function reactivateSubscriptionAction(
   tenantId: string,
@@ -219,69 +319,76 @@ export async function reactivateSubscriptionAction(
   if (!session) return { success: false, error: 'Unauthorized' }
 
   try {
-    const sub = await db.query.subscriptions.findFirst({
-      where: eq(subscriptions.tenantId, tenantId),
-    })
+    const [sub, tenant] = await Promise.all([
+      db.query.subscriptions.findFirst({ where: eq(subscriptions.tenantId, tenantId) }),
+      db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) }),
+    ])
+    if (!tenant) return { success: false, error: 'Tenant no encontrado' }
 
-    let token = sub?.cardToken
+    let paymentMethodId = sub?.n1coPaymentMethodId
     let last4 = sub?.cardLast4
     let brand = sub?.cardBrand
     let expMonth = sub?.cardExpMonth
     let expYear = sub?.cardExpYear
 
+    // Use new card if provided
     if (cardData) {
-      const tokenResult = await tokenizeCard(cardData)
-      token = tokenResult.token
-      last4 = tokenResult.last4
-      brand = tokenResult.brand
-      expMonth = tokenResult.expMonth
-      expYear = tokenResult.expYear
+      const pm = await createPaymentMethod(cardData)
+      paymentMethodId = pm.paymentMethodId
+      last4    = pm.last4
+      brand    = pm.brand
+      expMonth = pm.expMonth
+      expYear  = pm.expYear
     }
 
-    if (!token) {
+    if (!paymentMethodId) {
       return { success: false, error: 'Se requiere método de pago' }
     }
 
-    const amount = getPlanPrice(newPlan)
-    const chargeResult = await chargeWithToken(token, amount, `Reactivación plan ${newPlan}`)
-
-    if (!chargeResult.success) {
-      return { success: false, error: chargeResult.errorMessage ?? 'Pago rechazado' }
-    }
+    const n1coSub = await createN1coSubscription({
+      planId:          n1coPlanId(newPlan),
+      locationCode:    LOCATION_CODE,
+      paymentMethodId,
+      customerId:      tenantId,
+      customerName:    tenant.name,
+      customerEmail:   tenant.contactEmail ?? '',
+    })
 
     const now = new Date()
     const periodEnd = addDays(now, 30)
 
     await db.insert(subscriptions).values({
       tenantId,
-      plan: newPlan,
-      status: 'ACTIVE',
-      cardToken: token,
-      cardLast4: last4 ?? undefined,
-      cardBrand: brand ?? undefined,
-      cardExpMonth: expMonth ?? undefined,
-      cardExpYear: expYear ?? undefined,
-      currentPeriodStart: now,
-      currentPeriodEnd: periodEnd,
-      lastPaymentAt: now,
-      lastPaymentAmount: String(amount),
+      plan:                newPlan,
+      status:              'ACTIVE',
+      cardLast4:           last4 ?? undefined,
+      cardBrand:           brand ?? undefined,
+      cardExpMonth:        expMonth ?? undefined,
+      cardExpYear:         expYear ?? undefined,
+      n1coSubscriptionId:  n1coSub.subscriptionId,
+      n1coPaymentMethodId: paymentMethodId,
+      currentPeriodStart:  now,
+      currentPeriodEnd:    periodEnd,
+      lastPaymentAt:       now,
+      lastPaymentAmount:   String(getPlanPrice(newPlan)),
     }).onConflictDoUpdate({
       target: subscriptions.tenantId,
       set: {
-        plan: newPlan,
-        status: 'ACTIVE',
-        cardToken: token,
-        cardLast4: last4,
-        cardBrand: brand,
-        cardExpMonth: expMonth,
-        cardExpYear: expYear,
-        currentPeriodStart: now,
-        currentPeriodEnd: periodEnd,
-        cancelledAt: null,
-        gracePeriodEndsAt: null,
-        lastPaymentAt: now,
-        lastPaymentAmount: String(amount),
-        updatedAt: now,
+        plan:                newPlan,
+        status:              'ACTIVE',
+        cardLast4:           last4,
+        cardBrand:           brand,
+        cardExpMonth:        expMonth,
+        cardExpYear:         expYear,
+        n1coSubscriptionId:  n1coSub.subscriptionId,
+        n1coPaymentMethodId: paymentMethodId,
+        currentPeriodStart:  now,
+        currentPeriodEnd:    periodEnd,
+        cancelledAt:         null,
+        gracePeriodEndsAt:   null,
+        lastPaymentAt:       now,
+        lastPaymentAmount:   String(getPlanPrice(newPlan)),
+        updatedAt:           now,
       },
     })
 
@@ -293,6 +400,6 @@ export async function reactivateSubscriptionAction(
     return { success: true }
   } catch (err) {
     console.error('reactivateSubscription error:', err)
-    return { success: false, error: 'Error al reactivar la suscripción' }
+    return { success: false, error: err instanceof Error ? err.message : 'Error al reactivar la suscripción' }
   }
 }

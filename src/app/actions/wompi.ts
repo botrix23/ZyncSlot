@@ -97,3 +97,54 @@ export async function testWompiCredentialsAction(data: {
     };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Save plan prices — super admin only, stored in platform_config
+// ---------------------------------------------------------------------------
+export async function savePlanPricesAction(data: {
+  planPriceBasic: number;
+  planPriceProfessional: number;
+  planPriceEnterprise: number;
+}) {
+  try {
+    const session = await getSession();
+    if (!session || session.role !== "SUPER_ADMIN") {
+      return { success: false, error: "No autorizado" };
+    }
+
+    const basic = String(data.planPriceBasic);
+    const pro   = String(data.planPriceProfessional);
+    const ent   = String(data.planPriceEnterprise);
+
+    await db
+      .insert(platformConfig)
+      .values({
+        id: 1,
+        planPriceBasic:        basic,
+        planPriceProfessional: pro,
+        planPriceEnterprise:   ent,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: platformConfig.id,
+        set: {
+          planPriceBasic:        basic,
+          planPriceProfessional: pro,
+          planPriceEnterprise:   ent,
+          updatedAt: new Date(),
+        },
+      });
+
+    await logAuditEvent({
+      action: "PLAN_PRICES_UPDATED",
+      userId: session.userId,
+      details: { basic, pro, ent },
+    });
+
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error) {
+    console.error("Error saving plan prices:", error);
+    return { success: false, error: "Error al guardar los precios" };
+  }
+}

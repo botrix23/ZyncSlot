@@ -136,15 +136,43 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
   },
 };
 
+/** Precios base (fallback si platform_config no tiene valores configurados). */
 export const PLAN_PRICES: Record<PlanType, number> = {
   BASIC: 20,
   PROFESSIONAL: 45,
   ENTERPRISE: 99,
 }
 
-export function getPlanPrice(plan: string | null | undefined): number {
+/**
+ * Retorna el precio del plan usando precios dinámicos si se proveen,
+ * o los valores base de PLAN_PRICES como fallback.
+ *
+ * @param plan   - nombre del plan
+ * @param prices - precios dinámicos leídos desde platform_config (opcional)
+ */
+export function getPlanPrice(
+  plan: string | null | undefined,
+  prices?: Partial<Record<PlanType, number>>
+): number {
   const normalized = plan === 'FREE' ? 'BASIC' : plan === 'PRO' ? 'PROFESSIONAL' : plan
-  return PLAN_PRICES[(normalized as PlanType)] ?? PLAN_PRICES.BASIC
+  const key = (normalized || 'BASIC') as PlanType
+  return prices?.[key] ?? PLAN_PRICES[key] ?? PLAN_PRICES.BASIC
+}
+
+/**
+ * Convierte los campos de platform_config en un mapa de precios.
+ * Úsalo en server components / actions donde ya tienes el config de la BD.
+ */
+export function parsePlanPrices(cfg: {
+  planPriceBasic?: string | null
+  planPriceProfessional?: string | null
+  planPriceEnterprise?: string | null
+} | null | undefined): Record<PlanType, number> {
+  return {
+    BASIC:        parseFloat(cfg?.planPriceBasic        ?? '') || PLAN_PRICES.BASIC,
+    PROFESSIONAL: parseFloat(cfg?.planPriceProfessional ?? '') || PLAN_PRICES.PROFESSIONAL,
+    ENTERPRISE:   parseFloat(cfg?.planPriceEnterprise   ?? '') || PLAN_PRICES.ENTERPRISE,
+  }
 }
 
 /** Retorna las características del plan. Backward-compatible con FREE/PRO. */

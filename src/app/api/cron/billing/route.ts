@@ -1,15 +1,17 @@
+/**
+ * Billing Cron — runs daily via Vercel Cron or external scheduler.
+ *
+ * NOTE: With N1CO subscriptions, recurring charges are handled entirely
+ * by N1CO and reported back via webhooks (/api/webhooks/n1co).
+ * This cron only enforces local state transitions:
+ *   PAST_DUE (grace expired)  → suspend tenant
+ *   CANCELLED (period ended)  → suspend tenant
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { subscriptions, tenants } from '@/db/schema'
-import { and, eq, isNull, lte, or } from 'drizzle-orm'
-import { chargeWithToken } from '@/lib/n1co'
-import { getPlanPrice } from '@/core/plans'
-
-function addDays(date: Date, days: number): Date {
-  const d = new Date(date)
-  d.setDate(d.getDate() + days)
-  return d
-}
+import { and, eq, lte } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
   const secret = req.nextUrl.searchParams.get('secret')
@@ -18,72 +20,10 @@ export async function GET(req: NextRequest) {
   }
 
   const now = new Date()
-  let charged = 0
-  let failed = 0
   let suspended = 0
 
   try {
-    const dueSubscriptions = await db.query.subscriptions.findMany({
-      where: and(
-        eq(subscriptions.status, 'ACTIVE'),
-        isNull(subscriptions.cancelledAt),
-        lte(subscriptions.currentPeriodEnd, now),
-      ),
-    })
-
-    for (const sub of dueSubscriptions) {
-      if (!sub.cardToken) {
-        await db.update(subscriptions)
-          .set({
-            status: 'PAST_DUE',
-            gracePeriodEndsAt: addDays(now, 3),
-            updatedAt: now,
-          })
-          .where(eq(subscriptions.id, sub.id))
-        console.log(`[Billing Cron] No card token for tenant ${sub.tenantId} — marked PAST_DUE`)
-        failed++
-        continue
-      }
-
-      try {
-        const amount = getPlanPrice(sub.plan)
-        const charge = await chargeWithToken(sub.cardToken, amount, `Renovación ${sub.plan}`)
-
-        if (charge.success) {
-          await db.update(subscriptions)
-            .set({
-              currentPeriodStart: now,
-              currentPeriodEnd: addDays(now, 30),
-              lastPaymentAt: now,
-              lastPaymentAmount: String(amount),
-              updatedAt: now,
-            })
-            .where(eq(subscriptions.id, sub.id))
-          charged++
-        } else {
-          await db.update(subscriptions)
-            .set({
-              status: 'PAST_DUE',
-              gracePeriodEndsAt: addDays(now, 3),
-              updatedAt: now,
-            })
-            .where(eq(subscriptions.id, sub.id))
-          console.log(`[Billing Cron] Charge failed for tenant ${sub.tenantId}: ${charge.errorMessage}`)
-          failed++
-        }
-      } catch (err) {
-        await db.update(subscriptions)
-          .set({
-            status: 'PAST_DUE',
-            gracePeriodEndsAt: addDays(now, 3),
-            updatedAt: now,
-          })
-          .where(eq(subscriptions.id, sub.id))
-        console.error(`[Billing Cron] Error charging tenant ${sub.tenantId}:`, err)
-        failed++
-      }
-    }
-
+    // 1. Tenants in PAST_DUE whose grace period has expired → SUSPENDED
     const pastDueExpired = await db.query.subscriptions.findMany({
       where: and(
         eq(subscriptions.status, 'PAST_DUE'),
@@ -96,8 +36,10 @@ export async function GET(req: NextRequest) {
         .set({ status: 'SUSPENDED', updatedAt: now })
         .where(eq(tenants.id, sub.tenantId))
       suspended++
+      console.log(`[Billing Cron] Suspended tenant ${sub.tenantId} (grace period expired)`)
     }
 
+    // 2. Tenants CANCELLED whose period has ended → SUSPENDED
     const cancelledExpired = await db.query.subscriptions.findMany({
       where: and(
         eq(subscriptions.status, 'CANCELLED'),
@@ -110,9 +52,10 @@ export async function GET(req: NextRequest) {
         .set({ status: 'SUSPENDED', updatedAt: now })
         .where(eq(tenants.id, sub.tenantId))
       suspended++
+      console.log(`[Billing Cron] Suspended tenant ${sub.tenantId} (cancelled, period ended)`)
     }
 
-    return NextResponse.json({ ok: true, charged, failed, suspended })
+    return NextResponse.json({ ok: true, suspended })
   } catch (error) {
     console.error('[Billing Cron] Fatal error:', error)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })

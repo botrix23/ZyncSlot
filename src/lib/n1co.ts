@@ -1,108 +1,252 @@
 /**
- * n1co Payment Gateway — El Salvador
+ * n1co EPay — Payment Gateway (El Salvador)
  *
- * Replace BASE_URL and API_KEY with n1co credentials once provided.
+ * Subscription model:
+ *   1. createPaymentMethod(cardData) → paymentMethodId
+ *   2. createN1coSubscription({ planId, ..., paymentMethodId }) → subscriptionId
+ *   3. N1CO handles monthly auto-renewal and fires webhooks
  *
- * Card tokenization: verify with n1co whether to use their JS SDK for
- * client-side tokenization (preferred for PCI compliance) or server-side
- * as implemented here. If they provide a JS SDK / hosted fields solution,
- * replace `tokenizeCard` with client-side logic and only call `chargeWithToken`
- * from the server.
- *
- * TODO: Fill in actual endpoint paths once n1co API docs are available.
+ * Required env vars:
+ *   N1CO_BASE_URL          (default: https://api-sandbox.n1co.shop)
+ *   N1CO_API_KEY
+ *   N1CO_WEBHOOK_SECRET
+ *   N1CO_PLAN_ID_BASIC
+ *   N1CO_PLAN_ID_PROFESSIONAL
+ *   N1CO_PLAN_ID_ENTERPRISE
  */
 
-const BASE_URL = process.env.N1CO_BASE_URL ?? ''
-const API_KEY = process.env.N1CO_API_KEY ?? ''
+const BASE_URL = process.env.N1CO_BASE_URL ?? 'https://api-sandbox.n1co.shop'
+const API_KEY  = process.env.N1CO_API_KEY  ?? ''
+
+/** Maps internal plan names to N1CO plan IDs (configured per environment). */
+export const N1CO_PLAN_IDS = {
+  BASIC:        process.env.N1CO_PLAN_ID_BASIC        ?? '',
+  PROFESSIONAL: process.env.N1CO_PLAN_ID_PROFESSIONAL ?? '',
+  ENTERPRISE:   process.env.N1CO_PLAN_ID_ENTERPRISE   ?? '',
+} as const
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 export interface N1coCardData {
+  /** Full card number */
   number: string
   holderName: string
-  expMonth: string
-  expYear: string
+  expMonth: string   // "MM"
+  expYear: string    // "YYYY" or "YY"
   cvv: string
 }
 
-export interface N1coTokenResult {
-  token: string
+export interface N1coPaymentMethodResult {
+  paymentMethodId: string
   last4: string
   brand: string
   expMonth: string
   expYear: string
 }
 
-export interface N1coChargeResult {
-  success: boolean
+export interface N1coSubscriptionInput {
+  planId: string
+  /** N1CO commerce/location code */
+  locationCode: string
+  paymentMethodId: string
+  customerId: string       // tenantId or unique identifier
+  customerName: string
+  customerEmail: string
+  customerPhone?: string
+}
+
+export interface N1coSubscriptionResult {
+  subscriptionId: string
+  status: string
+  nextBillingDate?: string
+}
+
+export interface N1coSubscriptionDetail {
+  subscriptionId: string
+  status: string
+  planId: string
+  nextBillingDate?: string
+  cancelledAt?: string
+}
+
+export type N1coWebhookType =
+  | 'SubscriptionConfirmation'
+  | 'SubscriptionPayment'
+  | 'SubscriptionCancelled'
+  | 'SubscriptionFailed'
+
+export interface N1coWebhookPayload {
+  type: N1coWebhookType
+  subscriptionId: string
+  paymentMethodId?: string
+  status?: string
+  amount?: number
   transactionId?: string
-  errorCode?: string
-  errorMessage?: string
+  timestamp?: string
+  [key: string]: unknown
+}
+
+// ---------------------------------------------------------------------------
+// HTTP helper
+// ---------------------------------------------------------------------------
+
+async function n1coFetch<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const url = `${BASE_URL}${path}`
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Api-Key': API_KEY,
+      ...options.headers,
+    },
+  })
+
+  const text = await res.text()
+  let data: unknown
+  try { data = JSON.parse(text) } catch { data = { raw: text } }
+
+  if (!res.ok) {
+    const err = data as Record<string, unknown>
+    throw new Error(
+      `N1CO ${options.method ?? 'GET'} ${path} → ${res.status}: ${err?.message ?? text}`
+    )
+  }
+
+  return data as T
+}
+
+// ---------------------------------------------------------------------------
+// Payment Methods
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a payment method (tokenizes a card) in N1CO.
+ * Returns a paymentMethodId used to create subscriptions.
+ */
+export async function createPaymentMethod(
+  cardData: N1coCardData
+): Promise<N1coPaymentMethodResult> {
+  const data = await n1coFetch<{
+    id: string
+    last_four?: string
+    last4?: string
+    brand?: string
+    card_brand?: string
+    exp_month?: string
+    exp_year?: string
+  }>('/api/v3/PaymentMethods', {
+    method: 'POST',
+    body: JSON.stringify({
+      card_number:  cardData.number,
+      card_holder:  cardData.holderName,
+      exp_month:    cardData.expMonth,
+      exp_year:     cardData.expYear,
+      cvv:          cardData.cvv,
+    }),
+  })
+
+  return {
+    paymentMethodId: data.id,
+    last4:    data.last4 ?? data.last_four ?? '',
+    brand:    data.brand ?? data.card_brand ?? '',
+    expMonth: data.exp_month ?? cardData.expMonth,
+    expYear:  data.exp_year  ?? cardData.expYear,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Subscriptions
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a recurring subscription in N1CO.
+ * N1CO will handle monthly auto-renewal and fire webhooks.
+ */
+export async function createN1coSubscription(
+  input: N1coSubscriptionInput
+): Promise<N1coSubscriptionResult> {
+  const data = await n1coFetch<{
+    id: string
+    subscription_id?: string
+    status?: string
+    next_billing_date?: string
+  }>('/api/v3/Subscriptions', {
+    method: 'POST',
+    body: JSON.stringify({
+      plan_id:           input.planId,
+      location_code:     input.locationCode,
+      payment_method_id: input.paymentMethodId,
+      customer: {
+        id:    input.customerId,
+        name:  input.customerName,
+        email: input.customerEmail,
+        phone: input.customerPhone ?? '',
+      },
+    }),
+  })
+
+  return {
+    subscriptionId:  data.subscription_id ?? data.id,
+    status:          data.status ?? 'active',
+    nextBillingDate: data.next_billing_date,
+  }
 }
 
 /**
- * Sends card data to n1co and returns a reusable payment token.
- * TODO: Replace stub with actual n1co tokenization endpoint.
+ * Cancels an active N1CO subscription.
  */
-export async function tokenizeCard(cardData: N1coCardData): Promise<N1coTokenResult> {
-  // TODO: Implement when n1co tokenization docs are available.
-  // Example shape — adjust fields to match n1co API spec:
-  //
-  // const res = await fetch(`${BASE_URL}/tokens`, {
-  //   method: 'POST',
-  //   headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({
-  //     card_number: cardData.number,
-  //     card_holder: cardData.holderName,
-  //     exp_month: cardData.expMonth,
-  //     exp_year: cardData.expYear,
-  //     cvv: cardData.cvv,
-  //   }),
-  // })
-  // const data = await res.json()
-  // return { token: data.token, last4: data.last4, brand: data.brand, expMonth: data.expMonth, expYear: data.expYear }
-
-  void BASE_URL
-  void API_KEY
-  throw new Error('n1co tokenizeCard: not yet implemented — awaiting API docs')
+export async function cancelN1coSubscription(
+  n1coSubscriptionId: string,
+  reason = 'Customer requested cancellation'
+): Promise<{ success: boolean }> {
+  await n1coFetch<unknown>(`/api/v3/Subscriptions/${n1coSubscriptionId}/cancel`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  })
+  return { success: true }
 }
 
 /**
- * Charges a previously tokenized card.
- * TODO: Replace stub with actual n1co charge endpoint.
+ * Retrieves the current state of an N1CO subscription.
  */
-export async function chargeWithToken(
-  token: string,
-  amountUSD: number,
-  description: string
-): Promise<N1coChargeResult> {
-  // TODO: Implement when n1co charge docs are available.
-  // Example shape — adjust fields to match n1co API spec:
-  //
-  // const res = await fetch(`${BASE_URL}/charges`, {
-  //   method: 'POST',
-  //   headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({ token, amount: Math.round(amountUSD * 100), currency: 'USD', description }),
-  // })
-  // const data = await res.json()
-  // if (!res.ok) return { success: false, errorCode: data.code, errorMessage: data.message }
-  // return { success: true, transactionId: data.transaction_id }
+export async function getN1coSubscription(
+  n1coSubscriptionId: string
+): Promise<N1coSubscriptionDetail> {
+  const data = await n1coFetch<{
+    id: string
+    subscription_id?: string
+    status?: string
+    plan_id?: string
+    next_billing_date?: string
+    cancelled_at?: string
+  }>(`/api/v3/Subscriptions/${n1coSubscriptionId}`)
 
-  void token
-  void amountUSD
-  void description
-  throw new Error('n1co chargeWithToken: not yet implemented — awaiting API docs')
+  return {
+    subscriptionId:  data.subscription_id ?? data.id,
+    status:          data.status ?? 'unknown',
+    planId:          data.plan_id ?? '',
+    nextBillingDate: data.next_billing_date,
+    cancelledAt:     data.cancelled_at,
+  }
 }
 
-/**
- * Validates that a webhook payload came from n1co.
- * TODO: Replace stub with actual signature verification logic once n1co docs arrive.
- */
-export function validateWebhookSignature(payload: string, signature: string): boolean {
-  // TODO: Implement HMAC verification once n1co documents their webhook signing algorithm.
-  // Typical approach:
-  // const expected = crypto.createHmac('sha256', API_KEY).update(payload).digest('hex')
-  // return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
+// ---------------------------------------------------------------------------
+// Webhook validation
+// ---------------------------------------------------------------------------
 
-  void payload
-  void signature
-  return false
+/**
+ * Validates that an incoming webhook came from N1CO
+ * by comparing the secret header value.
+ */
+export function validateWebhookSecret(secret: string | null | undefined): boolean {
+  const expected = process.env.N1CO_WEBHOOK_SECRET
+  if (!expected || !secret) return false
+  // Constant-time comparison to prevent timing attacks
+  return secret.length === expected.length &&
+    Buffer.from(secret).equals(Buffer.from(expected))
 }

@@ -77,7 +77,30 @@
       "Bash(grep -E \"\\\\.tsx$\")",
       "Bash(psql \"postgresql://zyncslot_user:zyncslot_password@localhost:5432/zyncslot_db\" -c \"SELECT t.id, t.name, t.plan, t.hero_subtitle FROM tenants t JOIN users u ON u.tenant_id = t.id WHERE u.email = 'boris90alejandro@gmail.com' LIMIT 1;\")",
       "Read(//Applications/Postgres.app/Contents/Versions/latest/bin/**)",
-      "Read(//usr/local/bin/**)"
+      "Read(//usr/local/bin/**)",
+      "Bash(sips -s format png public/icons/icon-192x192.png --out public/icons/icon-192x192.png)",
+      "Bash(sips -s format png public/icons/icon-512x512.png --out public/icons/icon-512x512.png)",
+      "Bash(sips -s format png src/app/icon.png --out src/app/icon.png)",
+      "Bash(git commit *)",
+      "Bash(node -e \"const j = require\\('./messages/es.json'\\); console.log\\(Object.keys\\(j.Dashboard\\).join\\(', '\\)\\)\")",
+      "Bash(find /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox/src/app/[locale]/admin -type d)",
+      "Bash(xxd)",
+      "Bash(git diff *)",
+      "Bash(pnpm add *)",
+      "Bash(npx vercel *)",
+      "Bash(grep -E \"\\\\.\\(ts|js|json\\)$\")",
+      "Bash(node -e \"require\\('./messages/en.json'\\); console.log\\('en.json OK'\\)\")",
+      "Bash(node -e \"require\\('./messages/es.json'\\); console.log\\('es.json OK'\\)\")",
+      "Bash(node -e \"require\\('./messages/en.json'\\); require\\('./messages/es.json'\\); console.log\\('JSON OK'\\)\")",
+      "Bash(kill %1)",
+      "Bash(wait)",
+      "Bash(sed -n '25,50p' /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox/src/app/[locale]/[slug]/page.tsx)",
+      "Bash(sed -n '150,210p' /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox/src/app/actions/booking.ts)",
+      "Bash(sed -n '40,65p' /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox/src/app/\\\\[locale\\\\]/admin/\\\\\\(dashboard\\\\\\)/staff/StaffClient.tsx)",
+      "Bash(sed -n '370,395p' /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox/src/app/\\\\[locale\\\\]/admin/\\\\\\(dashboard\\\\\\)/staff/StaffClient.tsx)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('Dashboard', {}\\).get\\('sidebar', {}\\), indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(git -C /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox diff --name-only HEAD)",
+      "Bash(git -C /Users/BorisGuardado/Documents/Desarrollos/Zyncrox/Zyncrox status --short)"
     ]
   }
 }

@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { platformConfig } from "@/db/schema";
 import { redirect } from "next/navigation";
 import PaymentsClient from "./PaymentsClient";
+import { parsePlanPrices } from "@/core/plans";
 
 export default async function SuperPaymentsPage({
   params,
@@ -23,6 +24,8 @@ export default async function SuperPaymentsPage({
     .limit(1)
     .then((rows) => rows[0] ?? null);
 
+  const planPrices = parsePlanPrices(config);
+
   return (
     <PaymentsClient
       config={
@@ -32,6 +35,7 @@ export default async function SuperPaymentsPage({
           wompiIsProduction: false,
         }
       }
+      planPrices={planPrices}
     />
   );
 }
