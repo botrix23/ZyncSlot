@@ -313,43 +313,60 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
                 ) : null}
               </div>
             ) : (
-              <div className="flex-1 flex flex-col gap-3">
-                <div className="flex-1 rounded-2xl overflow-hidden border border-zinc-200 dark:border-white/10">
-                  {loadingPreview ? (
-                    <div className="flex items-center justify-center h-64">
-                      <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
-                    </div>
-                  ) : (
-                    <textarea
-                      value={editorValue}
-                      onChange={e => setEditorValue(e.target.value)}
-                      spellCheck={false}
-                      className="w-full h-full min-h-[480px] font-mono text-xs bg-zinc-950 text-zinc-100 p-4 resize-none focus:outline-none leading-relaxed"
-                      placeholder="Pega aquí tu HTML personalizado..."
-                    />
-                  )}
-                </div>
-
-                {/* Variables reference */}
-                <div className="bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/5 rounded-2xl p-4">
-                  <p className="text-xs font-bold text-zinc-600 dark:text-zinc-400 mb-2 uppercase tracking-wider">Variables disponibles</p>
-                  <div className="flex flex-wrap gap-2">
-                    {meta.variables.map(v => (
-                      <button
-                        key={v.key}
-                        onClick={() => setEditorValue(prev => prev + v.key)}
-                        title={v.desc}
-                        className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-mono rounded-lg transition-colors"
-                      >
-                        {v.key}
-                        <span className="text-zinc-500 dark:text-zinc-500 font-sans">{v.desc}</span>
-                      </button>
-                    ))}
+              <div className="flex-1 rounded-2xl overflow-hidden border border-zinc-200 dark:border-white/10">
+                {loadingPreview ? (
+                  <div className="flex items-center justify-center h-64">
+                    <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
                   </div>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-2">Clic en una variable para insertarla al final del editor.</p>
-                </div>
+                ) : (
+                  <textarea
+                    value={editorValue}
+                    onChange={e => setEditorValue(e.target.value)}
+                    spellCheck={false}
+                    className="w-full h-full min-h-[480px] font-mono text-xs bg-zinc-950 text-zinc-100 p-4 resize-none focus:outline-none leading-relaxed"
+                    placeholder="Pega aquí tu HTML personalizado..."
+                  />
+                )}
               </div>
             )}
+
+            {/* Variables — siempre visible */}
+            <div className="bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/5 rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Variables disponibles</p>
+                {view === 'preview' && (
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 italic">
+                    La preview usa datos de ejemplo — en el envío real se reemplazan con los datos del cliente
+                  </p>
+                )}
+                {view === 'editor' && (
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">Clic para insertar al final del editor</p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {meta.variables.map(v => (
+                  view === 'editor' ? (
+                    <button
+                      key={v.key}
+                      onClick={() => setEditorValue(prev => prev + v.key)}
+                      title={`Insertar ${v.key}`}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-mono rounded-lg transition-colors"
+                    >
+                      {v.key}
+                      <span className="text-zinc-500 dark:text-zinc-500 font-sans normal-case font-normal">— {v.desc}</span>
+                    </button>
+                  ) : (
+                    <div
+                      key={v.key}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-100 dark:bg-white/10 text-zinc-700 dark:text-zinc-300 text-xs font-mono rounded-lg"
+                    >
+                      {v.key}
+                      <span className="text-zinc-400 dark:text-zinc-500 font-sans normal-case font-normal">— {v.desc}</span>
+                    </div>
+                  )
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
