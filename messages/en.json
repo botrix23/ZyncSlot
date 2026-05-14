@@ -1061,6 +1061,70 @@
       "step2": "Go to General settings and select your business.",
       "step3": "Copy the App ID and API Secret shown there.",
       "step4": "Paste them above, test the connection and save. Done!"
+    },
+    "emailTemplatesPage": {
+      "title": "Email Templates",
+      "subtitle": "View and customize the emails sent to users. Changes apply to all future sends.",
+      "templates": {
+        "confirmation": {
+          "label": "Booking Confirmation",
+          "description": "Sent when a customer schedules an appointment.",
+          "trigger": "When a booking is created"
+        },
+        "reminder": {
+          "label": "Booking Reminder",
+          "description": "Sent 24 hours before the appointment.",
+          "trigger": "Cron job — 23-25h before appointment"
+        },
+        "cancellation": {
+          "label": "Booking Cancellation",
+          "description": "Sent when an appointment is cancelled.",
+          "trigger": "When a booking is cancelled"
+        },
+        "reschedule": {
+          "label": "Booking Reschedule",
+          "description": "Sent when the date/time of an appointment is changed.",
+          "trigger": "When a booking's schedule is modified"
+        },
+        "trialWarning": {
+          "label": "Trial Warning",
+          "description": "Sent when the trial period is about to expire or has already expired.",
+          "trigger": "Cron job — 3 days and 1 day before expiry"
+        },
+        "surveyInvite": {
+          "label": "Survey Invite",
+          "description": "Sent after an appointment is completed to request feedback.",
+          "trigger": "When a booking is marked as Completed"
+        }
+      },
+      "variables": {
+        "customerName": "Customer name",
+        "serviceName": "Service name",
+        "date": "Appointment date",
+        "time": "Appointment time",
+        "branchName": "Branch name",
+        "staffName": "Specialist name",
+        "tenantName": "Business name",
+        "oldDate": "Previous date",
+        "oldTime": "Previous time",
+        "newDate": "New date",
+        "newTime": "New time",
+        "businessName": "Business name",
+        "daysLeft": "Days remaining (0 = expired)",
+        "adminName": "Administrator name",
+        "surveyUrl": "Survey URL"
+      },
+      "previewTab": "Preview",
+      "editorTab": "HTML Editor",
+      "reset": "Reset",
+      "save": "Save",
+      "saved": "Saved!",
+      "variablesTitle": "Available variables",
+      "previewNote": "The preview uses sample data — in real sends they are replaced with the customer's data",
+      "editorNote": "Click to insert at the end of the editor",
+      "resetConfirm": "Reset this template to the default design? Saved customization will be lost.",
+      "previewError": "Error loading the preview.",
+      "loadError": "<!-- Error loading default template -->"
     }
   },
   "TrialPlans": {

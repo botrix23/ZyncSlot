@@ -1061,6 +1061,70 @@
       "step2": "Ve a Configuraciones generales y selecciona tu negocio.",
       "step3": "Copia el App ID y el API Secret que aparecen ahí.",
       "step4": "Pégalos arriba, prueba la conexión y guarda. ¡Listo!"
+    },
+    "emailTemplatesPage": {
+      "title": "Templates de Email",
+      "subtitle": "Visualiza y personaliza los correos que se envían a los usuarios. Los cambios se aplican en todos los envíos.",
+      "templates": {
+        "confirmation": {
+          "label": "Confirmación de cita",
+          "description": "Se envía cuando un cliente agenda una cita.",
+          "trigger": "Al crear una reserva"
+        },
+        "reminder": {
+          "label": "Recordatorio de cita",
+          "description": "Se envía 24 horas antes de la cita.",
+          "trigger": "Cron job — 23-25h antes de la cita"
+        },
+        "cancellation": {
+          "label": "Cancelación de cita",
+          "description": "Se envía cuando una cita es cancelada.",
+          "trigger": "Al cancelar una reserva"
+        },
+        "reschedule": {
+          "label": "Reagendado de cita",
+          "description": "Se envía cuando se cambia la fecha/hora de una cita.",
+          "trigger": "Al modificar el horario de una reserva"
+        },
+        "trialWarning": {
+          "label": "Aviso de trial",
+          "description": "Se envía cuando el período de prueba está próximo a vencer o ya venció.",
+          "trigger": "Cron job — 3 días y 1 día antes del vencimiento"
+        },
+        "surveyInvite": {
+          "label": "Invitación a encuesta",
+          "description": "Se envía después de que finaliza una cita para solicitar retroalimentación.",
+          "trigger": "Al marcar una cita como Finalizada"
+        }
+      },
+      "variables": {
+        "customerName": "Nombre del cliente",
+        "serviceName": "Nombre del servicio",
+        "date": "Fecha de la cita",
+        "time": "Hora de la cita",
+        "branchName": "Nombre de la sucursal",
+        "staffName": "Nombre del especialista",
+        "tenantName": "Nombre del negocio",
+        "oldDate": "Fecha anterior",
+        "oldTime": "Hora anterior",
+        "newDate": "Nueva fecha",
+        "newTime": "Nueva hora",
+        "businessName": "Nombre del negocio",
+        "daysLeft": "Días restantes (0 = vencido)",
+        "adminName": "Nombre del administrador",
+        "surveyUrl": "URL de la encuesta"
+      },
+      "previewTab": "Vista previa",
+      "editorTab": "Editor HTML",
+      "reset": "Restablecer",
+      "save": "Guardar",
+      "saved": "¡Guardado!",
+      "variablesTitle": "Variables disponibles",
+      "previewNote": "La preview usa datos de ejemplo — en el envío real se reemplazan con los datos del cliente",
+      "editorNote": "Clic para insertar al final del editor",
+      "resetConfirm": "¿Restablecer este template al diseño por defecto? Se perderá la personalización guardada.",
+      "previewError": "Error al cargar la vista previa.",
+      "loadError": "<!-- Error al cargar el template por defecto -->"
     }
   },
   "TrialPlans": {

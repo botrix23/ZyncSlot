@@ -1,102 +1,28 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { getEmailTemplatesAction, updateEmailTemplateAction } from '@/app/actions/superAdmin';
 import { CheckCircle, Eye, Code2, RotateCcw, Save, Loader2 } from 'lucide-react';
 
 type TemplateKey = 'confirmation' | 'reminder' | 'cancellation' | 'reschedule' | 'trialWarning' | 'surveyInvite';
 type Templates = Awaited<ReturnType<typeof getEmailTemplatesAction>>;
 
-const TEMPLATE_META: Record<TemplateKey, {
-  label: string;
-  description: string;
-  trigger: string;
-  variables: { key: string; desc: string }[];
-}> = {
-  confirmation: {
-    label: 'Confirmación de cita',
-    description: 'Se envía cuando un cliente agenda una cita.',
-    trigger: 'Al crear una reserva',
-    variables: [
-      { key: '{{customerName}}', desc: 'Nombre del cliente' },
-      { key: '{{serviceName}}', desc: 'Nombre del servicio' },
-      { key: '{{date}}', desc: 'Fecha de la cita' },
-      { key: '{{time}}', desc: 'Hora de la cita' },
-      { key: '{{branchName}}', desc: 'Nombre de la sucursal' },
-      { key: '{{staffName}}', desc: 'Nombre del especialista' },
-      { key: '{{tenantName}}', desc: 'Nombre del negocio' },
-    ],
-  },
-  reminder: {
-    label: 'Recordatorio de cita',
-    description: 'Se envía 24 horas antes de la cita.',
-    trigger: 'Cron job — 23-25h antes de la cita',
-    variables: [
-      { key: '{{customerName}}', desc: 'Nombre del cliente' },
-      { key: '{{serviceName}}', desc: 'Nombre del servicio' },
-      { key: '{{date}}', desc: 'Fecha de la cita' },
-      { key: '{{time}}', desc: 'Hora de la cita' },
-      { key: '{{branchName}}', desc: 'Nombre de la sucursal' },
-      { key: '{{staffName}}', desc: 'Nombre del especialista' },
-      { key: '{{tenantName}}', desc: 'Nombre del negocio' },
-    ],
-  },
-  cancellation: {
-    label: 'Cancelación de cita',
-    description: 'Se envía cuando una cita es cancelada.',
-    trigger: 'Al cancelar una reserva',
-    variables: [
-      { key: '{{customerName}}', desc: 'Nombre del cliente' },
-      { key: '{{serviceName}}', desc: 'Nombre del servicio' },
-      { key: '{{date}}', desc: 'Fecha de la cita' },
-      { key: '{{time}}', desc: 'Hora de la cita' },
-      { key: '{{branchName}}', desc: 'Nombre de la sucursal' },
-      { key: '{{tenantName}}', desc: 'Nombre del negocio' },
-    ],
-  },
-  reschedule: {
-    label: 'Reagendado de cita',
-    description: 'Se envía cuando se cambia la fecha/hora de una cita.',
-    trigger: 'Al modificar el horario de una reserva',
-    variables: [
-      { key: '{{customerName}}', desc: 'Nombre del cliente' },
-      { key: '{{serviceName}}', desc: 'Nombre del servicio' },
-      { key: '{{oldDate}}', desc: 'Fecha anterior' },
-      { key: '{{oldTime}}', desc: 'Hora anterior' },
-      { key: '{{newDate}}', desc: 'Nueva fecha' },
-      { key: '{{newTime}}', desc: 'Nueva hora' },
-      { key: '{{branchName}}', desc: 'Nombre de la sucursal' },
-      { key: '{{staffName}}', desc: 'Nombre del especialista' },
-      { key: '{{tenantName}}', desc: 'Nombre del negocio' },
-    ],
-  },
-  trialWarning: {
-    label: 'Aviso de trial',
-    description: 'Se envía cuando el período de prueba está próximo a vencer o ya venció.',
-    trigger: 'Cron job — 3 días y 1 día antes del vencimiento',
-    variables: [
-      { key: '{{businessName}}', desc: 'Nombre del negocio' },
-      { key: '{{daysLeft}}', desc: 'Días restantes (0 = vencido)' },
-      { key: '{{adminName}}', desc: 'Nombre del administrador' },
-    ],
-  },
-  surveyInvite: {
-    label: 'Invitación a encuesta',
-    description: 'Se envía después de que finaliza una cita para solicitar retroalimentación.',
-    trigger: 'Al marcar una cita como Finalizada',
-    variables: [
-      { key: '{{customerName}}', desc: 'Nombre del cliente' },
-      { key: '{{tenantName}}', desc: 'Nombre del negocio' },
-      { key: '{{surveyUrl}}', desc: 'URL de la encuesta' },
-    ],
-  },
+const TEMPLATE_VARIABLES: Record<TemplateKey, string[]> = {
+  confirmation: ['customerName', 'serviceName', 'date', 'time', 'branchName', 'staffName', 'tenantName'],
+  reminder:     ['customerName', 'serviceName', 'date', 'time', 'branchName', 'staffName', 'tenantName'],
+  cancellation: ['customerName', 'serviceName', 'date', 'time', 'branchName', 'tenantName'],
+  reschedule:   ['customerName', 'serviceName', 'oldDate', 'oldTime', 'newDate', 'newTime', 'branchName', 'staffName', 'tenantName'],
+  trialWarning: ['businessName', 'daysLeft', 'adminName'],
+  surveyInvite: ['customerName', 'tenantName', 'surveyUrl'],
 };
 
-const TEMPLATE_KEYS = Object.keys(TEMPLATE_META) as TemplateKey[];
+const TEMPLATE_KEYS = Object.keys(TEMPLATE_VARIABLES) as TemplateKey[];
 
 type PreviewLocale = 'es' | 'en';
 
-export default function EmailTemplatesClient({ initialTemplates }: { initialTemplates: Templates }) {
+export default function EmailTemplatesClient({ initialTemplates, locale }: { initialTemplates: Templates; locale: string }) {
+  const t = useTranslations('SuperAdmin.emailTemplatesPage');
   const [selected, setSelected] = useState<TemplateKey>('confirmation');
   const [templates, setTemplates] = useState<Templates>(initialTemplates);
   const [view, setView] = useState<'preview' | 'editor'>('preview');
@@ -115,7 +41,7 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
       const html = await res.text();
       setPreviewHtml(html);
     } catch {
-      setPreviewHtml('<p style="padding:20px;color:red">Error al cargar la vista previa.</p>');
+      setPreviewHtml(`<p style="padding:20px;color:red">${t('previewError')}</p>`);
     } finally {
       setLoadingPreview(false);
     }
@@ -128,7 +54,7 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
       const html = await res.text();
       setEditorValue(html);
     } catch {
-      setEditorValue('<!-- Error al cargar el template por defecto -->');
+      setEditorValue(t('loadError'));
     } finally {
       setLoadingPreview(false);
     }
@@ -176,7 +102,7 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
   };
 
   const handleReset = async () => {
-    if (!confirm('¿Restablecer este template al diseño por defecto? Se perderá la personalización guardada.')) return;
+    if (!confirm(t('resetConfirm'))) return;
     setSaving(true);
     try {
       await updateEmailTemplateAction(selected, null);
@@ -196,7 +122,9 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
     loadPreview(selected, previewLocale);
   }
 
-  const meta = TEMPLATE_META[selected];
+  const selectedLabel = t(`templates.${selected}.label`);
+  const selectedDescription = t(`templates.${selected}.description`);
+  const selectedVars = TEMPLATE_VARIABLES[selected];
   const hasCustom = !!templates[selected];
 
   return (
@@ -204,7 +132,6 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
       {/* Left panel — template list */}
       <div className="w-64 shrink-0 space-y-1">
         {TEMPLATE_KEYS.map(key => {
-          const m = TEMPLATE_META[key];
           const isCustom = !!templates[key];
           return (
             <button
@@ -217,7 +144,7 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
               }`}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-semibold leading-tight">{m.label}</span>
+                <span className="text-sm font-semibold leading-tight">{t(`templates.${key}.label`)}</span>
                 {isCustom && (
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
                     selected === key ? 'bg-white/20 text-white' : 'bg-purple-500/15 text-purple-600 dark:text-purple-400'
@@ -227,7 +154,7 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
                 )}
               </div>
               <p className={`text-xs mt-0.5 ${selected === key ? 'text-white/70' : 'text-zinc-500 dark:text-zinc-500'}`}>
-                {m.trigger}
+                {t(`templates.${key}.trigger`)}
               </p>
             </button>
           );
@@ -240,8 +167,8 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-white/5">
             <div>
-              <h2 className="font-black text-zinc-900 dark:text-white">{meta.label}</h2>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">{meta.description}</p>
+              <h2 className="font-black text-zinc-900 dark:text-white">{selectedLabel}</h2>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">{selectedDescription}</p>
             </div>
             <div className="flex items-center gap-2">
               {hasCustom && (
@@ -251,7 +178,7 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
                   className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all disabled:opacity-50"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  Restablecer
+                  {t('reset')}
                 </button>
               )}
               {view === 'editor' && (
@@ -267,7 +194,7 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
                   ) : (
                     <Save className="w-4 h-4" />
                   )}
-                  {savedKey === selected ? '¡Guardado!' : 'Guardar'}
+                  {savedKey === selected ? t('saved') : t('save')}
                 </button>
               )}
             </div>
@@ -285,7 +212,7 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
                 }`}
               >
                 <Eye className="w-4 h-4" />
-                Vista previa
+                {t('previewTab')}
               </button>
               <button
                 onClick={() => handleSwitchView('editor')}
@@ -296,7 +223,7 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
                 }`}
               >
                 <Code2 className="w-4 h-4" />
-                Editor HTML
+                {t('editorTab')}
                 {hasCustom && (
                   <span className="text-[10px] font-bold px-1.5 py-0.5 bg-purple-500/15 text-purple-600 dark:text-purple-400 rounded-full">
                     Custom
@@ -337,7 +264,7 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
                     className="w-full h-full border-0"
                     style={{ minHeight: 480 }}
                     sandbox="allow-same-origin"
-                    title={`Preview: ${meta.label}`}
+                    title={`Preview: ${selectedLabel}`}
                   />
                 ) : null}
               </div>
@@ -353,47 +280,47 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
                     onChange={e => setEditorValue(e.target.value)}
                     spellCheck={false}
                     className="w-full h-full min-h-[480px] font-mono text-xs bg-zinc-950 text-zinc-100 p-4 resize-none focus:outline-none leading-relaxed"
-                    placeholder="Pega aquí tu HTML personalizado..."
+                    placeholder="HTML..."
                   />
                 )}
               </div>
             )}
 
-            {/* Variables — siempre visible */}
+            {/* Variables */}
             <div className="bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/5 rounded-2xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Variables disponibles</p>
+                <p className="text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">{t('variablesTitle')}</p>
                 {view === 'preview' && (
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500 italic">
-                    La preview usa datos de ejemplo — en el envío real se reemplazan con los datos del cliente
-                  </p>
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 italic">{t('previewNote')}</p>
                 )}
                 {view === 'editor' && (
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500">Clic para insertar al final del editor</p>
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">{t('editorNote')}</p>
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
-                {meta.variables.map(v => (
-                  view === 'editor' ? (
+                {selectedVars.map(varKey => {
+                  const token = `{{${varKey}}}`;
+                  const desc = t(`variables.${varKey}`);
+                  return view === 'editor' ? (
                     <button
-                      key={v.key}
-                      onClick={() => setEditorValue(prev => prev + v.key)}
-                      title={`Insertar ${v.key}`}
+                      key={varKey}
+                      onClick={() => setEditorValue(prev => prev + token)}
+                      title={token}
                       className="flex items-center gap-1.5 px-2.5 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-mono rounded-lg transition-colors"
                     >
-                      {v.key}
-                      <span className="text-zinc-500 dark:text-zinc-500 font-sans normal-case font-normal">— {v.desc}</span>
+                      {token}
+                      <span className="text-zinc-500 dark:text-zinc-500 font-sans normal-case font-normal">— {desc}</span>
                     </button>
                   ) : (
                     <div
-                      key={v.key}
+                      key={varKey}
                       className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-100 dark:bg-white/10 text-zinc-700 dark:text-zinc-300 text-xs font-mono rounded-lg"
                     >
-                      {v.key}
-                      <span className="text-zinc-400 dark:text-zinc-500 font-sans normal-case font-normal">— {v.desc}</span>
+                      {token}
+                      <span className="text-zinc-400 dark:text-zinc-500 font-sans normal-case font-normal">— {desc}</span>
                     </div>
-                  )
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
