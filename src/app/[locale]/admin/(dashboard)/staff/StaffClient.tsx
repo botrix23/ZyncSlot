@@ -23,9 +23,11 @@ import {
   ShieldOff,
   KeyRound,
   Copy,
-  Check
+  Check,
+  Eye,
+  EyeOff
 } from 'lucide-react';
-import { createStaffAction, updateStaffAction, deleteStaffAction, getStaffFutureBookingCount } from "@/app/actions/staff";
+import { createStaffAction, updateStaffAction, deleteStaffAction, getStaffFutureBookingCount, toggleStaffActiveAction } from "@/app/actions/staff";
 import { updateShowStaffSelectionAction } from "@/app/actions/tenant";
 import { createStaffAccessAction, revokeStaffAccessAction, reactivateStaffAccessAction } from "@/app/actions/staffAccess";
 import { Tag } from 'lucide-react';
@@ -56,7 +58,8 @@ export default function StaffClient({
   showStaffSelection?: boolean,
 }) {
   const limit = planLimit ?? 999;
-  const atLimit = initialStaff.length >= limit;
+  const activeStaffCount = initialStaff.filter((m: any) => m.isActive !== false).length;
+  const atLimit = activeStaffCount >= limit;
   const t = useTranslations('Dashboard.staff');
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -253,6 +256,16 @@ export default function StaffClient({
     setDeleteStaffTarget({ id, name, bookingCount });
   };
 
+  const handleToggleActive = async (id: string, currentlyActive: boolean) => {
+    setOpenMenu(null);
+    const result = await toggleStaffActiveAction(id, tenantId, !currentlyActive);
+    if (!result.success && result.error) {
+      alert(result.error);
+      return;
+    }
+    router.refresh();
+  };
+
   const confirmDeleteStaff = async () => {
     if (!deleteStaffTarget) return;
     const { id } = deleteStaffTarget;
@@ -371,11 +384,11 @@ export default function StaffClient({
             <span className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${
               atLimit
                 ? 'bg-red-500/10 border-red-500/30 text-red-500'
-                : initialStaff.length >= limit - 1
+                : activeStaffCount >= limit - 1
                   ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
                   : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-zinc-400'
             }`}>
-              {initialStaff.length} / {limit} empleados · {plan ?? 'BASIC'}
+              {activeStaffCount} / {limit} empleados · {plan ?? 'BASIC'}
             </span>
           )}
           <button
@@ -454,6 +467,11 @@ export default function StaffClient({
               
               <div className="flex flex-col items-center">
                 <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-2">{member.name}</h3>
+                {member.isActive === false && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400 mb-1">
+                    Inactivo
+                  </span>
+                )}
                 {avgRating && (
                   <button 
                     onClick={(e) => {
@@ -932,6 +950,27 @@ export default function StaffClient({
               left: menuPos.left
             }}
           >
+            {(() => {
+              const member = initialStaff.find(s => s.id === openMenu);
+              if (!member) return null;
+              const isCurrentlyActive = member.isActive !== false;
+              return (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleActive(member.id, isCurrentlyActive);
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold rounded-xl transition-all ${
+                    isCurrentlyActive
+                      ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-500/5'
+                      : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/5'
+                  }`}
+                >
+                  {isCurrentlyActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {isCurrentlyActive ? 'Desactivar' : 'Reactivar'}
+                </button>
+              );
+            })()}
             <button
               onClick={(e) => {
                 e.stopPropagation();

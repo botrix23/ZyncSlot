@@ -307,3 +307,21 @@ export async function getStaffAction(tenantId: string) {
     return [];
   }
 }
+
+export async function toggleStaffActiveAction(id: string, tenantId: string, isActive: boolean) {
+  try {
+    if (isActive) {
+      const limit = await checkPlanLimit(tenantId, 'staff');
+      if (!limit.allowed) {
+        return { success: false, error: `Límite de ${limit.limit} empleado(s) alcanzado en el plan ${limit.plan}. Actualiza tu plan para reactivar más empleados.` };
+      }
+    }
+    await db.update(staff).set({ isActive }).where(and(eq(staff.id, id), eq(staff.tenantId, tenantId)));
+    revalidatePath("/[locale]/admin/staff", "page");
+    revalidatePath("/[locale]/[slug]", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Error toggling staff active:", error);
+    return { success: false, error: "Error al actualizar el empleado" };
+  }
+}
