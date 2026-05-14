@@ -37,6 +37,11 @@ export const BookingConfirmationEmail = ({
   customBody,
   whatsappNumber,
 }: BookingEmailProps) => {
+  const displayName = customerName
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
   const getFormattedBody = () => {
     if (!customBody) return null;
     return customBody
@@ -64,7 +69,7 @@ export const BookingConfirmationEmail = ({
             />
           )}
           <Heading style={h1}>
-            {customBody ? 'Confirmación de tu reserva' : `¡Hola ${customerName}!`}
+            {customBody ? 'Confirmación de tu reserva' : `¡Hola ${displayName}!`}
           </Heading>
           <Text style={text}>
             {formattedBody || `Tu cita en ${tenantName} ha sido confirmada satisfactoriamente. Aquí tienes los detalles:`}

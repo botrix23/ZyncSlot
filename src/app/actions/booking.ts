@@ -447,7 +447,7 @@ export async function createBookingAction(data: {
           const result = await resend.emails.send({
             from: 'Zyncrox <noreply@zyncrox.com>', // Cambiado temporalmente para asegurar entrega en cuentas no verificadas
             to: data.customerEmail,
-            subject: `Cita Confirmada - ${tenant.name}`,
+            subject: `Cita confirmada - ${tenant.name}`,
             react: BookingConfirmationEmail({
               customerName: data.customerName,
               serviceName: service.name,
@@ -758,7 +758,7 @@ export async function createBookingSessionAction(data: {
         await resend.emails.send({
           from: 'Zyncrox <noreply@zyncrox.com>',
           to: data.customerEmail,
-          subject: `${data.bookings.length > 1 ? 'Sesión de Reservas Confirmada' : 'Cita Confirmada'} - ${tenant.name}`,
+          subject: `${data.bookings.length > 1 ? 'Sesión de reservas confirmada' : 'Cita confirmada'} - ${tenant.name}`,
           react: BookingConfirmationEmail({
             customerName: data.customerName,
             serviceName: service.name + (data.bookings.length > 1 ? ` (+${data.bookings.length - 1} más)` : ''),

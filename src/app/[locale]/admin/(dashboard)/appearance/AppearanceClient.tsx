@@ -453,6 +453,19 @@ try {
                 </PlanGateSection>
 
 
+                {/* WhatsApp / Phone */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.phone')}</label>
+                  <input
+                    type="tel"
+                    value={whatsappNumber}
+                    onChange={e => setWhatsappNumber(e.target.value)}
+                    placeholder="Ej: 50370000000"
+                    className="w-full p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all text-sm text-slate-900 dark:text-white"
+                  />
+                  <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">Se muestra en los correos de confirmación para que el cliente pueda contactarte.</p>
+                </div>
+
                 {/* Widget Footer */}
                 <div>
                   <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">{tPortal('form.footerLabel')}</label>
