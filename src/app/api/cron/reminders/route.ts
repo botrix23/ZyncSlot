@@ -7,6 +7,8 @@ import { es } from "date-fns/locale";
 import { resend } from "@/lib/resend";
 import { BookingReminderEmail } from "@/components/emails/BookingReminderEmail";
 import { logAuditEvent } from "@/lib/audit";
+import { getPlatformEmailTemplates, buildEmailPayload } from "@/lib/emailTemplates";
+import React from "react";
 
 export async function GET(req: NextRequest) {
   const secret = req.nextUrl.searchParams.get("secret");
@@ -33,23 +35,33 @@ export async function GET(req: NextRequest) {
     let sent = 0;
     let failed = 0;
 
+    const emailCfg = await getPlatformEmailTemplates();
+
     for (const booking of upcoming) {
       if (!booking.customerEmail) continue;
       try {
+        const vars = {
+          customerName: booking.customerName,
+          serviceName: booking.service.name,
+          date: format(booking.startTime, "EEEE, d 'de' MMMM", { locale: es }),
+          time: format(booking.startTime, "hh:mm a"),
+          branchName: booking.branch.name,
+          staffName: booking.staff?.name ?? '',
+          tenantName: booking.tenant.name,
+        };
+        const emailPayload = buildEmailPayload(
+          emailCfg?.emailTplReminder,
+          React.createElement(BookingReminderEmail, {
+            ...vars,
+            tenantLogo: booking.tenant.logoUrl || undefined,
+          }),
+          vars
+        );
         await resend.emails.send({
           from: 'Zyncrox <noreply@zyncrox.com>',
           to: booking.customerEmail,
           subject: `Recordatorio: tu cita mañana en ${booking.tenant.name}`,
-          react: BookingReminderEmail({
-            customerName: booking.customerName,
-            serviceName: booking.service.name,
-            date: format(booking.startTime, "EEEE, d 'de' MMMM", { locale: es }),
-            time: format(booking.startTime, "hh:mm a"),
-            branchName: booking.branch.name,
-            staffName: booking.staff?.name,
-            tenantName: booking.tenant.name,
-            tenantLogo: booking.tenant.logoUrl || undefined,
-          }),
+          ...emailPayload,
         });
         sent++;
       } catch (e) {

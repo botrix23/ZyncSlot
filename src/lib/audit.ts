@@ -35,7 +35,9 @@ export type AuditAction =
   | 'CRON_TRIAL_RUN'
   | 'ADMIN_CREATED'
   | 'ADMIN_STATUS_CHANGED'
-  | 'ADMIN_DELETED';
+  | 'ADMIN_DELETED'
+  | 'TENANT_TRIAL_UPDATED'
+  | 'EMAIL_TEMPLATE_UPDATED';
 
 export interface AuditEventParams {
   action: AuditAction;

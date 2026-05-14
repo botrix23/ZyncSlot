@@ -411,6 +411,13 @@ export const platformConfig = pgTable('platform_config', {
   wompiAppId: text('wompi_app_id'),
   wompiApiSecret: text('wompi_api_secret'),
   wompiIsProduction: boolean('wompi_is_production').notNull().default(false),
+  // Custom HTML overrides for email templates (null = use default React component)
+  emailTplConfirmation: text('email_tpl_confirmation'),
+  emailTplReminder: text('email_tpl_reminder'),
+  emailTplCancellation: text('email_tpl_cancellation'),
+  emailTplReschedule: text('email_tpl_reschedule'),
+  emailTplTrialWarning: text('email_tpl_trial_warning'),
+  emailTplSurveyInvite: text('email_tpl_survey_invite'),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
 

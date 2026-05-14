@@ -390,6 +390,86 @@ export async function restoreAccessAction(tenantId: string) {
   return { success: true, recoveryEmail: tenant.recoveryEmail, tempPassword };
 }
 
+// ─── Ajustar días de trial (para pruebas) ────────────────────────────────────
+export async function updateTenantTrialDaysAction(tenantId: string, days: number) {
+  const session = await assertSuperAdmin();
+
+  const now = new Date();
+  let newExpiry: Date;
+  if (days <= 0) {
+    // Expirado: ponerlo 1ms en el pasado
+    newExpiry = new Date(now.getTime() - 1000);
+  } else {
+    newExpiry = new Date(now);
+    newExpiry.setDate(newExpiry.getDate() + days);
+  }
+
+  const prevTenant = await db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) });
+
+  await db.update(tenants)
+    .set({ subscriptionExpiresAt: newExpiry, status: 'TRIAL', updatedAt: new Date() })
+    .where(eq(tenants.id, tenantId));
+
+  await logAuditEvent({
+    action: 'TENANT_TRIAL_UPDATED',
+    userId: session.userId,
+    tenantId,
+    details: { days, newExpiry: newExpiry.toISOString(), tenantName: prevTenant?.name },
+  });
+
+  revalidatePath('/[locale]/admin/super', 'page');
+  revalidatePath('/[locale]/admin/super/tenants', 'page');
+  return { success: true };
+}
+
+// ─── Email templates (plataforma) ────────────────────────────────────────────
+export async function getEmailTemplatesAction() {
+  await assertSuperAdmin();
+  const cfg = await db.select().from(platformConfig).limit(1).then(rows => rows[0] ?? null);
+  return {
+    confirmation: cfg?.emailTplConfirmation ?? null,
+    reminder: cfg?.emailTplReminder ?? null,
+    cancellation: cfg?.emailTplCancellation ?? null,
+    reschedule: cfg?.emailTplReschedule ?? null,
+    trialWarning: cfg?.emailTplTrialWarning ?? null,
+    surveyInvite: cfg?.emailTplSurveyInvite ?? null,
+  };
+}
+
+export async function updateEmailTemplateAction(
+  key: 'confirmation' | 'reminder' | 'cancellation' | 'reschedule' | 'trialWarning' | 'surveyInvite',
+  html: string | null
+) {
+  const session = await assertSuperAdmin();
+
+  const columnMap = {
+    confirmation: { emailTplConfirmation: html },
+    reminder: { emailTplReminder: html },
+    cancellation: { emailTplCancellation: html },
+    reschedule: { emailTplReschedule: html },
+    trialWarning: { emailTplTrialWarning: html },
+    surveyInvite: { emailTplSurveyInvite: html },
+  } as const;
+
+  // Ensure row exists
+  const existing = await db.select().from(platformConfig).limit(1).then(rows => rows[0] ?? null);
+  if (!existing) {
+    await db.insert(platformConfig).values({ id: 1, ...columnMap[key], wompiIsProduction: false });
+  } else {
+    await db.update(platformConfig)
+      .set({ ...columnMap[key], updatedAt: new Date() })
+      .where(eq(platformConfig.id, 1));
+  }
+
+  await logAuditEvent({
+    action: 'EMAIL_TEMPLATE_UPDATED',
+    userId: session.userId,
+    details: { templateKey: key, reset: html === null },
+  });
+
+  return { success: true };
+}
+
 // ─── Límites de admins por plan ───────────────────────────────────────────────
 const ADMIN_LIMITS: Record<string, number> = {
   BASIC: 1,

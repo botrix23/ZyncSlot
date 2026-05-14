@@ -9,6 +9,8 @@ import { BookingConfirmationEmail } from "@/components/emails/BookingConfirmatio
 import { BookingCancellationEmail } from "@/components/emails/BookingCancellationEmail";
 import { BookingRescheduleEmail } from "@/components/emails/BookingRescheduleEmail";
 import { SurveyInviteEmail } from "@/components/emails/SurveyInviteEmail";
+import { getPlatformEmailTemplates, buildEmailPayload } from "@/lib/emailTemplates";
+import React from "react";
 import { es } from "date-fns/locale";
 import { getPlanFeatures } from "@/core/plans";
 import { v4 as uuidv4 } from "uuid";
@@ -444,22 +446,31 @@ export async function createBookingAction(data: {
       if (tenant && service && branch) {
         console.log(`[Email] Intentando enviar a ${data.customerEmail} para tenant ${tenant.name}`);
         try {
-          const result = await resend.emails.send({
-            from: 'Zyncrox <noreply@zyncrox.com>', // Cambiado temporalmente para asegurar entrega en cuentas no verificadas
-            to: data.customerEmail,
-            subject: `Cita confirmada - ${tenant.name}`,
-            react: BookingConfirmationEmail({
-              customerName: data.customerName,
-              serviceName: service.name,
-              date: format(data.startTime, "EEEE, d 'de' MMMM", { locale: es }),
-              time: format(data.startTime, "hh:mm a"),
-              branchName: branch.name,
-              staffName: tenant.plan !== 'BASIC' && staffMember ? staffMember.name : undefined,
-              tenantName: tenant.name,
+          const emailCfg = await getPlatformEmailTemplates();
+          const vars = {
+            customerName: data.customerName,
+            serviceName: service.name,
+            date: format(data.startTime, "EEEE, d 'de' MMMM", { locale: es }),
+            time: format(data.startTime, "hh:mm a"),
+            branchName: branch.name,
+            staffName: tenant.plan !== 'BASIC' && staffMember ? staffMember.name : '',
+            tenantName: tenant.name,
+          };
+          const emailPayload = buildEmailPayload(
+            emailCfg?.emailTplConfirmation,
+            React.createElement(BookingConfirmationEmail, {
+              ...vars,
               tenantLogo: tenant.logoUrl || undefined,
               customBody: tenant.emailBodyTemplate,
               whatsappNumber: tenant.whatsappNumber || branch.phone || undefined,
             }),
+            vars
+          );
+          const result = await resend.emails.send({
+            from: 'Zyncrox <noreply@zyncrox.com>',
+            to: data.customerEmail,
+            subject: `Cita confirmada - ${tenant.name}`,
+            ...emailPayload,
           });
           console.log(`[Email] Respuesta de Resend:`, result);
         } catch (innerError: any) {
@@ -755,22 +766,31 @@ export async function createBookingSessionAction(data: {
 
       if (service && branch) {
         const startDate = parseISO(firstBooking.startTime);
-        await resend.emails.send({
-          from: 'Zyncrox <noreply@zyncrox.com>',
-          to: data.customerEmail,
-          subject: `${data.bookings.length > 1 ? 'Sesión de reservas confirmada' : 'Cita confirmada'} - ${tenant.name}`,
-          react: BookingConfirmationEmail({
-            customerName: data.customerName,
-            serviceName: service.name + (data.bookings.length > 1 ? ` (+${data.bookings.length - 1} más)` : ''),
-            date: format(startDate, "EEEE, d 'de' MMMM", { locale: es }),
-            time: format(startDate, "hh:mm a"),
-            branchName: branch.name,
-            staffName: tenant.plan !== 'BASIC' ? staffMember?.name : undefined,
-            tenantName: tenant.name,
+        const emailCfg2 = await getPlatformEmailTemplates();
+        const vars2 = {
+          customerName: data.customerName,
+          serviceName: service.name + (data.bookings.length > 1 ? ` (+${data.bookings.length - 1} más)` : ''),
+          date: format(startDate, "EEEE, d 'de' MMMM", { locale: es }),
+          time: format(startDate, "hh:mm a"),
+          branchName: branch.name,
+          staffName: tenant.plan !== 'BASIC' ? staffMember?.name ?? '' : '',
+          tenantName: tenant.name,
+        };
+        const emailPayload2 = buildEmailPayload(
+          emailCfg2?.emailTplConfirmation,
+          React.createElement(BookingConfirmationEmail, {
+            ...vars2,
             tenantLogo: tenant.logoUrl || undefined,
             customBody: tenant.emailBodyTemplate,
             whatsappNumber: tenant.whatsappNumber || branch?.phone || undefined,
           }),
+          vars2
+        );
+        await resend.emails.send({
+          from: 'Zyncrox <noreply@zyncrox.com>',
+          to: data.customerEmail,
+          subject: `${data.bookings.length > 1 ? 'Sesión de reservas confirmada' : 'Cita confirmada'} - ${tenant.name}`,
+          ...emailPayload2,
         });
       }
     } catch (emailError) {
@@ -862,22 +882,31 @@ export async function updateBookingAction(data: {
         : existing.staff;
 
       try {
+        const emailCfgR = await getPlatformEmailTemplates();
+        const varsR = {
+          customerName: name,
+          serviceName: existing.service.name,
+          oldDate: format(existing.startTime, "EEEE, d 'de' MMMM", { locale: es }),
+          oldTime: format(existing.startTime, "hh:mm a"),
+          newDate: format(data.startTime!, "EEEE, d 'de' MMMM", { locale: es }),
+          newTime: format(data.startTime!, "hh:mm a"),
+          branchName: existing.branch.name,
+          staffName: newStaff?.name ?? '',
+          tenantName: existing.tenant.name,
+        };
+        const emailPayloadR = buildEmailPayload(
+          emailCfgR?.emailTplReschedule,
+          React.createElement(BookingRescheduleEmail, {
+            ...varsR,
+            tenantLogo: existing.tenant.logoUrl || undefined,
+          }),
+          varsR
+        );
         await resend.emails.send({
           from: 'Zyncrox <noreply@zyncrox.com>',
           to: emailData,
           subject: `Cita reagendada - ${existing.tenant.name}`,
-          react: BookingRescheduleEmail({
-            customerName: name,
-            serviceName: existing.service.name,
-            oldDate: format(existing.startTime, "EEEE, d 'de' MMMM", { locale: es }),
-            oldTime: format(existing.startTime, "hh:mm a"),
-            newDate: format(data.startTime!, "EEEE, d 'de' MMMM", { locale: es }),
-            newTime: format(data.startTime!, "hh:mm a"),
-            branchName: existing.branch.name,
-            staffName: newStaff?.name,
-            tenantName: existing.tenant.name,
-            tenantLogo: existing.tenant.logoUrl || undefined,
-          }),
+          ...emailPayloadR,
         });
       } catch (e) {
         console.error('[Email] Error sending reschedule email:', e);
@@ -905,19 +934,28 @@ export async function deleteBookingAction(id: string, tenantId: string) {
 
     if (existing?.customerEmail) {
       try {
+        const emailCfgC = await getPlatformEmailTemplates();
+        const varsC = {
+          customerName: existing.customerName,
+          serviceName: existing.service.name,
+          date: format(existing.startTime, "EEEE, d 'de' MMMM", { locale: es }),
+          time: format(existing.startTime, "hh:mm a"),
+          branchName: existing.branch.name,
+          tenantName: existing.tenant.name,
+        };
+        const emailPayloadC = buildEmailPayload(
+          emailCfgC?.emailTplCancellation,
+          React.createElement(BookingCancellationEmail, {
+            ...varsC,
+            tenantLogo: existing.tenant.logoUrl || undefined,
+          }),
+          varsC
+        );
         await resend.emails.send({
           from: 'Zyncrox <noreply@zyncrox.com>',
           to: existing.customerEmail,
           subject: `Cita cancelada - ${existing.tenant.name}`,
-          react: BookingCancellationEmail({
-            customerName: existing.customerName,
-            serviceName: existing.service.name,
-            date: format(existing.startTime, "EEEE, d 'de' MMMM", { locale: es }),
-            time: format(existing.startTime, "hh:mm a"),
-            branchName: existing.branch.name,
-            tenantName: existing.tenant.name,
-            tenantLogo: existing.tenant.logoUrl || undefined,
-          }),
+          ...emailPayloadC,
         });
       } catch (e) {
         console.error('[Email] Error sending cancellation email:', e);
@@ -1100,16 +1138,25 @@ export async function sendPendingSurveyEmailsAction(tenantId: string) {
       if (!booking.customerEmail) continue;
       try {
         const surveyUrl = `${baseUrl}/es/review/${booking.id}`;
+        const emailCfgS = await getPlatformEmailTemplates();
+        const varsS = {
+          customerName: booking.customerName,
+          tenantName: tenant.name,
+          surveyUrl,
+        };
+        const emailPayloadS = buildEmailPayload(
+          emailCfgS?.emailTplSurveyInvite,
+          React.createElement(SurveyInviteEmail, {
+            ...varsS,
+            tenantLogo: tenant.logoUrl || undefined,
+          }),
+          varsS
+        );
         await resend.emails.send({
           from: 'Zyncrox <noreply@zyncrox.com>',
           to: booking.customerEmail,
           subject: `¿Cómo fue tu experiencia? - ${tenant.name}`,
-          react: SurveyInviteEmail({
-            customerName: booking.customerName,
-            tenantName: tenant.name,
-            tenantLogo: tenant.logoUrl || undefined,
-            surveyUrl,
-          }),
+          ...emailPayloadS,
         });
         await db.update(bookings)
           .set({ surveyEmailSent: true })

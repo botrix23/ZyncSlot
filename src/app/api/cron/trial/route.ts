@@ -6,6 +6,8 @@ import { addDays } from "date-fns";
 import { resend } from "@/lib/resend";
 import { TrialWarningEmail } from "@/components/emails/TrialWarningEmail";
 import { logAuditEvent } from "@/lib/audit";
+import { getPlatformEmailTemplates, buildEmailPayload } from "@/lib/emailTemplates";
+import React from "react";
 
 export async function GET(req: NextRequest) {
   const secret = req.nextUrl.searchParams.get("secret");
@@ -56,6 +58,8 @@ export async function GET(req: NextRequest) {
     let sent = 0;
     let failed = 0;
 
+    const emailCfg = await getPlatformEmailTemplates();
+
     const sendWarnings = async (
       trialTenants: typeof expiring3,
       daysLeft: number,
@@ -64,17 +68,27 @@ export async function GET(req: NextRequest) {
         for (const admin of tenant.users) {
           if (!admin.email) continue;
           try {
+            const vars = {
+              businessName: tenant.name,
+              daysLeft: String(daysLeft),
+              adminName: admin.name ?? '',
+            };
+            const emailPayload = buildEmailPayload(
+              emailCfg?.emailTplTrialWarning,
+              React.createElement(TrialWarningEmail, {
+                businessName: tenant.name,
+                daysLeft,
+                adminName: admin.name ?? undefined,
+              }),
+              vars
+            );
             await resend.emails.send({
               from: "Zyncrox <noreply@zyncrox.com>",
               to: admin.email,
               subject: daysLeft === 0
                 ? `Tu período de prueba en Zyncrox ha vencido`
                 : `Tu trial en Zyncrox vence en ${daysLeft} día${daysLeft === 1 ? "" : "s"}`,
-              react: TrialWarningEmail({
-                businessName: tenant.name,
-                daysLeft,
-                adminName: admin.name ?? undefined,
-              }),
+              ...emailPayload,
             });
             sent++;
           } catch (e) {

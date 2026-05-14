@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { getAllTenantsAction, updateTenantStatusAction, updateTenantPlanAction, deleteTenantAction, impersonateTenantAction } from '@/app/actions/superAdmin';
-import { CheckCircle, Clock, XCircle, Trash2, ShieldCheck, MoreVertical, CreditCard, Users } from 'lucide-react';
+import { getAllTenantsAction, updateTenantStatusAction, updateTenantPlanAction, deleteTenantAction, impersonateTenantAction, updateTenantTrialDaysAction } from '@/app/actions/superAdmin';
+import { CheckCircle, Clock, XCircle, Trash2, ShieldCheck, MoreVertical, CreditCard, Users, Timer } from 'lucide-react';
 import TenantAdminsModal from './TenantAdminsModal';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useTranslations } from 'next-intl';
@@ -92,6 +92,79 @@ function PlanChangeModal({
   );
 }
 
+function TrialDaysModal({
+  tenant,
+  onConfirm,
+  onCancel,
+}: {
+  tenant: Tenant;
+  onConfirm: (days: number) => void;
+  onCancel: () => void;
+}) {
+  const [days, setDays] = useState<number | ''>('');
+  const presets = [0, 1, 3, 7, 14];
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-center w-12 h-12 bg-amber-500/10 rounded-2xl mb-4 mx-auto">
+          <Timer className="w-6 h-6 text-amber-500" />
+        </div>
+        <h3 className="text-lg font-black text-zinc-900 dark:text-white text-center">Ajustar días de trial</h3>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center mt-1 mb-5">
+          <span className="font-bold text-zinc-900 dark:text-white">{tenant.name}</span>
+          {tenant.daysLeft !== null && (
+            <span className="ml-2 text-xs">· actualmente {tenant.daysLeft}d restantes</span>
+          )}
+        </p>
+        <div className="flex flex-wrap gap-2 justify-center mb-4">
+          {presets.map(p => (
+            <button
+              key={p}
+              onClick={() => setDays(p)}
+              className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all ${
+                days === p
+                  ? 'border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                  : 'border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/10'
+              }`}
+            >
+              {p === 0 ? 'Vencido (0)' : `${p} día${p === 1 ? '' : 's'}`}
+            </button>
+          ))}
+        </div>
+        <div className="mb-5">
+          <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">O ingresa días personalizados</label>
+          <input
+            type="number"
+            min={0}
+            max={365}
+            value={days}
+            onChange={e => setDays(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+            placeholder="ej. 30"
+            className="w-full px-3 py-2 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+          />
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2.5 rounded-xl bg-zinc-100 dark:bg-white/5 hover:bg-zinc-200 dark:hover:bg-white/10 text-zinc-700 dark:text-zinc-300 font-bold text-sm transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={() => days !== '' && onConfirm(days as number)}
+            disabled={days === ''}
+            className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm transition-colors"
+          >
+            Aplicar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TenantsTable({ tenants: initialTenants, locale }: { tenants: Tenant[]; locale: string }) {
   const t = useTranslations('SuperAdmin.tenantsPage');
   const tStatus = useTranslations('SuperAdmin.tenantStatus');
@@ -101,6 +174,7 @@ export default function TenantsTable({ tenants: initialTenants, locale }: { tena
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [planTarget, setPlanTarget] = useState<Tenant | null>(null);
   const [adminsTarget, setAdminsTarget] = useState<Tenant | null>(null);
+  const [trialTarget, setTrialTarget] = useState<Tenant | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -185,9 +259,36 @@ export default function TenantsTable({ tenants: initialTenants, locale }: { tena
     setAdminsTarget(tenant);
   };
 
+  const handleTrialDays = (tenant: Tenant) => {
+    setOpenMenu(null);
+    setMenuPos(null);
+    setTrialTarget(tenant);
+  };
+
+  const confirmTrialDays = async (days: number) => {
+    if (!trialTarget) return;
+    setLoadingId(trialTarget.id);
+    setTrialTarget(null);
+    await updateTenantTrialDaysAction(trialTarget.id, days);
+    const newExpiry = days <= 0 ? new Date(Date.now() - 1000) : new Date(Date.now() + days * 86_400_000);
+    setTenants(prev => prev.map(ten =>
+      ten.id === trialTarget.id
+        ? { ...ten, subscriptionExpiresAt: newExpiry, status: 'TRIAL', daysLeft: days <= 0 ? -1 : days }
+        : ten
+    ));
+    setLoadingId(null);
+  };
+
   return (
     <>
       {/* Modals */}
+      {trialTarget && (
+        <TrialDaysModal
+          tenant={trialTarget}
+          onConfirm={confirmTrialDays}
+          onCancel={() => setTrialTarget(null)}
+        />
+      )}
       {adminsTarget && (
         <TenantAdminsModal
           tenantId={adminsTarget.id}
@@ -364,6 +465,12 @@ export default function TenantsTable({ tenants: initialTenants, locale }: { tena
             className="w-full text-left px-4 py-2.5 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 transition-colors flex items-center gap-2"
           >
             <CreditCard className="w-3.5 h-3.5" /> {t('changePlan')}
+          </button>
+          <button
+            onClick={() => { const ten = tenants.find(ten => ten.id === openMenu); if (ten) handleTrialDays(ten); }}
+            className="w-full text-left px-4 py-2.5 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors flex items-center gap-2"
+          >
+            <Timer className="w-3.5 h-3.5" /> Ajustar días trial
           </button>
           <div className="border-t border-zinc-100 dark:border-white/5" />
           {tenants.find(ten => ten.id === openMenu)?.status !== 'ACTIVE' && (
