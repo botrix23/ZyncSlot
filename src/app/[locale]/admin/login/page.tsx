@@ -58,6 +58,10 @@ export default function LoginPage() {
         }
       } else {
         const code = (result as any).errorCode as string | undefined;
+        if (code === 'errorTrialExpired') {
+          window.location.href = `/${locale}/admin/plans`;
+          return;
+        }
         setError(code ? t(code as any) : t('errorInvalid'));
         setIsLoading(false);
       }

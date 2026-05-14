@@ -1062,5 +1062,31 @@
       "step3": "Copy the App ID and API Secret shown there.",
       "step4": "Paste them above, test the connection and save. Done!"
     }
+  },
+  "TrialPlans": {
+    "expiredTitle": "Your trial period has expired",
+    "expiredSubtitle": "To continue using Zyncrox, choose the plan that best fits your business and contact us to activate it.",
+    "choosePlan": "Choose this plan",
+    "contactSubject": "I want to subscribe to the plan",
+    "logout": "Log out",
+    "perMonth": "/month",
+    "contactUs": "Contact support",
+    "plans": {
+      "BASIC": {
+        "name": "Basic",
+        "desc": "Ideal for small businesses just getting started.",
+        "features": ["1 branch", "1 staff", "Up to 10 services", "Booking widget", "Automatic reminders"]
+      },
+      "PROFESSIONAL": {
+        "name": "Professional",
+        "desc": "For growing businesses that need more control.",
+        "features": ["3 branches", "15 staff", "Up to 30 services", "Custom theme", "Surveys & analytics", "Priority support"]
+      },
+      "ENTERPRISE": {
+        "name": "Enterprise",
+        "desc": "No limits for high-volume businesses.",
+        "features": ["Unlimited branches", "Unlimited staff", "Unlimited services", "Advanced analytics", "NPS", "Dedicated support"]
+      }
+    }
   }
 }

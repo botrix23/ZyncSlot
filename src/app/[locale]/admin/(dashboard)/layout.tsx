@@ -34,7 +34,7 @@ export default async function AdminLayout({
     }
   }
 
-  // Obtener nombre de la empresa para el sidebar
+  // Obtener nombre de la empresa para el sidebar y verificar expiración del trial
   let tenantName = "";
   if (session) {
     if (session.role === 'SUPER_ADMIN' && session.impersonatedTenantName) {
@@ -45,6 +45,14 @@ export default async function AdminLayout({
           where: eq(tenants.id, session.tenantId)
         });
         tenantName = tenant?.name || "";
+        if (
+          session.role !== 'SUPER_ADMIN' &&
+          tenant?.status === 'TRIAL' &&
+          tenant.subscriptionExpiresAt &&
+          new Date() > tenant.subscriptionExpiresAt
+        ) {
+          redirect(`/${locale}/admin/plans`);
+        }
       } catch (error) {
         console.error("Error fetching tenant details:", error);
         tenantName = "";

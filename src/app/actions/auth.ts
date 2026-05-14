@@ -140,7 +140,7 @@ export async function registerTenantAction(formData: FormData, locale: string) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const slug = generateSlug(businessName);
     const expiration = new Date();
-    expiration.setDate(expiration.getDate() + 14);
+    expiration.setDate(expiration.getDate() + 7);
 
     // Transacción: si el usuario falla, el tenant se revierte
     const { newTenant, newAdmin } = await db.transaction(async (tx) => {
