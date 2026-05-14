@@ -1083,6 +1083,7 @@ export async function sendPendingSurveyEmailsAction(tenantId: string) {
       where: eq(tenants.id, tenantId),
     });
     if (!tenant?.reviewsEnabled) return;
+    if (!getPlanFeatures(tenant.plan).surveys) return;
 
     const pending = await db.query.bookings.findMany({
       where: and(
