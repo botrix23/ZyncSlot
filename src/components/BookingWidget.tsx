@@ -2016,7 +2016,31 @@ export default function BookingWidget({
                                 {showCalendarBtn && (
                                   <div className="relative group/sync">
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); setOpenCalendarIdx(openCalendarIdx === idx ? null : idx); }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                                        if (isMobile) {
+                                          const icsContent = [
+                                            'BEGIN:VCALENDAR', 'VERSION:2.0', 'BEGIN:VEVENT',
+                                            `DTSTART:${calStart.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+                                            `DTEND:${calEnd.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+                                            `SUMMARY:${calTitle}`,
+                                            `DESCRIPTION:Especialista: ${b.staff?.name || 'Cualquiera'}`,
+                                            `LOCATION:${guestAddress || (selectedBranch as any)?.address || 'Servicio a domicilio'}`,
+                                            'END:VEVENT', 'END:VCALENDAR',
+                                          ].join('\r\n');
+                                          const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                                          const link = document.createElement('a');
+                                          link.href = URL.createObjectURL(blob);
+                                          link.download = `cita-${tenantName.toLowerCase()}.ics`;
+                                          document.body.appendChild(link);
+                                          link.click();
+                                          document.body.removeChild(link);
+                                          setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+                                        } else {
+                                          setOpenCalendarIdx(openCalendarIdx === idx ? null : idx);
+                                        }
+                                      }}
                                       className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 dark:bg-white/10 hover:bg-purple-600 dark:hover:bg-purple-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">
                                       <Download className="w-3 h-3" />
                                       <span className="hidden sm:inline">{t("sync_calendar")}</span>

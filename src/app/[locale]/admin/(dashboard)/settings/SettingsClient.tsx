@@ -270,7 +270,7 @@ export default function SettingsClient({
         <div className="p-6">
           <form onSubmit={handleSaveRecovery} className="space-y-3">
             <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{t('recoveryDescription')}</p>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="email"
                 placeholder={t('recoveryPlaceholder')}
@@ -281,7 +281,7 @@ export default function SettingsClient({
               <button
                 type="submit"
                 disabled={savingRecovery}
-                className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-white font-bold text-sm transition-colors flex items-center gap-2 shrink-0"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 shrink-0"
               >
                 {savingRecovery ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -83,7 +83,7 @@ export const BookingConfirmationEmail = ({
               <strong>Sucursal:</strong> {branchName}
             </Text>
             <Text style={detailText}>
-              <strong>Especialista:</strong> {staffName || "De acuerdo a disponibilidad"}
+              <strong>Especialista:</strong> {staffName || "Se asignará según disponibilidad"}
             </Text>
           </Section>
           <Hr style={hr} />
