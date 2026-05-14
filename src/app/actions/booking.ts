@@ -10,6 +10,7 @@ import { BookingCancellationEmail } from "@/components/emails/BookingCancellatio
 import { BookingRescheduleEmail } from "@/components/emails/BookingRescheduleEmail";
 import { SurveyInviteEmail } from "@/components/emails/SurveyInviteEmail";
 import { getPlatformEmailTemplates, buildEmailPayload } from "@/lib/emailTemplates";
+import { formatEmailDate, formatEmailTime, t as emailT, type EmailLocale } from "@/lib/emailI18n";
 import React from "react";
 import { es } from "date-fns/locale";
 import { getPlanFeatures } from "@/core/plans";
@@ -447,11 +448,12 @@ export async function createBookingAction(data: {
         console.log(`[Email] Intentando enviar a ${data.customerEmail} para tenant ${tenant.name}`);
         try {
           const emailCfg = await getPlatformEmailTemplates();
+          const locale = (tenant.emailLocale as EmailLocale) || 'es';
           const vars = {
             customerName: data.customerName,
             serviceName: service.name,
-            date: format(data.startTime, "EEEE, d 'de' MMMM", { locale: es }),
-            time: format(data.startTime, "hh:mm a"),
+            date: formatEmailDate(data.startTime, locale),
+            time: formatEmailTime(data.startTime),
             branchName: branch.name,
             staffName: tenant.plan !== 'BASIC' && staffMember ? staffMember.name : '',
             tenantName: tenant.name,
@@ -460,6 +462,7 @@ export async function createBookingAction(data: {
             emailCfg?.emailTplConfirmation,
             React.createElement(BookingConfirmationEmail, {
               ...vars,
+              locale,
               tenantLogo: tenant.logoUrl || undefined,
               customBody: tenant.emailBodyTemplate,
               whatsappNumber: tenant.whatsappNumber || branch.phone || undefined,
@@ -469,7 +472,7 @@ export async function createBookingAction(data: {
           const result = await resend.emails.send({
             from: 'Zyncrox <noreply@zyncrox.com>',
             to: data.customerEmail,
-            subject: `Cita confirmada - ${tenant.name}`,
+            subject: emailT.confirmationSubject(tenant.name, 1, locale),
             ...emailPayload,
           });
           console.log(`[Email] Respuesta de Resend:`, result);
@@ -767,11 +770,12 @@ export async function createBookingSessionAction(data: {
       if (service && branch) {
         const startDate = parseISO(firstBooking.startTime);
         const emailCfg2 = await getPlatformEmailTemplates();
+        const locale2 = (tenant.emailLocale as EmailLocale) || 'es';
         const vars2 = {
           customerName: data.customerName,
           serviceName: service.name + (data.bookings.length > 1 ? ` (+${data.bookings.length - 1} más)` : ''),
-          date: format(startDate, "EEEE, d 'de' MMMM", { locale: es }),
-          time: format(startDate, "hh:mm a"),
+          date: formatEmailDate(startDate, locale2),
+          time: formatEmailTime(startDate),
           branchName: branch.name,
           staffName: tenant.plan !== 'BASIC' ? staffMember?.name ?? '' : '',
           tenantName: tenant.name,
@@ -780,6 +784,7 @@ export async function createBookingSessionAction(data: {
           emailCfg2?.emailTplConfirmation,
           React.createElement(BookingConfirmationEmail, {
             ...vars2,
+            locale: locale2,
             tenantLogo: tenant.logoUrl || undefined,
             customBody: tenant.emailBodyTemplate,
             whatsappNumber: tenant.whatsappNumber || branch?.phone || undefined,
@@ -789,7 +794,7 @@ export async function createBookingSessionAction(data: {
         await resend.emails.send({
           from: 'Zyncrox <noreply@zyncrox.com>',
           to: data.customerEmail,
-          subject: `${data.bookings.length > 1 ? 'Sesión de reservas confirmada' : 'Cita confirmada'} - ${tenant.name}`,
+          subject: emailT.confirmationSubject(tenant.name, data.bookings.length, locale2),
           ...emailPayload2,
         });
       }
@@ -883,13 +888,14 @@ export async function updateBookingAction(data: {
 
       try {
         const emailCfgR = await getPlatformEmailTemplates();
+        const localeR = (existing.tenant.emailLocale as EmailLocale) || 'es';
         const varsR = {
           customerName: name,
           serviceName: existing.service.name,
-          oldDate: format(existing.startTime, "EEEE, d 'de' MMMM", { locale: es }),
-          oldTime: format(existing.startTime, "hh:mm a"),
-          newDate: format(data.startTime!, "EEEE, d 'de' MMMM", { locale: es }),
-          newTime: format(data.startTime!, "hh:mm a"),
+          oldDate: formatEmailDate(existing.startTime, localeR),
+          oldTime: formatEmailTime(existing.startTime),
+          newDate: formatEmailDate(data.startTime!, localeR),
+          newTime: formatEmailTime(data.startTime!),
           branchName: existing.branch.name,
           staffName: newStaff?.name ?? '',
           tenantName: existing.tenant.name,
@@ -898,6 +904,7 @@ export async function updateBookingAction(data: {
           emailCfgR?.emailTplReschedule,
           React.createElement(BookingRescheduleEmail, {
             ...varsR,
+            locale: localeR,
             tenantLogo: existing.tenant.logoUrl || undefined,
           }),
           varsR
@@ -905,7 +912,7 @@ export async function updateBookingAction(data: {
         await resend.emails.send({
           from: 'Zyncrox <noreply@zyncrox.com>',
           to: emailData,
-          subject: `Cita reagendada - ${existing.tenant.name}`,
+          subject: emailT.rescheduleSubject(existing.tenant.name, localeR),
           ...emailPayloadR,
         });
       } catch (e) {
@@ -935,11 +942,12 @@ export async function deleteBookingAction(id: string, tenantId: string) {
     if (existing?.customerEmail) {
       try {
         const emailCfgC = await getPlatformEmailTemplates();
+        const localeC = (existing.tenant.emailLocale as EmailLocale) || 'es';
         const varsC = {
           customerName: existing.customerName,
           serviceName: existing.service.name,
-          date: format(existing.startTime, "EEEE, d 'de' MMMM", { locale: es }),
-          time: format(existing.startTime, "hh:mm a"),
+          date: formatEmailDate(existing.startTime, localeC),
+          time: formatEmailTime(existing.startTime),
           branchName: existing.branch.name,
           tenantName: existing.tenant.name,
         };
@@ -947,6 +955,7 @@ export async function deleteBookingAction(id: string, tenantId: string) {
           emailCfgC?.emailTplCancellation,
           React.createElement(BookingCancellationEmail, {
             ...varsC,
+            locale: localeC,
             tenantLogo: existing.tenant.logoUrl || undefined,
           }),
           varsC
@@ -954,7 +963,7 @@ export async function deleteBookingAction(id: string, tenantId: string) {
         await resend.emails.send({
           from: 'Zyncrox <noreply@zyncrox.com>',
           to: existing.customerEmail,
-          subject: `Cita cancelada - ${existing.tenant.name}`,
+          subject: emailT.cancellationSubject(existing.tenant.name, localeC),
           ...emailPayloadC,
         });
       } catch (e) {
@@ -1139,6 +1148,7 @@ export async function sendPendingSurveyEmailsAction(tenantId: string) {
       try {
         const surveyUrl = `${baseUrl}/es/review/${booking.id}`;
         const emailCfgS = await getPlatformEmailTemplates();
+        const localeS = (tenant.emailLocale as EmailLocale) || 'es';
         const varsS = {
           customerName: booking.customerName,
           tenantName: tenant.name,
@@ -1148,6 +1158,7 @@ export async function sendPendingSurveyEmailsAction(tenantId: string) {
           emailCfgS?.emailTplSurveyInvite,
           React.createElement(SurveyInviteEmail, {
             ...varsS,
+            locale: localeS,
             tenantLogo: tenant.logoUrl || undefined,
           }),
           varsS
@@ -1155,7 +1166,7 @@ export async function sendPendingSurveyEmailsAction(tenantId: string) {
         await resend.emails.send({
           from: 'Zyncrox <noreply@zyncrox.com>',
           to: booking.customerEmail,
-          subject: `¿Cómo fue tu experiencia? - ${tenant.name}`,
+          subject: emailT.surveySubject(tenant.name, localeS),
           ...emailPayloadS,
         });
         await db.update(bookings)

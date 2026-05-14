@@ -10,6 +10,7 @@ import { TrialWarningEmail } from '@/components/emails/TrialWarningEmail';
 import { SurveyInviteEmail } from '@/components/emails/SurveyInviteEmail';
 import { db } from '@/db';
 import { platformConfig } from '@/db/schema';
+import { type EmailLocale } from '@/lib/emailI18n';
 
 function replaceVars(html: string, vars: Record<string, string>): string {
   return Object.entries(vars).reduce((result, [key, value]) => {
@@ -17,22 +18,41 @@ function replaceVars(html: string, vars: Record<string, string>): string {
   }, html);
 }
 
-const SAMPLE = {
-  customerName: 'María González',
-  serviceName: 'Corte y Peinado Premium',
-  date: 'lunes, 15 de enero',
-  time: '10:00 AM',
-  branchName: 'Sucursal Central',
-  staffName: 'Ana López',
-  tenantName: 'Salón Bella',
-  oldDate: 'viernes, 12 de enero',
-  oldTime: '02:00 PM',
-  newDate: 'lunes, 15 de enero',
-  newTime: '10:00 AM',
-  businessName: 'Salón Bella',
-  daysLeft: '3',
-  adminName: 'Carlos Rodríguez',
-  surveyUrl: 'https://zyncrox.com/survey/demo',
+const SAMPLE: Record<EmailLocale, Record<string, string>> = {
+  es: {
+    customerName: 'María González',
+    serviceName: 'Corte y Peinado Premium',
+    date: 'lunes, 15 de enero',
+    time: '10:00 AM',
+    branchName: 'Sucursal Central',
+    staffName: 'Ana López',
+    tenantName: 'Salón Bella',
+    oldDate: 'viernes, 12 de enero',
+    oldTime: '02:00 PM',
+    newDate: 'lunes, 15 de enero',
+    newTime: '10:00 AM',
+    businessName: 'Salón Bella',
+    daysLeft: '3',
+    adminName: 'Carlos Rodríguez',
+    surveyUrl: 'https://zyncrox.com/survey/demo',
+  },
+  en: {
+    customerName: 'Mary Johnson',
+    serviceName: 'Premium Cut & Style',
+    date: 'Monday, January 15',
+    time: '10:00 AM',
+    branchName: 'Main Branch',
+    staffName: 'Anne Lopez',
+    tenantName: 'Bella Salon',
+    oldDate: 'Friday, January 12',
+    oldTime: '02:00 PM',
+    newDate: 'Monday, January 15',
+    newTime: '10:00 AM',
+    businessName: 'Bella Salon',
+    daysLeft: '3',
+    adminName: 'Charles Rodriguez',
+    surveyUrl: 'https://zyncrox.com/survey/demo',
+  },
 };
 
 export async function GET(req: NextRequest) {
@@ -42,6 +62,9 @@ export async function GET(req: NextRequest) {
   }
 
   const template = req.nextUrl.searchParams.get('template');
+  const localeParam = req.nextUrl.searchParams.get('locale');
+  const locale: EmailLocale = localeParam === 'en' ? 'en' : 'es';
+  const sample = SAMPLE[locale];
   const cfg = await db.select().from(platformConfig).limit(1).then(rows => rows[0] ?? null);
 
   let html = '';
@@ -49,89 +72,95 @@ export async function GET(req: NextRequest) {
   switch (template) {
     case 'confirmation': {
       if (cfg?.emailTplConfirmation) {
-        html = replaceVars(cfg.emailTplConfirmation, SAMPLE);
+        html = replaceVars(cfg.emailTplConfirmation, sample);
       } else {
         html = await render(React.createElement(BookingConfirmationEmail, {
-          customerName: SAMPLE.customerName,
-          serviceName: SAMPLE.serviceName,
-          date: SAMPLE.date,
-          time: SAMPLE.time,
-          branchName: SAMPLE.branchName,
-          staffName: SAMPLE.staffName,
-          tenantName: SAMPLE.tenantName,
+          customerName: sample.customerName,
+          serviceName: sample.serviceName,
+          date: sample.date,
+          time: sample.time,
+          branchName: sample.branchName,
+          staffName: sample.staffName,
+          tenantName: sample.tenantName,
+          locale,
         }));
       }
       break;
     }
     case 'reminder': {
       if (cfg?.emailTplReminder) {
-        html = replaceVars(cfg.emailTplReminder, SAMPLE);
+        html = replaceVars(cfg.emailTplReminder, sample);
       } else {
         html = await render(React.createElement(BookingReminderEmail, {
-          customerName: SAMPLE.customerName,
-          serviceName: SAMPLE.serviceName,
-          date: SAMPLE.date,
-          time: SAMPLE.time,
-          branchName: SAMPLE.branchName,
-          staffName: SAMPLE.staffName,
-          tenantName: SAMPLE.tenantName,
+          customerName: sample.customerName,
+          serviceName: sample.serviceName,
+          date: sample.date,
+          time: sample.time,
+          branchName: sample.branchName,
+          staffName: sample.staffName,
+          tenantName: sample.tenantName,
+          locale,
         }));
       }
       break;
     }
     case 'cancellation': {
       if (cfg?.emailTplCancellation) {
-        html = replaceVars(cfg.emailTplCancellation, SAMPLE);
+        html = replaceVars(cfg.emailTplCancellation, sample);
       } else {
         html = await render(React.createElement(BookingCancellationEmail, {
-          customerName: SAMPLE.customerName,
-          serviceName: SAMPLE.serviceName,
-          date: SAMPLE.date,
-          time: SAMPLE.time,
-          branchName: SAMPLE.branchName,
-          tenantName: SAMPLE.tenantName,
+          customerName: sample.customerName,
+          serviceName: sample.serviceName,
+          date: sample.date,
+          time: sample.time,
+          branchName: sample.branchName,
+          tenantName: sample.tenantName,
+          locale,
         }));
       }
       break;
     }
     case 'reschedule': {
       if (cfg?.emailTplReschedule) {
-        html = replaceVars(cfg.emailTplReschedule, SAMPLE);
+        html = replaceVars(cfg.emailTplReschedule, sample);
       } else {
         html = await render(React.createElement(BookingRescheduleEmail, {
-          customerName: SAMPLE.customerName,
-          serviceName: SAMPLE.serviceName,
-          oldDate: SAMPLE.oldDate,
-          oldTime: SAMPLE.oldTime,
-          newDate: SAMPLE.newDate,
-          newTime: SAMPLE.newTime,
-          branchName: SAMPLE.branchName,
-          staffName: SAMPLE.staffName,
-          tenantName: SAMPLE.tenantName,
+          customerName: sample.customerName,
+          serviceName: sample.serviceName,
+          oldDate: sample.oldDate,
+          oldTime: sample.oldTime,
+          newDate: sample.newDate,
+          newTime: sample.newTime,
+          branchName: sample.branchName,
+          staffName: sample.staffName,
+          tenantName: sample.tenantName,
+          locale,
         }));
       }
       break;
     }
     case 'trialWarning': {
       if (cfg?.emailTplTrialWarning) {
-        html = replaceVars(cfg.emailTplTrialWarning, SAMPLE);
+        html = replaceVars(cfg.emailTplTrialWarning, sample);
       } else {
         html = await render(React.createElement(TrialWarningEmail, {
-          businessName: SAMPLE.businessName,
-          daysLeft: parseInt(SAMPLE.daysLeft),
-          adminName: SAMPLE.adminName,
+          businessName: sample.businessName,
+          daysLeft: parseInt(sample.daysLeft),
+          adminName: sample.adminName,
+          locale,
         }));
       }
       break;
     }
     case 'surveyInvite': {
       if (cfg?.emailTplSurveyInvite) {
-        html = replaceVars(cfg.emailTplSurveyInvite, SAMPLE);
+        html = replaceVars(cfg.emailTplSurveyInvite, sample);
       } else {
         html = await render(React.createElement(SurveyInviteEmail, {
-          customerName: SAMPLE.customerName,
-          tenantName: SAMPLE.tenantName,
-          surveyUrl: SAMPLE.surveyUrl,
+          customerName: sample.customerName,
+          tenantName: sample.tenantName,
+          surveyUrl: sample.surveyUrl,
+          locale,
         }));
       }
       break;

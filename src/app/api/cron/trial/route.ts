@@ -7,6 +7,7 @@ import { resend } from "@/lib/resend";
 import { TrialWarningEmail } from "@/components/emails/TrialWarningEmail";
 import { logAuditEvent } from "@/lib/audit";
 import { getPlatformEmailTemplates, buildEmailPayload } from "@/lib/emailTemplates";
+import { t as emailT, type EmailLocale } from "@/lib/emailI18n";
 import React from "react";
 
 export async function GET(req: NextRequest) {
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
           columns: { email: true, name: true },
         },
       },
-      columns: { id: true, name: true },
+      columns: { id: true, name: true, emailLocale: true },
     });
 
     const expiring1 = await db.query.tenants.findMany({
@@ -52,7 +53,7 @@ export async function GET(req: NextRequest) {
           columns: { email: true, name: true },
         },
       },
-      columns: { id: true, name: true },
+      columns: { id: true, name: true, emailLocale: true },
     });
 
     let sent = 0;
@@ -65,6 +66,7 @@ export async function GET(req: NextRequest) {
       daysLeft: number,
     ) => {
       for (const tenant of trialTenants) {
+        const locale = (tenant.emailLocale || 'es') as EmailLocale;
         for (const admin of tenant.users) {
           if (!admin.email) continue;
           try {
@@ -79,15 +81,14 @@ export async function GET(req: NextRequest) {
                 businessName: tenant.name,
                 daysLeft,
                 adminName: admin.name ?? undefined,
+                locale,
               }),
               vars
             );
             await resend.emails.send({
               from: "Zyncrox <noreply@zyncrox.com>",
               to: admin.email,
-              subject: daysLeft === 0
-                ? `Tu período de prueba en Zyncrox ha vencido`
-                : `Tu trial en Zyncrox vence en ${daysLeft} día${daysLeft === 1 ? "" : "s"}`,
+              subject: emailT.trialSubject(daysLeft, locale),
               ...emailPayload,
             });
             sent++;

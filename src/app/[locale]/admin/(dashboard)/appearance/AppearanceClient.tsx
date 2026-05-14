@@ -47,6 +47,7 @@ showStaffSelection?: boolean;
 heroTitle?: string | null;
 heroSubtitle?: string | null;
 emailBodyTemplate?: string | null;
+emailLocale?: string | null;
 bookingSettings?: {
   footerText?: string;
   [key: string]: any;
@@ -80,6 +81,7 @@ const [tiktokUrl, setTiktokUrl] = useState(tenant.tiktokUrl || "");
 const [heroTitle, setHeroTitle] = useState(tenant.heroTitle || "");
 const [heroSubtitle, setHeroSubtitle] = useState(tenant.heroSubtitle || "");
 const [emailBodyTemplate, setEmailBodyTemplate] = useState(tenant.emailBodyTemplate || "");
+const [emailLocale, setEmailLocale] = useState(tenant.emailLocale || "es");
 const [footerText, setFooterText] = useState(tenant.bookingSettings?.footerText || "");
   
   // Operación y Reglas (Lógico)
@@ -190,6 +192,7 @@ showStaffSelection,
 heroTitle,
 heroSubtitle,
 emailBodyTemplate,
+emailLocale,
 bookingSettings: {
   ...tenant.bookingSettings,
   footerText
@@ -803,6 +806,26 @@ try {
 <h2 className="text-xl font-bold">{tPortal('sections.email')}</h2>
 </div>
 <div className="space-y-4">
+<div className="space-y-2">
+  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">Idioma de los correos</label>
+  <div className="flex gap-3">
+    {[{ value: 'es', label: '🇪🇸 Español' }, { value: 'en', label: '🇺🇸 English' }].map(opt => (
+      <button
+        key={opt.value}
+        type="button"
+        onClick={() => setEmailLocale(opt.value)}
+        className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition-all ${
+          emailLocale === opt.value
+            ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
+            : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/10'
+        }`}
+      >
+        {opt.label}
+      </button>
+    ))}
+  </div>
+  <p className="text-xs text-slate-500 dark:text-zinc-500">Los correos de confirmación, recordatorio, cancelación y encuesta se enviarán en este idioma.</p>
+</div>
 <div className="space-y-2">
 <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300">{tPortal('form.emailTitle')}</label>
 <textarea

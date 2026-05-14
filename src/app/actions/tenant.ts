@@ -20,6 +20,7 @@ export async function updateTenantSettingsAction(data: {
   heroTitle?: string | null;
   heroSubtitle?: string | null;
   emailBodyTemplate?: string | null;
+  emailLocale?: string;
 }) {
   try {
     const session = await getSession();
@@ -36,6 +37,7 @@ export async function updateTenantSettingsAction(data: {
         heroTitle: data.heroTitle,
         heroSubtitle: data.heroSubtitle,
         emailBodyTemplate: data.emailBodyTemplate,
+        emailLocale: data.emailLocale,
         updatedAt: new Date()
       })
       .where(eq(tenants.id, data.tenantId));
@@ -102,6 +104,7 @@ export async function updatePortalSettingsAction(data: {
   heroTitle?: string | null;
   heroSubtitle?: string | null;
   emailBodyTemplate?: string | null;
+  emailLocale?: string;
   bookingSettings?: any;
   timezone?: string;
 }) {
@@ -128,6 +131,7 @@ export async function updatePortalSettingsAction(data: {
         heroTitle: data.heroTitle || null,
         heroSubtitle: data.heroSubtitle || null,
         emailBodyTemplate: data.emailBodyTemplate || null,
+        emailLocale: data.emailLocale || 'es',
         bookingSettings: data.bookingSettings,
         timezone: data.timezone || 'America/El_Salvador',
         updatedAt: new Date()

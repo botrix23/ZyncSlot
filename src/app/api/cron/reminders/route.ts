@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { bookings } from "@/db/schema";
 import { and, eq, gte, lte, not } from "drizzle-orm";
-import { addHours, format } from "date-fns";
-import { es } from "date-fns/locale";
+import { addHours } from "date-fns";
 import { resend } from "@/lib/resend";
 import { BookingReminderEmail } from "@/components/emails/BookingReminderEmail";
 import { logAuditEvent } from "@/lib/audit";
 import { getPlatformEmailTemplates, buildEmailPayload } from "@/lib/emailTemplates";
+import { formatEmailDate, formatEmailTime, t as emailT, type EmailLocale } from "@/lib/emailI18n";
 import React from "react";
 
 export async function GET(req: NextRequest) {
@@ -40,11 +40,12 @@ export async function GET(req: NextRequest) {
     for (const booking of upcoming) {
       if (!booking.customerEmail) continue;
       try {
+        const locale = ((booking.tenant as any).emailLocale || 'es') as EmailLocale;
         const vars = {
           customerName: booking.customerName,
           serviceName: booking.service.name,
-          date: format(booking.startTime, "EEEE, d 'de' MMMM", { locale: es }),
-          time: format(booking.startTime, "hh:mm a"),
+          date: formatEmailDate(booking.startTime, locale),
+          time: formatEmailTime(booking.startTime),
           branchName: booking.branch.name,
           staffName: booking.staff?.name ?? '',
           tenantName: booking.tenant.name,
@@ -54,13 +55,14 @@ export async function GET(req: NextRequest) {
           React.createElement(BookingReminderEmail, {
             ...vars,
             tenantLogo: booking.tenant.logoUrl || undefined,
+            locale,
           }),
           vars
         );
         await resend.emails.send({
           from: 'Zyncrox <noreply@zyncrox.com>',
           to: booking.customerEmail,
-          subject: `Recordatorio: tu cita mañana en ${booking.tenant.name}`,
+          subject: emailT.reminderSubject(booking.tenant.name, locale),
           ...emailPayload,
         });
         sent++;

@@ -94,6 +94,8 @@ const TEMPLATE_META: Record<TemplateKey, {
 
 const TEMPLATE_KEYS = Object.keys(TEMPLATE_META) as TemplateKey[];
 
+type PreviewLocale = 'es' | 'en';
+
 export default function EmailTemplatesClient({ initialTemplates }: { initialTemplates: Templates }) {
   const [selected, setSelected] = useState<TemplateKey>('confirmation');
   const [templates, setTemplates] = useState<Templates>(initialTemplates);
@@ -103,12 +105,13 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [savedKey, setSavedKey] = useState<TemplateKey | null>(null);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [previewLocale, setPreviewLocale] = useState<PreviewLocale>('es');
 
-  const loadPreview = useCallback(async (key: TemplateKey) => {
+  const loadPreview = useCallback(async (key: TemplateKey, locale: PreviewLocale = 'es') => {
     setLoadingPreview(true);
     setPreviewHtml(null);
     try {
-      const res = await fetch(`/api/super/email-preview?template=${key}`);
+      const res = await fetch(`/api/super/email-preview?template=${key}&locale=${locale}`);
       const html = await res.text();
       setPreviewHtml(html);
     } catch {
@@ -118,10 +121,10 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
     }
   }, []);
 
-  const loadDefaultHtml = useCallback(async (key: TemplateKey) => {
+  const loadDefaultHtml = useCallback(async (key: TemplateKey, locale: PreviewLocale = 'es') => {
     setLoadingPreview(true);
     try {
-      const res = await fetch(`/api/super/email-preview?template=${key}`);
+      const res = await fetch(`/api/super/email-preview?template=${key}&locale=${locale}`);
       const html = await res.text();
       setEditorValue(html);
     } catch {
@@ -135,22 +138,29 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
     setSelected(key);
     setView('preview');
     setPreviewHtml(null);
-    loadPreview(key);
+    loadPreview(key, previewLocale);
   };
 
   const handleSwitchView = async (newView: 'preview' | 'editor') => {
     if (newView === 'preview' && view !== 'preview') {
-      await loadPreview(selected);
+      await loadPreview(selected, previewLocale);
     }
     if (newView === 'editor' && view !== 'editor') {
       const customHtml = templates[selected];
       if (customHtml) {
         setEditorValue(customHtml);
       } else {
-        await loadDefaultHtml(selected);
+        await loadDefaultHtml(selected, previewLocale);
       }
     }
     setView(newView);
+  };
+
+  const handleLocaleChange = (locale: PreviewLocale) => {
+    setPreviewLocale(locale);
+    if (view === 'preview') {
+      loadPreview(selected, locale);
+    }
   };
 
   const handleSave = async () => {
@@ -183,7 +193,7 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
 
   // Load initial preview on mount
   if (previewHtml === null && view === 'preview' && !loadingPreview) {
-    loadPreview(selected);
+    loadPreview(selected, previewLocale);
   }
 
   const meta = TEMPLATE_META[selected];
@@ -264,34 +274,53 @@ export default function EmailTemplatesClient({ initialTemplates }: { initialTemp
           </div>
 
           {/* Tab bar */}
-          <div className="flex items-center gap-1 px-6 pt-4">
-            <button
-              onClick={() => handleSwitchView('preview')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                view === 'preview'
-                  ? 'bg-zinc-100 dark:bg-white/10 text-zinc-900 dark:text-white'
-                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
-              }`}
-            >
-              <Eye className="w-4 h-4" />
-              Vista previa
-            </button>
-            <button
-              onClick={() => handleSwitchView('editor')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                view === 'editor'
-                  ? 'bg-zinc-100 dark:bg-white/10 text-zinc-900 dark:text-white'
-                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
-              }`}
-            >
-              <Code2 className="w-4 h-4" />
-              Editor HTML
-              {hasCustom && (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 bg-purple-500/15 text-purple-600 dark:text-purple-400 rounded-full">
-                  Custom
-                </span>
-              )}
-            </button>
+          <div className="flex items-center justify-between gap-1 px-6 pt-4">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => handleSwitchView('preview')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                  view === 'preview'
+                    ? 'bg-zinc-100 dark:bg-white/10 text-zinc-900 dark:text-white'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
+                }`}
+              >
+                <Eye className="w-4 h-4" />
+                Vista previa
+              </button>
+              <button
+                onClick={() => handleSwitchView('editor')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                  view === 'editor'
+                    ? 'bg-zinc-100 dark:bg-white/10 text-zinc-900 dark:text-white'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
+                }`}
+              >
+                <Code2 className="w-4 h-4" />
+                Editor HTML
+                {hasCustom && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 bg-purple-500/15 text-purple-600 dark:text-purple-400 rounded-full">
+                    Custom
+                  </span>
+                )}
+              </button>
+            </div>
+            {view === 'preview' && (
+              <div className="flex items-center gap-1 bg-zinc-100 dark:bg-white/5 rounded-xl p-1">
+                {(['es', 'en'] as PreviewLocale[]).map(loc => (
+                  <button
+                    key={loc}
+                    onClick={() => handleLocaleChange(loc)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold uppercase transition-all ${
+                      previewLocale === loc
+                        ? 'bg-white dark:bg-white/15 text-zinc-900 dark:text-white shadow-sm'
+                        : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+                    }`}
+                  >
+                    {loc}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Content */}

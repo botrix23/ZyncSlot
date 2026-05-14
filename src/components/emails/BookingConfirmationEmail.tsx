@@ -1,16 +1,6 @@
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Img,
-  Preview,
-  Section,
-  Text,
-} from "@react-email/components";
+import { Body, Container, Head, Heading, Hr, Html, Img, Preview, Section, Text } from "@react-email/components";
 import * as React from "react";
+import { t, type EmailLocale } from "@/lib/emailI18n";
 
 interface BookingEmailProps {
   customerName: string;
@@ -23,6 +13,7 @@ interface BookingEmailProps {
   tenantLogo?: string;
   customBody?: string | null;
   whatsappNumber?: string | null;
+  locale?: EmailLocale;
 }
 
 export const BookingConfirmationEmail = ({
@@ -36,11 +27,9 @@ export const BookingConfirmationEmail = ({
   tenantLogo,
   customBody,
   whatsappNumber,
+  locale = 'es',
 }: BookingEmailProps) => {
-  const displayName = customerName
-    .split(' ')
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
+  const displayName = customerName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
   const getFormattedBody = () => {
     if (!customBody) return null;
@@ -54,46 +43,32 @@ export const BookingConfirmationEmail = ({
   };
 
   const formattedBody = getFormattedBody();
+
   return (
     <Html>
       <Head />
-      <Preview>Tu cita en {tenantName} ha sido confirmada</Preview>
+      <Preview>{t.confirmationPreview(tenantName, locale)}</Preview>
       <Body style={main}>
         <Container style={container}>
-          {tenantLogo && (
-            <Img
-              src={tenantLogo}
-              width="150"
-              alt={tenantName}
-              style={logo}
-            />
-          )}
+          {tenantLogo && <Img src={tenantLogo} width="150" alt={tenantName} style={logo} />}
           <Heading style={h1}>
-            {customBody ? 'Confirmación de tu reserva' : `¡Hola ${displayName}!`}
+            {t.confirmationHeading(displayName, !!customBody, locale)}
           </Heading>
           <Text style={text}>
-            {formattedBody || `Tu cita en ${tenantName} ha sido confirmada satisfactoriamente. Aquí tienes los detalles:`}
+            {formattedBody || t.confirmationBody(tenantName, locale)}
           </Text>
           <Section style={section}>
+            <Text style={detailText}><strong>{t.service(locale)}</strong> {serviceName}</Text>
+            <Text style={detailText}><strong>{t.date(locale)}</strong> {date}</Text>
+            <Text style={detailText}><strong>{t.time(locale)}</strong> {time}</Text>
+            <Text style={detailText}><strong>{t.branch(locale)}</strong> {branchName}</Text>
             <Text style={detailText}>
-              <strong>Servicio:</strong> {serviceName}
-            </Text>
-            <Text style={detailText}>
-              <strong>Fecha:</strong> {date}
-            </Text>
-            <Text style={detailText}>
-              <strong>Hora:</strong> {time}
-            </Text>
-            <Text style={detailText}>
-              <strong>Sucursal:</strong> {branchName}
-            </Text>
-            <Text style={detailText}>
-              <strong>Especialista:</strong> {staffName || "Se asignará según disponibilidad"}
+              <strong>{t.specialist(locale)}</strong> {staffName || t.confirmationSpecialistTbd(locale)}
             </Text>
           </Section>
           <Hr style={hr} />
           <Text style={footer}>
-            Gracias por confiar en {tenantName}. Si necesitas realizar algún cambio, por favor contáctanos{whatsappNumber ? ` al ${whatsappNumber}` : ""}.
+            {t.confirmationFooter(tenantName, whatsappNumber, locale)}
           </Text>
         </Container>
       </Body>
@@ -103,60 +78,12 @@ export const BookingConfirmationEmail = ({
 
 export default BookingConfirmationEmail;
 
-const main = {
-  backgroundColor: "#f6f9fc",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-};
-
-const container = {
-  backgroundColor: "#ffffff",
-  margin: "0 auto",
-  padding: "40px 20px",
-  borderRadius: "8px",
-  boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-};
-
-const logo = {
-  margin: "0 auto 20px auto",
-  display: "block",
-};
-
-const h1 = {
-  color: "#333",
-  fontSize: "24px",
-  fontWeight: "bold",
-  textAlign: "center" as const,
-  margin: "30px 0",
-};
-
-const text = {
-  color: "#555",
-  fontSize: "16px",
-  lineHeight: "26px",
-  textAlign: "center" as const,
-};
-
-const section = {
-  padding: "20px",
-  backgroundColor: "#f9f9f9",
-  borderRadius: "8px",
-  margin: "20px 0",
-};
-
-const detailText = {
-  color: "#444",
-  fontSize: "15px",
-  margin: "10px 0",
-};
-
-const hr = {
-  borderColor: "#e6ebf1",
-  margin: "20px 0",
-};
-
-const footer = {
-  color: "#8898aa",
-  fontSize: "12px",
-  textAlign: "center" as const,
-};
+const main = { backgroundColor: "#f6f9fc", fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif' };
+const container = { backgroundColor: "#ffffff", margin: "0 auto", padding: "40px 20px", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" };
+const logo = { margin: "0 auto 20px auto", display: "block" };
+const h1 = { color: "#333", fontSize: "24px", fontWeight: "bold", textAlign: "center" as const, margin: "30px 0" };
+const text = { color: "#555", fontSize: "16px", lineHeight: "26px", textAlign: "center" as const };
+const section = { padding: "20px", backgroundColor: "#f9f9f9", borderRadius: "8px", margin: "20px 0" };
+const detailText = { color: "#444", fontSize: "15px", margin: "10px 0" };
+const hr = { borderColor: "#e6ebf1", margin: "20px 0" };
+const footer = { color: "#8898aa", fontSize: "12px", textAlign: "center" as const };
