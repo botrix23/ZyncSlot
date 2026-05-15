@@ -17,6 +17,7 @@ import {
   LogOut,
   ChevronDown,
   Calendar,
+  Users2,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LangToggle } from '@/components/LangToggle';
@@ -351,6 +352,19 @@ export function AdminHeader({ user, locale, userEmail, nextBillingDate }: AdminH
                       <CreditCard className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400 group-hover:text-purple-500 transition-colors" />
                     </span>
                     {t('billing')}
+                  </Link>
+                )}
+
+                {user?.isOwner && !isSuperAdmin && (
+                  <Link
+                    href={`/${locale}/admin/team`}
+                    onClick={() => setAvatarOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors group"
+                  >
+                    <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/5 group-hover:bg-purple-500/10 flex items-center justify-center transition-colors shrink-0">
+                      <Users2 className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400 group-hover:text-purple-500 transition-colors" />
+                    </span>
+                    {t('team')}
                   </Link>
                 )}
 

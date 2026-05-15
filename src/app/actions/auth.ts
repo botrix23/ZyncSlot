@@ -97,6 +97,7 @@ export async function loginAction(formData: FormData, locale: string) {
         userId: user.id,
         tenantId: user.tenantId,
         staffId: user.staffId ?? null,
+        isOwner: user.isOwner ?? false,
         mustChangePassword: user.mustChangePassword ?? false,
       }), {
         httpOnly: true,
@@ -158,6 +159,7 @@ export async function registerTenantAction(formData: FormData, locale: string) {
         email,
         password: hashedPassword,
         role: 'ADMIN',
+        isOwner: true,
       }).returning();
 
       return { newTenant, newAdmin };
@@ -165,9 +167,11 @@ export async function registerTenantAction(formData: FormData, locale: string) {
 
     cookies().set("zync_session", JSON.stringify({
       email,
+      name: adminName,
       role: 'ADMIN',
       userId: newAdmin.id,
-      tenantId: newTenant.id
+      tenantId: newTenant.id,
+      isOwner: true,
     }), {
       httpOnly: true,
       maxAge: 60 * 60 * 24,

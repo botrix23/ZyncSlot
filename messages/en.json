@@ -758,7 +758,8 @@
       "nextBilling": "Next billing",
       "logout": "Sign out",
       "myAccount": "My account",
-      "noBillingDate": "No billing date"
+      "noBillingDate": "No billing date",
+      "team": "My team"
     },
     "home": {
       "title": "Admin dashboard",
@@ -794,6 +795,38 @@
         "premiumExpire": "Your Premium account expires in {days} days",
         "renewNow": "Renew now"
       }
+    },
+    "team": {
+      "title": "My team",
+      "subtitle": "Manage your business administrators.",
+      "adminsTitle": "Administrators",
+      "adminsSubtitle": "{count} additional · Limit: {limit}",
+      "addAdmin": "Add admin",
+      "owner": "Owner",
+      "inactive": "Inactive",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "delete": "Remove",
+      "newAdminTitle": "New administrator",
+      "namePlaceholder": "Full name",
+      "emailPlaceholder": "Email address",
+      "createAdmin": "Create admin",
+      "cancel": "Cancel",
+      "tempPassTitle": "Temporary password generated",
+      "tempPassNote": "Share it with the admin. They must change it on first login.",
+      "confirmDelete": "Remove {name}? They will lose access immediately.",
+      "errorPlanLimit": "You have reached the limit of {limit} additional admins on your plan.",
+      "errorPlanNoExtra": "Your Basic plan does not allow additional admins. Upgrade to Professional or Enterprise.",
+      "errorEmailExists": "An account with that email already exists.",
+      "errorOwnerOnly": "Only the owner can manage administrators.",
+      "errorGeneric": "An error occurred. Please try again.",
+      "error_NOT_FOUND": "Admin not found.",
+      "error_CANNOT_DELETE_OWNER": "You cannot delete the owner.",
+      "nonOwnerNote": "Only the business owner can manage administrators.",
+      "lockedTitle": "Feature available on higher plans",
+      "lockedDesc": "Add branch managers and additional admins by upgrading to Professional or Enterprise.",
+      "upgrade": "View plans",
+      "unlimited": "Unlimited"
     }
   },
   "Review": {

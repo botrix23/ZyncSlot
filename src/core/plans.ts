@@ -39,6 +39,9 @@ export interface PlanFeatures {
   // Soporte
   prioritySupport: boolean;
 
+  // Admins adicionales (sin contar al owner)
+  maxAdmins: number;                   // 0 = solo owner, -1 = ilimitado
+
   // Enterprise exclusivo
   auditLogsAdmin: boolean;             // Audit logs visibles al admin
 }
@@ -71,6 +74,8 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     weeklyMonthlyStats: false,
     advancedAnalytics: false,
 
+    maxAdmins: 0,
+
     prioritySupport: false,
     auditLogsAdmin: false,
   },
@@ -101,6 +106,8 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     weeklyMonthlyStats: true,
     advancedAnalytics: false,
 
+    maxAdmins: 3,
+
     prioritySupport: true,
     auditLogsAdmin: false,
   },
@@ -130,6 +137,8 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
 
     weeklyMonthlyStats: true,
     advancedAnalytics: true,
+
+    maxAdmins: -1,
 
     prioritySupport: true,
     auditLogsAdmin: true,

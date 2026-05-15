@@ -2,17 +2,12 @@
 
 import { db } from "@/db";
 import { users, tenants } from "@/db/schema";
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { getSession, getEffectiveTenantId } from "@/lib/auth-session";
 import { logAuditEvent } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
+import { getPlanFeatures } from "@/core/plans";
 import bcrypt from "bcryptjs";
-
-const ADMIN_LIMITS: Record<string, number> = {
-  BASIC: 1,
-  PROFESSIONAL: 2,
-  ENTERPRISE: Infinity,
-};
 
 async function assertAdmin() {
   const session = await getSession();
@@ -24,27 +19,41 @@ async function assertAdmin() {
   return { session, tenantId };
 }
 
+/** Lista todos los admins del tenant (owner + adicionales) */
 export async function getAdminsAction() {
   const { tenantId } = await assertAdmin();
   return db.query.users.findMany({
     where: and(eq(users.tenantId, tenantId), eq(users.role, 'ADMIN')),
-    columns: { id: true, name: true, email: true, isActive: true, createdAt: true },
+    columns: { id: true, name: true, email: true, isActive: true, isOwner: true, createdAt: true },
+    orderBy: (u, { asc }) => [asc(u.createdAt)],
   });
 }
 
+/** Crea un nuevo admin adicional. Solo el owner puede hacerlo. */
 export async function createAdminAction(data: { name: string; email: string }) {
   const { session, tenantId } = await assertAdmin();
+
+  if (!session.isOwner) {
+    return { success: false, error: 'OWNER_ONLY' };
+  }
 
   const tenant = await db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) });
   if (!tenant) return { success: false, error: 'TENANT_NOT_FOUND' };
 
-  const limit = ADMIN_LIMITS[tenant.plan] ?? 1;
-  const activeAdmins = await db.query.users.findMany({
-    where: and(eq(users.tenantId, tenantId), eq(users.role, 'ADMIN'), eq(users.isActive, true)),
-  });
+  const features = getPlanFeatures(tenant.plan);
+  const maxAdmins = features.maxAdmins;
 
-  if (activeAdmins.length >= limit) {
-    return { success: false, error: 'PLAN_LIMIT', limit, plan: tenant.plan };
+  if (maxAdmins === 0) {
+    return { success: false, error: 'PLAN_NO_EXTRA_ADMINS', plan: tenant.plan };
+  }
+
+  if (maxAdmins > 0) {
+    const extraAdmins = await db.query.users.findMany({
+      where: and(eq(users.tenantId, tenantId), eq(users.role, 'ADMIN'), eq(users.isOwner, false)),
+    });
+    if (extraAdmins.length >= maxAdmins) {
+      return { success: false, error: 'PLAN_LIMIT', limit: maxAdmins, plan: tenant.plan };
+    }
   }
 
   const existing = await db.query.users.findFirst({ where: eq(users.email, data.email) });
@@ -62,6 +71,7 @@ export async function createAdminAction(data: { name: string; email: string }) {
     email: data.email,
     password: hashed,
     role: 'ADMIN',
+    isOwner: false,
     isActive: true,
     mustChangePassword: true,
     tempPasswordExpiresAt: expires,
@@ -71,63 +81,74 @@ export async function createAdminAction(data: { name: string; email: string }) {
     action: 'ADMIN_CREATED',
     userId: session.userId,
     tenantId,
-    details: { email: data.email },
+    details: { email: data.email, name: data.name },
   });
 
-  revalidatePath('/[locale]/admin/settings', 'page');
+  revalidatePath('/[locale]/admin/team', 'page');
   return { success: true, tempPassword };
 }
 
-export async function toggleAdminAction(userId: string, isActive: boolean) {
+/** Elimina un admin. Solo el owner puede eliminar, y no puede eliminarse a sí mismo. */
+export async function deleteAdminAction(targetUserId: string) {
   const { session, tenantId } = await assertAdmin();
 
-  if (!isActive) {
-    const activeAdmins = await db.query.users.findMany({
-      where: and(eq(users.tenantId, tenantId), eq(users.role, 'ADMIN'), eq(users.isActive, true)),
-    });
-    if (activeAdmins.length <= 1) {
-      return { success: false, error: 'LAST_ADMIN' };
-    }
+  if (!session.isOwner) {
+    return { success: false, error: 'OWNER_ONLY' };
   }
 
-  await db.update(users)
-    .set({ isActive })
-    .where(and(eq(users.id, userId), eq(users.tenantId, tenantId)));
-
-  await logAuditEvent({
-    action: 'ADMIN_STATUS_CHANGED',
-    userId: session.userId,
-    tenantId,
-    details: { targetUserId: userId, isActive },
-  });
-
-  return { success: true };
-}
-
-export async function deleteAdminAction(userId: string) {
-  const { session, tenantId } = await assertAdmin();
-
-  if (session.userId === userId) {
+  if (session.userId === targetUserId) {
     return { success: false, error: 'CANNOT_DELETE_SELF' };
   }
 
-  const remaining = await db.query.users.findMany({
-    where: and(eq(users.tenantId, tenantId), eq(users.role, 'ADMIN'), ne(users.id, userId)),
+  const target = await db.query.users.findFirst({
+    where: and(eq(users.id, targetUserId), eq(users.tenantId, tenantId)),
+    columns: { id: true, isOwner: true, name: true, email: true },
   });
-  if (remaining.length === 0) {
-    return { success: false, error: 'LAST_ADMIN' };
-  }
 
-  await db.delete(users).where(and(eq(users.id, userId), eq(users.tenantId, tenantId)));
+  if (!target) return { success: false, error: 'NOT_FOUND' };
+  if (target.isOwner) return { success: false, error: 'CANNOT_DELETE_OWNER' };
+
+  await db.delete(users).where(and(eq(users.id, targetUserId), eq(users.tenantId, tenantId)));
 
   await logAuditEvent({
     action: 'ADMIN_DELETED',
     userId: session.userId,
     tenantId,
-    details: { deletedUserId: userId },
+    details: { deletedUserId: targetUserId, deletedEmail: target.email },
   });
 
-  revalidatePath('/[locale]/admin/settings', 'page');
+  revalidatePath('/[locale]/admin/team', 'page');
+  return { success: true };
+}
+
+/** Activa o desactiva un admin adicional. Solo el owner puede hacerlo. */
+export async function toggleAdminAction(targetUserId: string, isActive: boolean) {
+  const { session, tenantId } = await assertAdmin();
+
+  if (!session.isOwner) {
+    return { success: false, error: 'OWNER_ONLY' };
+  }
+
+  const target = await db.query.users.findFirst({
+    where: and(eq(users.id, targetUserId), eq(users.tenantId, tenantId)),
+    columns: { id: true, isOwner: true },
+  });
+
+  if (!target) return { success: false, error: 'NOT_FOUND' };
+  if (target.isOwner) return { success: false, error: 'CANNOT_MODIFY_OWNER' };
+
+  await db.update(users)
+    .set({ isActive })
+    .where(and(eq(users.id, targetUserId), eq(users.tenantId, tenantId)));
+
+  await logAuditEvent({
+    action: 'ADMIN_STATUS_CHANGED',
+    userId: session.userId,
+    tenantId,
+    details: { targetUserId, isActive },
+  });
+
+  revalidatePath('/[locale]/admin/team', 'page');
   return { success: true };
 }
 

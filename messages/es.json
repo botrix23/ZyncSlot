@@ -758,7 +758,8 @@
       "nextBilling": "Próx. facturación",
       "logout": "Cerrar sesión",
       "myAccount": "Mi cuenta",
-      "noBillingDate": "Sin fecha de cobro"
+      "noBillingDate": "Sin fecha de cobro",
+      "team": "Mi equipo"
     },
     "home": {
       "title": "Dashboard admin",
@@ -794,6 +795,38 @@
         "premiumExpire": "Tu cuenta Premium vence en {days} días",
         "renewNow": "Renovar ahora"
       }
+    },
+    "team": {
+      "title": "Mi equipo",
+      "subtitle": "Gestiona los administradores de tu negocio.",
+      "adminsTitle": "Administradores",
+      "adminsSubtitle": "{count} adicionales · Límite: {limit}",
+      "addAdmin": "Agregar admin",
+      "owner": "Dueño",
+      "inactive": "Inactivo",
+      "activate": "Activar",
+      "deactivate": "Desactivar",
+      "delete": "Eliminar",
+      "newAdminTitle": "Nuevo administrador",
+      "namePlaceholder": "Nombre completo",
+      "emailPlaceholder": "Correo electrónico",
+      "createAdmin": "Crear admin",
+      "cancel": "Cancelar",
+      "tempPassTitle": "Contraseña temporal generada",
+      "tempPassNote": "Compártela con el admin. Deberá cambiarla en su primer inicio de sesión.",
+      "confirmDelete": "¿Eliminar a {name}? Perderá acceso inmediatamente.",
+      "errorPlanLimit": "Has alcanzado el límite de {limit} admins adicionales en tu plan.",
+      "errorPlanNoExtra": "Tu plan Basic no permite admins adicionales. Actualiza a Professional o Enterprise.",
+      "errorEmailExists": "Ya existe una cuenta con ese correo.",
+      "errorOwnerOnly": "Solo el dueño puede gestionar administradores.",
+      "errorGeneric": "Ocurrió un error. Intenta de nuevo.",
+      "error_NOT_FOUND": "Admin no encontrado.",
+      "error_CANNOT_DELETE_OWNER": "No puedes eliminar al dueño.",
+      "nonOwnerNote": "Solo el dueño del negocio puede gestionar administradores.",
+      "lockedTitle": "Función exclusiva de planes superiores",
+      "lockedDesc": "Agrega gerentes y administradores adicionales actualizando a Professional o Enterprise.",
+      "upgrade": "Ver planes",
+      "unlimited": "Ilimitado"
     }
   },
   "Review": {
