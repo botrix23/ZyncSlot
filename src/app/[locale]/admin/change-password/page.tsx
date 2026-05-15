@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { KeyRound, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { KeyRound, Eye, EyeOff, ShieldCheck, ArrowLeft } from "lucide-react";
 import { changePasswordAction } from "@/app/actions/changePassword";
 import { useTranslations } from "next-intl";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function ChangePasswordPage({ params: { locale } }: { params: { locale: string } }) {
   const t = useTranslations('ChangePassword');
   const searchParams = useSearchParams();
   // forced=1 cuando viene del redirect por mustChangePassword (no se pide contraseña actual)
   const isForced = searchParams.get('forced') === '1';
+  const router = useRouter();
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -45,6 +46,16 @@ export default function ChangePasswordPage({ params: { locale } }: { params: { l
     <div className="min-h-screen bg-slate-50 dark:bg-black flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] p-10 shadow-2xl space-y-8">
+          {!isForced && (
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+              Volver
+            </button>
+          )}
           <div className="flex flex-col items-center text-center gap-4">
             <div className="w-16 h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center">
               <KeyRound className="w-8 h-8 text-purple-500" />
