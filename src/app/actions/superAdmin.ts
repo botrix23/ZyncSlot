@@ -26,8 +26,8 @@ export async function getAllTenantsAction() {
   const allTenants = await db.query.tenants.findMany({
     orderBy: [desc(tenants.createdAt)],
     with: {
-      users: true,
-      branches: true,
+      users: { columns: { role: true } },
+      branches: { columns: { id: true } },
     },
   });
 
@@ -236,7 +236,8 @@ export async function getSuperAdminDashboardDataAction() {
   ] = await Promise.all([
     db.query.tenants.findMany({
       orderBy: [desc(tenants.createdAt)],
-      with: { users: true, branches: true },
+      // No necesitamos branches en el dashboard principal, solo users para contar admins
+      with: { users: { columns: { role: true } } },
     }),
     db.select({ total: count() }).from(users),
     db.select({ total: count() }).from(bookings).where(

@@ -10,7 +10,7 @@ const globalForDb = globalThis as unknown as {
   client: postgres.Sql | undefined;
 };
 
-const client = globalForDb.client ?? postgres(connectionString, { max: 10 });
+const client = globalForDb.client ?? postgres(connectionString, { max: 20 });
 
 if (process.env.NODE_ENV !== 'production') {
   globalForDb.client = client;

@@ -1051,7 +1051,7 @@ export default function BookingWidget({
         )}
 
         {/* ===== RIGHT SIDE: Interactive Booking Widget ===== */}
-        <div className={`w-full ${step < 5 ? 'flex-[1.5]' : 'max-w-5xl text-center'} bg-white/95 dark:bg-zinc-950/85 backdrop-blur-2xl border border-slate-200 dark:border-white/10 p-5 sm:p-7 shadow-2xl relative min-h-[550px] flex flex-col rounded-3xl overflow-hidden text-left`}>
+        <div className={`w-full ${step < 5 ? 'flex-[1.5]' : 'max-w-5xl text-center'} bg-white/95 dark:bg-zinc-900/90 backdrop-blur-2xl border border-slate-200 dark:border-white/10 p-5 sm:p-7 shadow-2xl relative min-h-[600px] flex flex-col rounded-3xl text-left`}>
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent dark:from-white/5 rounded-3xl pointer-events-none"></div>
 
           {/* STEP 1: Branch & Modality */}
@@ -1152,7 +1152,7 @@ export default function BookingWidget({
 
           {/* STEP 2: Select Service */}
           {step === 2 && (
-            <div className="relative z-10 flex flex-col w-full items-start animate-in fade-in slide-in-from-right-8 duration-500">
+            <div className="relative z-10 flex flex-col w-full h-full items-start animate-in fade-in slide-in-from-right-8 duration-500">
               <div className="flex items-center gap-3 mb-6">
                 <button
                   onClick={() => {

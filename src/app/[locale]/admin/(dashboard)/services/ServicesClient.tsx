@@ -408,8 +408,8 @@ export default function ServicesClient({
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
+      <div className="flex flex-col sm:flex-row gap-4 items-center">
+        <div className="flex-1 relative w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
             type="text"
@@ -418,6 +418,11 @@ export default function ServicesClient({
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm text-slate-900 dark:text-white outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-400 shadow-sm"
           />
+        </div>
+        <div className="shrink-0 px-4 py-2 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
+          <p className="text-xs font-bold text-slate-500 dark:text-zinc-400">
+            {searchTerm ? `Encontrados: ${filteredServices.length}` : `Total servicios: ${initialServices.length}`}
+          </p>
         </div>
       </div>
 
@@ -541,7 +546,7 @@ export default function ServicesClient({
       </div>
 
       {/* Desktop table — oculta en móvil */}
-      <div className="hidden md:block bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden shadow-sm">
+      <div className="hidden md:block bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl shadow-sm">
         <div className="overflow-x-auto">
         <table className="w-full text-left min-w-[600px]">
           <thead className="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
