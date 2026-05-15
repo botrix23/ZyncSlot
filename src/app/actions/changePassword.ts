@@ -16,7 +16,7 @@ function validatePasswordComplexity(password: string) {
   return { success: true };
 }
 
-export async function changePasswordAction(newPassword: string, confirmPassword: string) {
+export async function changePasswordAction(newPassword: string, confirmPassword: string, currentPassword?: string) {
   const session = await getSession();
   if (!session?.userId) return { success: false, errorCode: 'errorUnauthorized' };
 
@@ -26,6 +26,18 @@ export async function changePasswordAction(newPassword: string, confirmPassword:
 
   const complexity = validatePasswordComplexity(newPassword);
   if (!complexity.success) return { success: false, errorCode: 'error' };
+
+  // Si NO es cambio forzado (mustChangePassword), verificar contraseña actual
+  if (!session.mustChangePassword) {
+    if (!currentPassword) return { success: false, errorCode: 'errorCurrentRequired' };
+    const userRecord = await db.query.users.findFirst({
+      where: eq(users.id, session.userId),
+      columns: { password: true },
+    });
+    if (!userRecord) return { success: false, errorCode: 'errorUnauthorized' };
+    const match = await bcrypt.compare(currentPassword, userRecord.password);
+    if (!match) return { success: false, errorCode: 'errorCurrentInvalid' };
+  }
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 

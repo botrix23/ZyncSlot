@@ -155,7 +155,7 @@ export function AdminHeader({ user, locale, userEmail, nextBillingDate }: AdminH
   const billingDateStr = nextBillingDate ? format(new Date(nextBillingDate), 'dd MMM yyyy') : null;
 
   return (
-    <header className="h-16 lg:h-20 border-b border-slate-200 dark:border-white/5 px-4 lg:px-8 flex items-center justify-between bg-white/50 dark:bg-black/50 backdrop-blur-xl shrink-0 z-10 sticky top-0">
+    <header className="h-16 lg:h-20 border-b border-slate-200 dark:border-white/5 px-4 lg:px-8 flex items-center justify-between bg-white/50 dark:bg-black/50 backdrop-blur-xl shrink-0 z-50 sticky top-0">
       {/* Mobile hamburger */}
       <div className="flex items-center gap-3 lg:hidden">
         <button

@@ -206,7 +206,10 @@
     "submit": "Set password",
     "errorMismatch": "Passwords don't match.",
     "errorUnauthorized": "Unauthorized.",
-    "error": "Error changing password."
+    "error": "Error changing password.",
+    "currentPassword": "Current password",
+    "errorCurrentRequired": "You must enter your current password.",
+    "errorCurrentInvalid": "The current password is incorrect."
   },
   "Dashboard": {
     "technical": {

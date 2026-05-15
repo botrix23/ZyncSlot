@@ -206,7 +206,10 @@
     "submit": "Establecer contraseña",
     "errorMismatch": "Las contraseñas no coinciden.",
     "errorUnauthorized": "No autorizado.",
-    "error": "Error al cambiar la contraseña."
+    "error": "Error al cambiar la contraseña.",
+    "currentPassword": "Contraseña actual",
+    "errorCurrentRequired": "Debes ingresar tu contraseña actual.",
+    "errorCurrentInvalid": "La contraseña actual es incorrecta."
   },
   "Dashboard": {
     "technical": {

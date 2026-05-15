@@ -30,7 +30,7 @@ export default async function AdminLayout({
       redirect(`/${locale}/admin/login`);
     }
     if (dbUser?.mustChangePassword) {
-      redirect(`/${locale}/admin/change-password`);
+      redirect(`/${locale}/admin/change-password?forced=1`);
     }
     if (dbUser?.name && !session.name) {
       session.name = dbUser.name;
