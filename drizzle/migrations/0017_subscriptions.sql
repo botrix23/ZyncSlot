@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS "subscriptions" (
   "tenant_id" uuid NOT NULL UNIQUE REFERENCES "tenants"("id") ON DELETE CASCADE,
   "plan" varchar(50) NOT NULL,
   "status" varchar(50) NOT NULL DEFAULT 'ACTIVE',
+  "n1co_subscription_id" varchar(100),
+  "n1co_payment_method_id" varchar(100),
   "card_token" text,
   "card_last4" varchar(4),
   "card_brand" varchar(20),

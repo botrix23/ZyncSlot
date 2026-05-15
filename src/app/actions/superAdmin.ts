@@ -80,6 +80,7 @@ export async function updateTenantPlanAction(
   });
 
   revalidatePath('/[locale]/admin/super', 'page');
+  revalidatePath('/[locale]/admin/(dashboard)/staff', 'page');
   revalidatePath('/[locale]/[slug]', 'page');
   return { success: true };
 }

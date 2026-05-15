@@ -205,6 +205,7 @@ export async function changePlanAction(tenantId: string, newPlan: string) {
     }
 
     revalidatePath('/[locale]/admin/billing', 'page')
+    revalidatePath('/[locale]/admin/(dashboard)/staff', 'page')
     return { success: true }
   } catch (err) {
     console.error('changePlan error:', err)
