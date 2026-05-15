@@ -11,9 +11,11 @@ import {
   Edit2,
   X,
   Clock,
-  MoreVertical
+  MoreVertical,
+  PowerOff,
+  Power
 } from 'lucide-react';
-import { createBranchAction, updateBranchAction, deleteBranchAction } from "@/app/actions/branches";
+import { createBranchAction, updateBranchAction, deleteBranchAction, toggleBranchActiveAction } from "@/app/actions/branches";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useCallback } from "react";
 import PhoneInput from "@/components/PhoneInput";
@@ -37,7 +39,8 @@ export default function BranchesClient({
   plan?: string,
 }) {
   const limit = planLimit ?? 999;
-  const atLimit = initialBranches.length >= limit;
+  const activeBranches = initialBranches.filter(b => b.isActive !== false);
+  const atLimit = activeBranches.length >= limit;
   const t = useTranslations('Dashboard.branches');
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,6 +66,7 @@ export default function BranchesClient({
   );
 
   const handleOpenModal = (branch?: any) => {
+    if (branch && branch.isActive === false) return; // Can't edit inactive
     if (branch) {
       setEditingBranch(branch);
       setFormData({
@@ -105,7 +109,7 @@ export default function BranchesClient({
       setIsModalOpen(false);
       router.refresh();
     } else if (result.error === 'PLAN_LIMIT_EXCEEDED') {
-      alert(`Límite del plan ${plan ?? 'BASIC'} alcanzado (${result.current}/${result.limit} sucursales). Actualiza tu plan para agregar más.`);
+      alert(`${plan ?? 'BASIC'}: ${result.current}/${result.limit}. ${t('planLimitReactivate')}`);
     } else {
       alert(t('errorSave'));
     }
@@ -125,6 +129,20 @@ export default function BranchesClient({
     const { id } = deleteBranchTarget;
     setDeleteBranchTarget(null);
     await deleteBranchAction(id, tenantId);
+    router.refresh();
+  };
+
+  const handleToggleActive = async (branch: any) => {
+    setOpenMenu(null);
+    setMenuPos(null);
+    const result = await toggleBranchActiveAction(branch.id, tenantId, branch.isActive !== false);
+    if (!result.success) {
+      if (result.error === 'PLAN_LIMIT_EXCEEDED') {
+        alert(t('planLimitReactivate'));
+      } else {
+        alert(t('toggleError'));
+      }
+    }
     router.refresh();
   };
 
@@ -151,7 +169,7 @@ export default function BranchesClient({
     const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
     setMenuPos({ 
       top: rect.bottom + window.scrollY + 4, 
-      left: rect.right - 176, // 176 = w-44
+      left: rect.right - 176,
     });
     setOpenMenu(branchId);
   }, [openMenu]);
@@ -179,17 +197,17 @@ export default function BranchesClient({
             <span className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${
               atLimit
                 ? 'bg-red-500/10 border-red-500/30 text-red-500'
-                : initialBranches.length >= limit - 1
+                : activeBranches.length >= limit - 1
                   ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
                   : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-zinc-400'
             }`}>
-              {initialBranches.length} / {limit} sucursales · {plan ?? 'BASIC'}
+              {activeBranches.length} / {limit} · {plan ?? 'BASIC'}
             </span>
           )}
           <button
             onClick={() => !atLimit && handleOpenModal()}
             disabled={atLimit}
-            title={atLimit ? `Límite de ${limit} sucursales alcanzado. Actualiza tu plan para agregar más.` : undefined}
+            title={atLimit ? t('planLimitReactivate') : undefined}
             className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold shadow-xl transition-all ${
               atLimit
                 ? 'bg-slate-200 dark:bg-zinc-700 text-slate-400 dark:text-zinc-500 cursor-not-allowed shadow-none'
@@ -218,97 +236,113 @@ export default function BranchesClient({
 
       {/* Branches Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredBranches.map((branch) => (
-          <div 
-            key={branch.id} 
-            onClick={() => handleOpenModal(branch)}
-            className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all group relative overflow-hidden cursor-pointer active:scale-[0.98]"
-          >
-            <div className="absolute top-0 right-0 p-4 z-10">
-              <button 
-                onClick={(e) => handleOpenMenu(e, branch.id)}
-                className={`p-2 rounded-xl transition-all ${openMenu === branch.id ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white'}`}
-              >
-                <MoreVertical className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-600">
-                <MapPin className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900 dark:text-white tracking-tight">{branch.name}</h3>
-                <span className="text-xs font-bold text-slate-400 dark:text-zinc-500">ID: {branch.id.slice(0, 8)}</span>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center shrink-0 border border-slate-100 dark:border-white/5">
-                  <Home className="w-4 h-4 text-slate-400" />
-                </div>
-                <p className="text-sm font-medium text-slate-600 dark:text-zinc-300 leading-tight pt-1">
-                  {branch.address || t('noAddress')}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center shrink-0 border border-slate-100 dark:border-white/5">
-                  <Phone className="w-4 h-4 text-slate-400" />
-                </div>
-                <p className="text-sm font-medium text-slate-600 dark:text-zinc-300">
-                  {branch.phone || t('noPhone')}
-                </p>
-              </div>
-              {branch.businessHours && (
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-purple-500/5 dark:bg-purple-500/10 flex items-center justify-center shrink-0 border border-purple-500/10 dark:border-purple-500/20">
-                    <Clock className="w-4 h-4 text-purple-500" />
-                  </div>
-                  <div className="text-[11px] font-medium pt-0.5">
-                    {(() => {
-                      try {
-                        const bh = JSON.parse(branch.businessHours);
-                        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                        const todayIndex = (new Date().getDay() + 6) % 7;
-                        const todayId = days[todayIndex];
-                        
-                        const isNewFormat = !!bh.regular;
-                        const todaySched = isNewFormat ? bh.regular[todayId] : bh;
-                        const isOpen = isNewFormat ? todaySched?.isOpen : true;
-                        
-                        let displayTime = "";
-                        if (!isOpen) {
-                          displayTime = t('closedToday');
-                        } else if (isNewFormat && todaySched?.slots) {
-                          displayTime = todaySched.slots.map((s: any) => `${s.open} - ${s.close}`).join(', ');
-                        } else if (todaySched?.open && todaySched?.close) {
-                          displayTime = `${todaySched.open} - ${todaySched.close}`;
-                        } else {
-                          displayTime = t('hoursNotAvailable');
-                        }
-
-                        return (
-                          <div className="flex flex-col">
-                            <span className="font-bold text-slate-900 dark:text-white tracking-widest uppercase text-[11px] mb-1 opacity-60">{t('today')}</span>
-                            <span className="font-bold text-slate-700 dark:text-zinc-100">{displayTime}</span>
-                            {isNewFormat && (
-                              <span className="text-slate-400 dark:text-zinc-500 text-[11px] font-bold mt-0.5">
-                                {t('regularOperatingDays', { count: days.filter(d => bh.regular[d]?.isOpen).length })}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      } catch {
-                        return <span className="italic text-rose-500/70">{t('operatingError')}</span>;
-                      }
-                    })()}
-                  </div>
+        {filteredBranches.map((branch) => {
+          const isInactive = branch.isActive === false;
+          return (
+            <div 
+              key={branch.id} 
+              onClick={() => !isInactive && handleOpenModal(branch)}
+              className={`border rounded-3xl p-6 shadow-sm transition-all group relative overflow-hidden ${
+                isInactive
+                  ? 'bg-slate-50 dark:bg-zinc-900/50 border-slate-200 dark:border-white/5 opacity-60 cursor-default'
+                  : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-white/5 hover:shadow-xl hover:shadow-purple-500/10 cursor-pointer active:scale-[0.98]'
+              }`}
+            >
+              {/* Inactive badge */}
+              {isInactive && (
+                <div className="absolute top-3 left-3 z-10">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    {t('deactivated')}
+                  </span>
                 </div>
               )}
+
+              <div className="absolute top-0 right-0 p-4 z-10">
+                <button 
+                  onClick={(e) => handleOpenMenu(e, branch.id)}
+                  className={`p-2 rounded-xl transition-all ${openMenu === branch.id ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white'}`}
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className={`flex items-center gap-4 mb-6 ${isInactive ? 'mt-5' : ''}`}>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isInactive ? 'bg-slate-200 dark:bg-zinc-700 text-slate-400' : 'bg-purple-500/10 text-purple-600'}`}>
+                  <MapPin className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-white tracking-tight">{branch.name}</h3>
+                  <span className="text-xs font-bold text-slate-400 dark:text-zinc-500">ID: {branch.id.slice(0, 8)}</span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center shrink-0 border border-slate-100 dark:border-white/5">
+                    <Home className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-600 dark:text-zinc-300 leading-tight pt-1">
+                    {branch.address || t('noAddress')}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center shrink-0 border border-slate-100 dark:border-white/5">
+                    <Phone className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-600 dark:text-zinc-300">
+                    {branch.phone || t('noPhone')}
+                  </p>
+                </div>
+                {!isInactive && branch.businessHours && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/5 dark:bg-purple-500/10 flex items-center justify-center shrink-0 border border-purple-500/10 dark:border-purple-500/20">
+                      <Clock className="w-4 h-4 text-purple-500" />
+                    </div>
+                    <div className="text-[11px] font-medium pt-0.5">
+                      {(() => {
+                        try {
+                          const bh = JSON.parse(branch.businessHours);
+                          const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                          const todayIndex = (new Date().getDay() + 6) % 7;
+                          const todayId = days[todayIndex];
+                          
+                          const isNewFormat = !!bh.regular;
+                          const todaySched = isNewFormat ? bh.regular[todayId] : bh;
+                          const isOpen = isNewFormat ? todaySched?.isOpen : true;
+                          
+                          let displayTime = "";
+                          if (!isOpen) {
+                            displayTime = t('closedToday');
+                          } else if (isNewFormat && todaySched?.slots) {
+                            displayTime = todaySched.slots.map((s: any) => `${s.open} - ${s.close}`).join(', ');
+                          } else if (todaySched?.open && todaySched?.close) {
+                            displayTime = `${todaySched.open} - ${todaySched.close}`;
+                          } else {
+                            displayTime = t('hoursNotAvailable');
+                          }
+
+                          return (
+                            <div className="flex flex-col">
+                              <span className="font-bold text-slate-900 dark:text-white tracking-widest uppercase text-[11px] mb-1 opacity-60">{t('today')}</span>
+                              <span className="font-bold text-slate-700 dark:text-zinc-100">{displayTime}</span>
+                              {isNewFormat && (
+                                <span className="text-slate-400 dark:text-zinc-500 text-[11px] font-bold mt-0.5">
+                                  {t('regularOperatingDays', { count: days.filter(d => bh.regular[d]?.isOpen).length })}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        } catch {
+                          return <span className="italic text-rose-500/70">{t('operatingError')}</span>;
+                        }
+                      })()}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {initialBranches.length === 0 && (
@@ -323,7 +357,6 @@ export default function BranchesClient({
       {isModalOpen && (
         <Portal>
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
-             {/* Backdrop con Blur Dinámico - Fixed para cubrir todo */}
              <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300" />
             <div className="relative z-10 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
               <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5 sticky top-0 z-10">
@@ -395,15 +428,36 @@ export default function BranchesClient({
         </Portal>
       )}
 
-
       {/* Actions Dropdown */}
       {openMenu && menuPos && (
         <Portal>
           <div
             ref={menuRef}
             style={{ position: 'fixed', top: menuPos.top, left: menuPos.left, zIndex: 9999 }}
-            className="w-44 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+            className="w-52 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
           >
+            {/* Toggle active/inactive */}
+            {(() => {
+              const b = initialBranches.find(b => b.id === openMenu);
+              if (!b) return null;
+              const isInactive = b.isActive === false;
+              return (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleActive(b);
+                  }}
+                  className={`w-full text-left px-4 py-3 text-sm font-bold transition-colors flex items-center gap-2 ${
+                    isInactive
+                      ? 'text-emerald-600 hover:bg-emerald-500/10'
+                      : 'text-amber-600 hover:bg-amber-500/10'
+                  }`}
+                >
+                  {isInactive ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
+                  {isInactive ? t('reactivate') : t('inactive')}
+                </button>
+              );
+            })()}
             <button 
               onClick={(e) => {
                 e.stopPropagation();

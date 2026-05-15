@@ -65,7 +65,8 @@ export const branches = pgTable('branches', {
   name: varchar('name', { length: 255 }).notNull(),
   address: varchar('address', { length: 500 }),
   phone: varchar('phone', { length: 30 }),
-  businessHours: text('business_hours'), 
+  businessHours: text('business_hours'),
+  isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
 
@@ -100,6 +101,7 @@ export const services = pgTable('services', {
   allowsHomeService: boolean('allows_home_service').notNull().default(true),
   allowSimultaneous: boolean('allow_simultaneous').notNull().default(false),
   isExclusive: boolean('is_exclusive').notNull().default(false),
+  isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });

@@ -262,7 +262,13 @@
       "operatingError": "Error in business hours format",
       "namePlaceholder": "Branch name",
       "addressPlaceholder": "Full address",
-      "phonePlaceholder": "Phone number"
+      "phonePlaceholder": "Phone number",
+      "inactive": "Inactive",
+      "active": "Active",
+      "reactivate": "Reactivate",
+      "deactivated": "Deactivated",
+      "planLimitReactivate": "You are at your plan limit. Deactivate another branch to reactivate this one.",
+      "toggleError": "Error changing branch status."
     },
     "services": {
       "title": "Services",
@@ -307,7 +313,13 @@
       },
       "confirmDelete": "Are you sure you want to delete this service?",
       "errorSave": "Error saving service",
-      "errorDelete": "Error deleting service"
+      "errorDelete": "Error deleting service",
+      "inactive": "Inactive",
+      "active": "Active",
+      "reactivate": "Reactivate",
+      "deactivated": "Deactivated by plan change",
+      "planLimitReactivate": "You are at your plan limit. Deactivate another service to reactivate this one.",
+      "toggleError": "Error changing service status."
     },
     "bookings": {
       "title": "Appointments / bookings",

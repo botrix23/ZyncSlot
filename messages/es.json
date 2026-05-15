@@ -262,7 +262,13 @@
       "operatingError": "Error en formato de horario",
       "namePlaceholder": "Nombre de la sucursal",
       "addressPlaceholder": "Dirección completa",
-      "phonePlaceholder": "Teléfono"
+      "phonePlaceholder": "Teléfono",
+      "inactive": "Inactiva",
+      "active": "Activa",
+      "reactivate": "Reactivar",
+      "deactivated": "Desactivada",
+      "planLimitReactivate": "Estás en el límite de tu plan. Desactiva otra sucursal para poder reactivar esta.",
+      "toggleError": "Error al cambiar el estado de la sucursal."
     },
     "services": {
       "title": "Servicios",
@@ -307,7 +313,13 @@
       },
       "confirmDelete": "¿Estás seguro de eliminar este servicio?",
       "errorSave": "Error al guardar el servicio",
-      "errorDelete": "Error al eliminar el servicio"
+      "errorDelete": "Error al eliminar el servicio",
+      "inactive": "Inactivo",
+      "active": "Activo",
+      "reactivate": "Reactivar",
+      "deactivated": "Desactivado por cambio de plan",
+      "planLimitReactivate": "Estás en el límite de tu plan. Desactiva otro servicio para poder reactivar este.",
+      "toggleError": "Error al cambiar el estado del servicio."
     },
     "bookings": {
       "title": "Citas",

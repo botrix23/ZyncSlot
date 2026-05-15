@@ -25,7 +25,7 @@ export async function checkPlanLimit(
     const [row] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(branches)
-      .where(eq(branches.tenantId, tenantId));
+      .where(and(eq(branches.tenantId, tenantId), eq(branches.isActive, true)));
     current = row?.count ?? 0;
     limit = features.maxBranches;
   } else if (resource === "staff") {
@@ -39,7 +39,7 @@ export async function checkPlanLimit(
     const [row] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(services)
-      .where(eq(services.tenantId, tenantId));
+      .where(and(eq(services.tenantId, tenantId), eq(services.isActive, true)));
     current = row?.count ?? 0;
     limit = features.maxServices;
   }

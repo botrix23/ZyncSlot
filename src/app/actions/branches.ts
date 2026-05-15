@@ -2,14 +2,14 @@
 
 import { db } from "@/db";
 import { branches } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
-import { getSession } from "@/lib/auth-session";
+import { eq, and, asc } from "drizzle-orm";
+import { getSession, getEffectiveTenantId } from "@/lib/auth-session";
 import { logAuditEvent } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { checkPlanLimit } from "@/lib/plan-guard";
 
 /**
- * Obtener todas las sucursales de un tenant
+ * Obtener todas las sucursales de un tenant (activas e inactivas)
  */
 export async function getBranchesAction(tenantId: string) {
   const session = await getSession();
@@ -19,7 +19,7 @@ export async function getBranchesAction(tenantId: string) {
 
   return await db.query.branches.findMany({
     where: eq(branches.tenantId, tenantId),
-    orderBy: [desc(branches.createdAt)]
+    orderBy: [asc(branches.createdAt)]
   });
 }
 
@@ -110,7 +110,7 @@ export async function deleteBranchAction(id: string, tenantId: string) {
     throw new Error("Unauthorized");
   }
 
-  // Verificar si hay más sucursales antes de eliminar (no dejar al tenant sin sucursales)
+  // Verificar si hay más sucursales activas antes de eliminar
   const existing = await db.query.branches.findMany({
     where: eq(branches.tenantId, tenantId)
   });
@@ -129,6 +129,38 @@ export async function deleteBranchAction(id: string, tenantId: string) {
     tenantId: tenantId,
     details: { type: 'BRANCH_DELETED', branchName: branchToDelete?.name }
   });
+
+  revalidatePath('/[locale]/admin/branches', 'page');
+  return { success: true };
+}
+
+/**
+ * Activar / desactivar una sucursal
+ * Al reactivar, verifica que no se exceda el límite del plan
+ */
+export async function toggleBranchActiveAction(id: string, tenantId: string, currentlyActive: boolean) {
+  const session = await getSession();
+  if (!session || (session.tenantId !== tenantId && session.role !== 'SUPER_ADMIN')) {
+    throw new Error("Unauthorized");
+  }
+
+  // Si queremos reactivar, checar límite del plan
+  if (!currentlyActive) {
+    const limitCheck = await checkPlanLimit(tenantId, "branches");
+    if (!limitCheck.allowed) {
+      return {
+        success: false,
+        error: "PLAN_LIMIT_EXCEEDED",
+        limit: limitCheck.limit,
+        current: limitCheck.current,
+        plan: limitCheck.plan,
+      };
+    }
+  }
+
+  await db.update(branches)
+    .set({ isActive: !currentlyActive })
+    .where(and(eq(branches.id, id), eq(branches.tenantId, tenantId)));
 
   revalidatePath('/[locale]/admin/branches', 'page');
   return { success: true };

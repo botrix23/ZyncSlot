@@ -177,3 +177,35 @@ export async function reorderServicesAction(tenantId: string, orderedIds: string
     return { success: false };
   }
 }
+
+/**
+ * Activar / desactivar un servicio
+ * Al reactivar, verifica que no se exceda el límite del plan
+ */
+export async function toggleServiceActiveAction(id: string, tenantId: string, currentlyActive: boolean) {
+  try {
+    if (!currentlyActive) {
+      const limitCheck = await checkPlanLimit(tenantId, "services");
+      if (!limitCheck.allowed) {
+        return {
+          success: false,
+          error: "PLAN_LIMIT_EXCEEDED",
+          limit: limitCheck.limit,
+          current: limitCheck.current,
+          plan: limitCheck.plan,
+        };
+      }
+    }
+
+    await db.update(services)
+      .set({ isActive: !currentlyActive })
+      .where(and(eq(services.id, id), eq(services.tenantId, tenantId)));
+
+    revalidatePath("/[locale]/admin/services", "page");
+    revalidatePath("/[locale]/[slug]", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Error toggling service:", error);
+    return { success: false, error: "Failed to toggle service" };
+  }
+}

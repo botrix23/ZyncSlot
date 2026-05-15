@@ -18,11 +18,13 @@ import {
   Tag,
   Truck,
   Save,
-  Users
+  Users,
+  Power,
+  PowerOff
 } from 'lucide-react';
 import { Portal } from "@/components/Portal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { createServiceAction, updateServiceAction, deleteServiceAction, reorderServicesAction } from "@/app/actions/services";
+import { createServiceAction, updateServiceAction, deleteServiceAction, reorderServicesAction, toggleServiceActiveAction } from "@/app/actions/services";
 import { createCategoryAction, updateCategoryAction, deleteCategoryAction } from "@/app/actions/categories";
 import { updateHomeServiceTravelTimeAction } from "@/app/actions/tenant";
 import { useRouter } from "next/navigation";
@@ -52,7 +54,8 @@ export default function ServicesClient({
   plan?: string,
 }) {
   const limit = planLimit ?? 999;
-  const atLimit = initialServices.length >= limit;
+  const activeServices = initialServices.filter(s => s.isActive !== false);
+  const atLimit = activeServices.length >= limit;
   const t = useTranslations('Dashboard.services');
   const [activeTab, setActiveTab] = useState<'services' | 'categories'>('services');
   const [searchTerm, setSearchTerm] = useState("");
@@ -139,6 +142,18 @@ export default function ServicesClient({
   const [newInclude, setNewInclude] = useState("");
   const [newExclude, setNewExclude] = useState("");
 
+  const handleToggleActive = async (service: any) => {
+    const result = await toggleServiceActiveAction(service.id, tenantId, service.isActive !== false);
+    if (!result.success) {
+      if (result.error === 'PLAN_LIMIT_EXCEEDED') {
+        alert(t('planLimitReactivate'));
+      } else {
+        alert(t('toggleError'));
+      }
+    }
+    router.refresh();
+  };
+
   const filteredServices = initialServices
     .filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
@@ -214,7 +229,7 @@ export default function ServicesClient({
       setIsModalOpen(false);
       router.refresh();
     } else if ((result as any).error === 'PLAN_LIMIT_EXCEEDED') {
-      alert(`Límite del plan ${plan ?? 'BASIC'} alcanzado (${(result as any).current}/${(result as any).limit} servicios). Actualiza tu plan para agregar más.`);
+      alert(t('planLimitReactivate'));
     } else {
       alert(t('errorSave'));
     }
@@ -311,7 +326,7 @@ export default function ServicesClient({
                   ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
                   : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-zinc-400'
             }`}>
-              {initialServices.length} / {limit} servicios · {plan ?? 'BASIC'}
+              {activeServices.length} / {limit} · {plan ?? 'BASIC'}
             </span>
           )}
           <button
@@ -408,28 +423,35 @@ export default function ServicesClient({
 
       {/* Mobile cards — solo en pantallas pequeñas */}
       <div className="md:hidden space-y-3">
-        {filteredServices.map((service, idx) => (
+        {filteredServices.map((service, idx) => {
+          const isInactive = service.isActive === false;
+          return (
           <div
             key={service.id}
-            onClick={() => handleOpenModal(service)}
-            className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-4 shadow-sm hover:border-purple-500/50 transition-all cursor-pointer"
+            onClick={() => !isInactive && handleOpenModal(service)}
+            className={`border rounded-2xl p-4 shadow-sm transition-all ${isInactive ? 'bg-slate-50 dark:bg-zinc-900/50 border-slate-200 dark:border-white/5 opacity-60 cursor-default' : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-white/5 hover:border-purple-500/50 cursor-pointer'}`}
           >
+            {isInactive && (
+              <span className="inline-block mb-2 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                {t('deactivated')}
+              </span>
+            )}
             <div className="flex items-start gap-3">
               {/* Reorder + icono */}
               <div className="flex flex-col items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
                 <button
-                  onClick={e => { e.stopPropagation(); handleReorder(service.id, 'up'); }}
-                  disabled={idx === 0}
+                  onClick={e => { e.stopPropagation(); if (!isInactive) handleReorder(service.id, 'up'); }}
+                  disabled={idx === 0 || isInactive}
                   className="p-1 text-slate-400 hover:text-purple-500 disabled:opacity-20 transition-colors"
                 >
                   <ChevronUp className="w-4 h-4" />
                 </button>
-                <div className="w-9 h-9 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-600">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isInactive ? 'bg-slate-200 dark:bg-zinc-700 text-slate-400' : 'bg-purple-500/10 text-purple-600'}`}>
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <button
-                  onClick={e => { e.stopPropagation(); handleReorder(service.id, 'down'); }}
-                  disabled={idx === filteredServices.length - 1}
+                  onClick={e => { e.stopPropagation(); if (!isInactive) handleReorder(service.id, 'down'); }}
+                  disabled={idx === filteredServices.length - 1 || isInactive}
                   className="p-1 text-slate-400 hover:text-purple-500 disabled:opacity-20 transition-colors"
                 >
                   <ChevronDown className="w-4 h-4" />
@@ -495,17 +517,27 @@ export default function ServicesClient({
                 )}
               </div>
 
-              {/* Eliminar */}
-              <button
-                onClick={e => { e.stopPropagation(); handleDelete(service.id); }}
-                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-500/5 rounded-xl transition-all shrink-0"
-                title={t('confirmDelete')}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              {/* Acciones */}
+              <div className="flex flex-col gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                <button
+                  onClick={e => { e.stopPropagation(); handleToggleActive(service); }}
+                  className={`p-2 rounded-xl transition-all ${isInactive ? 'text-emerald-600 hover:bg-emerald-500/10' : 'text-amber-500 hover:bg-amber-500/10'}`}
+                  title={isInactive ? t('reactivate') : t('inactive')}
+                >
+                  {isInactive ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={e => { e.stopPropagation(); handleDelete(service.id); }}
+                  className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-500/5 rounded-xl transition-all"
+                  title={t('confirmDelete')}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Desktop table — oculta en móvil */}
@@ -522,11 +554,13 @@ export default function ServicesClient({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-slate-600 dark:text-zinc-300">
-            {filteredServices.map((service, idx) => (
+            {filteredServices.map((service, idx) => {
+              const isInactiveSvc = service.isActive === false;
+              return (
               <tr
                 key={service.id}
-                onClick={() => handleOpenModal(service)}
-                className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group cursor-pointer"
+                onClick={() => !isInactiveSvc && handleOpenModal(service)}
+                className={`transition-colors group ${isInactiveSvc ? 'opacity-55 cursor-default bg-slate-50/60 dark:bg-zinc-900/30' : 'hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer'}`}
               >
                 <td className="px-6 py-6" onClick={(e) => e.stopPropagation()}>
                   <div className="flex flex-col items-center gap-1">
@@ -548,11 +582,18 @@ export default function ServicesClient({
                 </td>
                 <td className="px-6 py-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-600">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isInactiveSvc ? 'bg-slate-200 dark:bg-zinc-700 text-slate-400' : 'bg-purple-500/10 text-purple-600'}`}>
                       <Sparkles className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="font-bold text-slate-900 dark:text-white block tracking-tight">{service.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 dark:text-white block tracking-tight">{service.name}</span>
+                        {isInactiveSvc && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                            {t('deactivated')}
+                          </span>
+                        )}
+                      </div>
                       <span className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-1">
                         <Clock className="w-3.5 h-3.5 text-slate-400" /> {service.durationMinutes} min
                       </span>
@@ -618,7 +659,14 @@ export default function ServicesClient({
                   </div>
                 </td>
                 <td className="px-6 py-6" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleToggleActive(service); }}
+                      className={`p-3 rounded-xl transition-all ${isInactiveSvc ? 'text-emerald-600 hover:bg-emerald-500/10' : 'text-amber-500 hover:bg-amber-500/10'}`}
+                      title={isInactiveSvc ? t('reactivate') : t('inactive')}
+                    >
+                      {isInactiveSvc ? <Power className="w-5 h-5" /> : <PowerOff className="w-5 h-5" />}
+                    </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDelete(service.id); }}
                       className="p-3 text-slate-400 hover:text-rose-600 hover:bg-rose-500/5 rounded-xl transition-all"
@@ -629,7 +677,8 @@ export default function ServicesClient({
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
         </div>

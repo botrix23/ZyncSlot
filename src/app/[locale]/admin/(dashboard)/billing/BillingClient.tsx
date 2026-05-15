@@ -395,7 +395,7 @@ export default function BillingClient({ tenantId, plan, tenantStatus, subscripti
                   <ul className="space-y-1 mb-3">
                     {FEATURE_KEYS.slice(0, 5).map(key => (
                       <li key={key} className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
-                        <span className={PLAN_FEATURES[p][key] && PLAN_FEATURES[p][key] !== false ? 'text-purple-600 font-bold' : 'text-zinc-300 dark:text-zinc-600'}>{featureValue(p, key)}</span>
+                        <span className={PLAN_FEATURES[p][key] && PLAN_FEATURES[p][key] !== 0 ? 'text-purple-600 font-bold' : 'text-zinc-300 dark:text-zinc-600'}>{featureValue(p, key)}</span>
                         {t(`features.${key}` as any)}
                       </li>
                     ))}
