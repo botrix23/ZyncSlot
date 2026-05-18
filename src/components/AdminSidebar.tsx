@@ -18,6 +18,7 @@ import {
   ChevronRight,
   X,
 } from 'lucide-react';
+import { getPlanDisplayName } from '@/core/plans';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { logoutAction } from '@/app/actions/auth';
@@ -28,7 +29,7 @@ import { useTranslations } from 'next-intl';
 
 const COLLAPSED_KEY = 'sidebar-collapsed';
 
-export function AdminSidebar({ user, locale, tenantName }: { user: SessionUser | null, locale: string, tenantName?: string }) {
+export function AdminSidebar({ user, locale, tenantName, tenantPlan }: { user: SessionUser | null, locale: string, tenantName?: string, tenantPlan?: string | null }) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations('Dashboard.sidebar');
@@ -199,6 +200,17 @@ export function AdminSidebar({ user, locale, tenantName }: { user: SessionUser |
           <div className="px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl">
             <p className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 mb-1 uppercase tracking-wider">{t('business') || 'Empresa'}</p>
             <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{tenantName}</p>
+            {tenantPlan && (
+              <span className={`inline-block mt-1.5 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                tenantPlan === 'ENTERPRISE'
+                  ? 'bg-amber-500/15 text-amber-500'
+                  : tenantPlan === 'PROFESSIONAL'
+                  ? 'bg-purple-500/15 text-purple-500'
+                  : 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-zinc-400'
+              }`}>
+                {getPlanDisplayName(tenantPlan)}
+              </span>
+            )}
           </div>
         )}
         {!isImpersonating && (

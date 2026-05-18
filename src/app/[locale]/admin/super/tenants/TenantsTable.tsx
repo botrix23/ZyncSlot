@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { getAllTenantsAction, updateTenantStatusAction, updateTenantPlanAction, deleteTenantAction, impersonateTenantAction, updateTenantTrialDaysAction } from '@/app/actions/superAdmin';
-import { CheckCircle, Clock, XCircle, Trash2, ShieldCheck, MoreVertical, CreditCard, Users, Timer } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, Trash2, ShieldCheck, MoreVertical, CreditCard, Users, Timer, Search, X as XIcon } from 'lucide-react';
 import TenantAdminsModal from './TenantAdminsModal';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useTranslations } from 'next-intl';
@@ -169,6 +169,7 @@ export default function TenantsTable({ tenants: initialTenants, locale }: { tena
   const t = useTranslations('SuperAdmin.tenantsPage');
   const tStatus = useTranslations('SuperAdmin.tenantStatus');
   const [tenants, setTenants] = useState(initialTenants);
+  const [search, setSearch] = useState('');
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -177,6 +178,17 @@ export default function TenantsTable({ tenants: initialTenants, locale }: { tena
   const [trialTarget, setTrialTarget] = useState<Tenant | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const filteredTenants = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return tenants;
+    return tenants.filter(ten => {
+      const nameMatch = ten.name.toLowerCase().includes(q);
+      const slugMatch = ten.slug.toLowerCase().includes(q);
+      const emailMatch = ten.users?.some(u => u.email?.toLowerCase().includes(q));
+      return nameMatch || slugMatch || emailMatch;
+    });
+  }, [tenants, search]);
 
   useEffect(() => {
     if (!openMenu) return;
@@ -316,6 +328,26 @@ export default function TenantsTable({ tenants: initialTenants, locale }: { tena
         />
       )}
 
+      {/* Search bar */}
+      <div className="relative mb-4">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar por empresa, slug o email..."
+          className="w-full pl-10 pr-10 py-3 bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-2xl text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors"
+          >
+            <XIcon className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
       {/* Desktop table */}
       <div className="bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/5 rounded-3xl overflow-hidden hidden md:block">
         <div className="overflow-x-auto">
@@ -332,7 +364,14 @@ export default function TenantsTable({ tenants: initialTenants, locale }: { tena
               </tr>
             </thead>
             <tbody>
-              {tenants.map(tenant => {
+              {filteredTenants.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-400 text-sm">
+                    No se encontraron resultados para <strong className="text-zinc-600 dark:text-zinc-300">"{search}"</strong>
+                  </td>
+                </tr>
+              )}
+              {filteredTenants.map(tenant => {
                 const cfg = statusConfig[tenant.status as keyof typeof statusConfig] || statusConfig.SUSPENDED;
                 const planCfg = planConfig[tenant.plan as keyof typeof planConfig] || planConfig.BASIC;
                 const isLoading = loadingId === tenant.id;
@@ -398,7 +437,12 @@ export default function TenantsTable({ tenants: initialTenants, locale }: { tena
 
       {/* Mobile cards */}
       <div className="space-y-3 md:hidden">
-        {tenants.map(tenant => {
+        {filteredTenants.length === 0 && (
+          <div className="text-center py-10 text-zinc-400 text-sm">
+            No se encontraron resultados para <strong className="text-zinc-600 dark:text-zinc-300">"{search}"</strong>
+          </div>
+        )}
+        {filteredTenants.map(tenant => {
           const cfg = statusConfig[tenant.status as keyof typeof statusConfig] || statusConfig.SUSPENDED;
           const planCfg = planConfig[tenant.plan as keyof typeof planConfig] || planConfig.BASIC;
           const isLoading = loadingId === tenant.id;
