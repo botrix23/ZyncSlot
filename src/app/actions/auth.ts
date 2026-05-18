@@ -65,16 +65,11 @@ export async function loginAction(formData: FormData, locale: string) {
       return { success: false, errorCode: 'errorDisabled' };
     }
 
-    // 3. Verificar que el Tenant no esté suspendido o expirado
+    // 3. Verificar que el Tenant no esté suspendido
+    // El trial vencido NO bloquea el login — el layout redirige a /billing para que pueda pagar
     if (user.role === 'ADMIN' && user.tenant) {
       if (user.tenant.status === 'SUSPENDED') {
         return { success: false, errorCode: 'errorSuspended' };
-      }
-      if (user.tenant.status === 'TRIAL' && user.tenant.subscriptionExpiresAt) {
-        const now = new Date();
-        if (now > user.tenant.subscriptionExpiresAt) {
-          return { success: false, errorCode: 'errorTrialExpired' };
-        }
       }
     }
 
