@@ -49,7 +49,7 @@ export interface PlanFeatures {
 export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
   BASIC: {
     maxBranches: 1,
-    maxStaff: 1,
+    maxStaff: 2,
     maxServices: 10,
 
     multiServiceBooking: false,
@@ -64,7 +64,7 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     serviceCategories: false,
     servicesPerBranch: false,
 
-    staffAccess: false,
+    staffAccess: true,
     staffCategories: false,
     staffRotations: false,
 
@@ -147,8 +147,8 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
 
 /** Precios base (fallback si platform_config no tiene valores configurados). */
 export const PLAN_PRICES: Record<PlanType, number> = {
-  BASIC: 20,
-  PROFESSIONAL: 45,
+  BASIC: 25,
+  PROFESSIONAL: 59,
   ENTERPRISE: 99,
 }
 
@@ -204,7 +204,7 @@ export function getPlanDisplayName(plan?: string | null): string {
   const names: Record<string, string> = {
     BASIC: 'Basic',
     PROFESSIONAL: 'Professional',
-    ENTERPRISE: 'Enterprise',
+    ENTERPRISE: 'Business',
   };
   return names[normalized || 'BASIC'] || 'Basic';
 }

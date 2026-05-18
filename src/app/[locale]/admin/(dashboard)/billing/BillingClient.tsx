@@ -41,7 +41,7 @@ const PLANS: PlanType[] = ['BASIC', 'PROFESSIONAL', 'ENTERPRISE']
 const PLAN_NAMES: Record<PlanType, string> = {
   BASIC: 'Basic',
   PROFESSIONAL: 'Professional',
-  ENTERPRISE: 'Enterprise',
+  ENTERPRISE: 'Business',
 }
 const PLAN_ORDER: Record<string, number> = { BASIC: 0, PROFESSIONAL: 1, ENTERPRISE: 2 }
 
@@ -469,10 +469,12 @@ export default function BillingClient({ tenantId, plan, tenantStatus, subscripti
               </ul>
             </div>
           )}
-          {targetPlan === 'BASIC' && (
+          {(PLAN_FEATURES[targetPlan].maxBranches < PLAN_FEATURES[currentPlan].maxBranches ||
+            PLAN_FEATURES[targetPlan].maxStaff < PLAN_FEATURES[currentPlan].maxStaff ||
+            PLAN_FEATURES[targetPlan].maxServices < PLAN_FEATURES[currentPlan].maxServices) && (
             <div className="flex items-start gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl mb-4">
               <AlertTriangle className="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" />
-              <p className="text-sm text-yellow-700 dark:text-yellow-400">{t('modal.downgrade.basicWarning')}</p>
+              <p className="text-sm text-yellow-700 dark:text-yellow-400">{t('modal.downgrade.limitWarning')}</p>
             </div>
           )}
           <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-5 py-3 border-t border-zinc-100 dark:border-white/10" dangerouslySetInnerHTML={{ __html: t('modal.downgrade.charge', { amount: PLAN_PRICES[targetPlan] }) }} />

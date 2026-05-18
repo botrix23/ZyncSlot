@@ -636,7 +636,17 @@
       "recoveryDescription": "Si pierdes acceso a tu cuenta, el soporte de Zyncrox usará este email para restaurarte el acceso. Debe ser una dirección diferente a tu email de admin.",
       "recoveryPlaceholder": "email@ejemplo.com",
       "saved": "Guardado",
-      "save": "Guardar"
+      "save": "Guardar",
+      "owner": "Dueño",
+      "transferOwnership": "Ceder titularidad",
+      "confirm": "Confirmar",
+      "confirmDeleteTitle": "Eliminar administrador",
+      "confirmDeleteDesc": "¿Eliminar a {name}? Esta acción no se puede deshacer.",
+      "confirmActivateDesc": "¿Activar a {name}? Podrá acceder al sistema nuevamente.",
+      "confirmDeactivateDesc": "¿Desactivar a {name}? Perderá acceso al sistema.",
+      "confirmTransferTitle": "Ceder titularidad",
+      "confirmTransferDesc": "¿Ceder la titularidad de la cuenta a {name}? Pasará a ser el propietario y tú perderás ese rol.",
+      "errorTransfer": "Error al transferir la titularidad. Intenta de nuevo."
     },
     "portal": {
       "title": "Mi portal web",
@@ -1293,7 +1303,8 @@
       "downgrade": {
         "title": "Bajar a {plan}",
         "willLose": "Lo que perderás",
-        "basicWarning": "Solo tu empleado más antiguo quedará activo. El resto será desactivado.",
+        "basicWarning": "Al bajar al plan Basic se aplicarán los límites de sucursales, servicios y staff. Se conservarán los registros más antiguos de cada categoría; el resto quedará desactivado automáticamente.",
+        "limitWarning": "Al bajar de plan se aplicarán los nuevos límites de sucursales, servicios y staff. Se conservarán los registros más antiguos de cada categoría; el resto quedará desactivado automáticamente.",
         "charge": "Se te cobrará <strong>${amount}</strong> hoy. Tu nueva fecha de facturación será <strong>hoy</strong>."
       },
       "cancelSub": {

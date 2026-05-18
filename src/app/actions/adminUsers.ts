@@ -170,6 +170,47 @@ export async function updateRecoveryEmailAction(recoveryEmail: string) {
   return { success: true };
 }
 
+/** Transfiere la titularidad de la cuenta a otro admin. Solo el owner puede hacerlo. */
+export async function transferOwnershipAction(targetUserId: string) {
+  const { session, tenantId } = await assertAdmin();
+
+  if (!session.isOwner) {
+    return { success: false, error: 'OWNER_ONLY' };
+  }
+
+  if (session.userId === targetUserId) {
+    return { success: false, error: 'CANNOT_TRANSFER_TO_SELF' };
+  }
+
+  const target = await db.query.users.findFirst({
+    where: and(eq(users.id, targetUserId), eq(users.tenantId, tenantId)),
+    columns: { id: true, isOwner: true, name: true, email: true, role: true },
+  });
+
+  if (!target) return { success: false, error: 'NOT_FOUND' };
+  if (target.isOwner) return { success: false, error: 'ALREADY_OWNER' };
+  if (target.role !== 'ADMIN') return { success: false, error: 'NOT_ADMIN' };
+
+  // Transfer: new owner gets isOwner=true, current owner loses it
+  await db.update(users)
+    .set({ isOwner: true })
+    .where(and(eq(users.id, targetUserId), eq(users.tenantId, tenantId)));
+
+  await db.update(users)
+    .set({ isOwner: false })
+    .where(and(eq(users.id, session.userId!), eq(users.tenantId, tenantId)));
+
+  await logAuditEvent({
+    action: 'OWNERSHIP_TRANSFERRED',
+    userId: session.userId,
+    tenantId,
+    details: { newOwnerId: targetUserId, newOwnerEmail: target.email },
+  });
+
+  revalidatePath('/[locale]/admin/settings', 'page');
+  return { success: true };
+}
+
 export async function getRecoveryEmailAction() {
   const { tenantId } = await assertAdmin();
   const tenant = await db.query.tenants.findFirst({

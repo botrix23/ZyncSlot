@@ -636,7 +636,17 @@
       "recoveryDescription": "If you lose access to your account, Zyncrox support will use this email to restore your access. It must be a different address from your admin email.",
       "recoveryPlaceholder": "email@example.com",
       "saved": "Saved",
-      "save": "Save"
+      "save": "Save",
+      "owner": "Owner",
+      "transferOwnership": "Transfer ownership",
+      "confirm": "Confirm",
+      "confirmDeleteTitle": "Delete administrator",
+      "confirmDeleteDesc": "Delete {name}? This action cannot be undone.",
+      "confirmActivateDesc": "Activate {name}? They will regain access to the system.",
+      "confirmDeactivateDesc": "Deactivate {name}? They will lose access to the system.",
+      "confirmTransferTitle": "Transfer ownership",
+      "confirmTransferDesc": "Transfer account ownership to {name}? They will become the new owner and you will lose that role.",
+      "errorTransfer": "Error transferring ownership. Please try again."
     },
     "portal": {
       "title": "My web portal",
@@ -1293,7 +1303,8 @@
       "downgrade": {
         "title": "Downgrade to {plan}",
         "willLose": "What you'll lose",
-        "basicWarning": "Only your oldest employee will remain active. The rest will be deactivated.",
+        "basicWarning": "Downgrading to Basic applies limits on branches, services, and staff. The oldest records in each category will be kept; the rest will be automatically deactivated.",
+        "limitWarning": "Downgrading will apply the new limits on branches, services, and staff. The oldest records in each category will be kept; the rest will be automatically deactivated.",
         "charge": "You'll be charged <strong>${amount}</strong> today. Your new billing date will be <strong>today</strong>."
       },
       "cancelSub": {

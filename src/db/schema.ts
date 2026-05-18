@@ -454,8 +454,8 @@ export const platformConfig = pgTable('platform_config', {
   emailTplTrialWarning: text('email_tpl_trial_warning'),
   emailTplSurveyInvite: text('email_tpl_survey_invite'),
   // Precios de planes (editables desde super admin, en USD)
-  planPriceBasic: decimal('plan_price_basic', { precision: 10, scale: 2 }).default('20.00'),
-  planPriceProfessional: decimal('plan_price_professional', { precision: 10, scale: 2 }).default('45.00'),
+  planPriceBasic: decimal('plan_price_basic', { precision: 10, scale: 2 }).default('25.00'),
+  planPriceProfessional: decimal('plan_price_professional', { precision: 10, scale: 2 }).default('59.00'),
   planPriceEnterprise: decimal('plan_price_enterprise', { precision: 10, scale: 2 }).default('99.00'),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });

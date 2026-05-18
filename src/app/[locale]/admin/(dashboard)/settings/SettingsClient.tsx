@@ -2,12 +2,91 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Users, Plus, Trash2, ToggleLeft, ToggleRight, Copy, Check, AlertCircle, ShieldCheck, UserCog, LifeBuoy, Save } from 'lucide-react';
-import { getAdminsAction, createAdminAction, toggleAdminAction, deleteAdminAction, updateRecoveryEmailAction } from '@/app/actions/adminUsers';
+import { Users, Plus, Trash2, ToggleLeft, ToggleRight, Copy, Check, AlertCircle, ShieldCheck, UserCog, LifeBuoy, Save, Crown, X, AlertTriangle } from 'lucide-react';
+import { getAdminsAction, createAdminAction, toggleAdminAction, deleteAdminAction, updateRecoveryEmailAction, transferOwnershipAction } from '@/app/actions/adminUsers';
 
 type Admin = Awaited<ReturnType<typeof getAdminsAction>>[number];
 
+type ConfirmState =
+  | { type: 'delete'; admin: Admin }
+  | { type: 'toggle'; admin: Admin; newActive: boolean }
+  | { type: 'transfer'; admin: Admin }
+  | null;
+
 const ADMIN_LIMITS: Record<string, number> = { BASIC: 1, PROFESSIONAL: 2, ENTERPRISE: Infinity };
+
+function ConfirmModal({
+  state,
+  loading,
+  onConfirm,
+  onClose,
+  t,
+}: {
+  state: NonNullable<ConfirmState>;
+  loading: boolean;
+  onConfirm: () => void;
+  onClose: () => void;
+  t: ReturnType<typeof useTranslations<'Dashboard.settings'>>;
+}) {
+  const isDelete = state.type === 'delete';
+  const isTransfer = state.type === 'transfer';
+  const isToggle = state.type === 'toggle';
+
+  const title = isDelete
+    ? t('confirmDeleteTitle')
+    : isTransfer
+    ? t('confirmTransferTitle')
+    : state.newActive
+    ? t('activate')
+    : t('deactivate');
+
+  const desc = isDelete
+    ? t('confirmDeleteDesc', { name: state.admin.name })
+    : isTransfer
+    ? t('confirmTransferDesc', { name: state.admin.name })
+    : state.newActive
+    ? t('confirmActivateDesc', { name: state.admin.name })
+    : t('confirmDeactivateDesc', { name: state.admin.name });
+
+  const confirmCls = isDelete || isTransfer
+    ? 'flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-60'
+    : 'flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-60';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+      <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl w-full max-w-sm">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-zinc-100 dark:border-white/10">
+          <div className="flex items-center gap-2">
+            {(isDelete || isTransfer) && <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />}
+            <h2 className="text-base font-bold">{title}</h2>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="px-6 py-5">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-5">{desc}</p>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 py-2.5 text-sm font-semibold rounded-xl border border-zinc-200 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors disabled:opacity-60"
+            >
+              {t('cancel')}
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={loading}
+              className={confirmCls}
+            >
+              {loading ? <span className="flex justify-center"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /></span> : t('confirm')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function SettingsClient({
   initialAdmins,
@@ -34,11 +113,14 @@ export default function SettingsClient({
   const [error, setError] = useState('');
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [confirmState, setConfirmState] = useState<ConfirmState>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const limit = ADMIN_LIMITS[plan] ?? 1;
   const activeCount = admins.filter(a => a.isActive).length;
   const canAdd = activeCount < limit;
   const planLimitLabel = limit === Infinity ? t('planLimitUnlimited') : `${limit} admin${limit !== 1 ? 's' : ''}`;
+  const currentUserIsOwner = admins.find(a => a.id === currentUserId)?.isOwner ?? false;
 
   const handleSaveRecovery = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,31 +136,42 @@ export default function SettingsClient({
     setAdmins(data);
   };
 
-  const handleToggle = async (admin: Admin) => {
-    setActionId(admin.id);
+  const handleConfirm = async () => {
+    if (!confirmState) return;
+    setConfirmLoading(true);
     setError('');
-    const res = await toggleAdminAction(admin.id, !admin.isActive);
-    if (res.success) {
-      setAdmins(prev => prev.map(a => a.id === admin.id ? { ...a, isActive: !a.isActive } : a));
-    } else if (res.error === 'LAST_ADMIN') {
-      setError(t('errorLastAdmin'));
-    }
-    setActionId(null);
-  };
 
-  const handleDelete = async (admin: Admin) => {
-    if (!confirm(t('confirmDelete', { name: admin.name }))) return;
-    setActionId(admin.id);
-    setError('');
-    const res = await deleteAdminAction(admin.id);
-    if (res.success) {
-      setAdmins(prev => prev.filter(a => a.id !== admin.id));
-    } else if (res.error === 'LAST_ADMIN') {
-      setError(t('errorLastAdminDelete'));
-    } else if (res.error === 'CANNOT_DELETE_SELF') {
-      setError(t('errorSelf'));
+    if (confirmState.type === 'toggle') {
+      setActionId(confirmState.admin.id);
+      const res = await toggleAdminAction(confirmState.admin.id, confirmState.newActive);
+      if (res.success) {
+        setAdmins(prev => prev.map(a => a.id === confirmState.admin.id ? { ...a, isActive: confirmState.newActive } : a));
+      } else if (res.error === 'LAST_ADMIN') {
+        setError(t('errorLastAdmin'));
+      }
+      setActionId(null);
+    } else if (confirmState.type === 'delete') {
+      setActionId(confirmState.admin.id);
+      const res = await deleteAdminAction(confirmState.admin.id);
+      if (res.success) {
+        setAdmins(prev => prev.filter(a => a.id !== confirmState.admin.id));
+      } else if (res.error === 'LAST_ADMIN') {
+        setError(t('errorLastAdminDelete'));
+      } else if (res.error === 'CANNOT_DELETE_SELF') {
+        setError(t('errorSelf'));
+      }
+      setActionId(null);
+    } else if (confirmState.type === 'transfer') {
+      const res = await transferOwnershipAction(confirmState.admin.id);
+      if (res.success) {
+        await reload();
+      } else {
+        setError(t('errorTransfer'));
+      }
     }
-    setActionId(null);
+
+    setConfirmLoading(false);
+    setConfirmState(null);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -112,6 +205,16 @@ export default function SettingsClient({
 
   return (
     <div className="max-w-2xl space-y-6">
+      {confirmState && (
+        <ConfirmModal
+          state={confirmState}
+          loading={confirmLoading}
+          onConfirm={handleConfirm}
+          onClose={() => !confirmLoading && setConfirmState(null)}
+          t={t}
+        />
+      )}
+
       <div>
         <h1 className="text-2xl font-black text-zinc-900 dark:text-white flex items-center gap-3">
           <UserCog className="w-6 h-6 text-purple-500" />
@@ -168,12 +271,17 @@ export default function SettingsClient({
                   {admin.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className={`font-bold text-sm truncate ${admin.isActive ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 line-through'}`}>
                       {admin.name}
                     </p>
                     {admin.id === currentUserId && (
                       <span className="text-xs bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold px-1.5 py-0.5 rounded-md shrink-0">{t('you')}</span>
+                    )}
+                    {admin.isOwner && (
+                      <span className="text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold px-1.5 py-0.5 rounded-md shrink-0 flex items-center gap-1">
+                        <Crown className="w-3 h-3" />{t('owner')}
+                      </span>
                     )}
                   </div>
                   <p className="text-xs text-zinc-500 truncate">{admin.email}</p>
@@ -181,23 +289,36 @@ export default function SettingsClient({
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${admin.isActive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-zinc-200 dark:bg-white/10 text-zinc-400'}`}>
                   {admin.isActive ? t('active') : t('inactive')}
                 </span>
-                {admin.id !== currentUserId && (
+
+                {/* Acciones: solo sobre admins no-owner, y solo si quien mira es el owner */}
+                {!admin.isOwner && currentUserIsOwner && (
                   <>
+                    {/* Ceder titularidad */}
                     <button
-                      onClick={() => handleToggle(admin)}
+                      onClick={() => setConfirmState({ type: 'transfer', admin })}
+                      disabled={actionId === admin.id}
+                      title={t('transferOwnership')}
+                      className="p-1.5 rounded-lg text-zinc-400 hover:text-amber-500 hover:bg-amber-500/10 transition-all disabled:opacity-40"
+                    >
+                      <Crown className="w-5 h-5" />
+                    </button>
+                    {/* Toggle activo/inactivo */}
+                    <button
+                      onClick={() => setConfirmState({ type: 'toggle', admin, newActive: !admin.isActive })}
                       disabled={actionId === admin.id}
                       title={admin.isActive ? t('deactivate') : t('activate')}
                       className="p-1.5 rounded-lg text-zinc-400 hover:text-amber-500 hover:bg-amber-500/10 transition-all disabled:opacity-40"
                     >
-                      {admin.isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                      {admin.isActive ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
                     </button>
+                    {/* Eliminar */}
                     <button
-                      onClick={() => handleDelete(admin)}
+                      onClick={() => setConfirmState({ type: 'delete', admin })}
                       disabled={actionId === admin.id}
                       title={t('delete')}
                       className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all disabled:opacity-40"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   </>
                 )}
@@ -242,16 +363,18 @@ export default function SettingsClient({
               </div>
             </form>
           ) : (
-            <button
-              onClick={() => { setShowCreate(true); setError(''); setTempPassword(null); }}
-              disabled={!canAdd}
-              title={!canAdd ? t('errorPlanLimit', { plan, limit }) : ''}
-              className="w-full py-3 rounded-2xl border border-dashed border-zinc-300 dark:border-white/10 text-zinc-500 dark:text-zinc-400 hover:border-purple-500/50 hover:text-purple-500 hover:bg-purple-500/5 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-sm flex items-center justify-center gap-2 transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              {t('addAdmin')}
-              {!canAdd && <span className="text-xs font-normal opacity-70">{t('planLimitReached')}</span>}
-            </button>
+            currentUserIsOwner && (
+              <button
+                onClick={() => { setShowCreate(true); setError(''); setTempPassword(null); }}
+                disabled={!canAdd}
+                title={!canAdd ? t('errorPlanLimit', { plan, limit }) : ''}
+                className="w-full py-3 rounded-2xl border border-dashed border-zinc-300 dark:border-white/10 text-zinc-500 dark:text-zinc-400 hover:border-purple-500/50 hover:text-purple-500 hover:bg-purple-500/5 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-sm flex items-center justify-center gap-2 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                {t('addAdmin')}
+                {!canAdd && <span className="text-xs font-normal opacity-70">{t('planLimitReached')}</span>}
+              </button>
+            )
           )}
         </div>
       </div>
