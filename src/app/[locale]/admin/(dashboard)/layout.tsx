@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { tenants, users, subscriptions } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
 
 export default async function AdminLayout({
   children,
@@ -16,9 +15,6 @@ export default async function AdminLayout({
 }) {
   const session = await getSession();
   const locale = params.locale || 'es';
-  const headersList = headers();
-  const pathname = headersList.get('x-pathname') ?? '';
-  const isBillingPage = pathname.includes('/billing');
 
   // Session checks
   if (session?.userId) {
@@ -80,8 +76,9 @@ export default async function AdminLayout({
     }
   }
 
-  // redirect() lanza una excepción internamente — debe llamarse FUERA del try/catch
-  if (shouldRedirectToBilling && !isBillingPage) {
+  // redirect() lanza una excepción internamente — debe llamarse FUERA del try/catch.
+  // El billing ya está fuera de este route group, así que no hay riesgo de loop.
+  if (shouldRedirectToBilling) {
     redirect(`/${locale}/admin/billing`);
   }
 
